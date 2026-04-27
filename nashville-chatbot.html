@@ -408,15 +408,6 @@
     <span id="locationStatus">📍 Location not shared</span>
     <button onclick="requestLocation()" id="locationBtn">Share location</button>
   </div>
-  <div class="ride-row">
-    <a class="ride-btn uber-btn" id="uberBtn" href="#" onclick="return rideClick('uber', null, event)">🚗 Uber</a>
-    <a class="ride-btn lyft-btn" id="lyftBtn" href="#" onclick="return rideClick('lyft', null, event)">🚙 Lyft</a>
-    <a class="ride-btn waymo-btn" id="waymoBtn" href="#" onclick="return rideClick('waymo', null, event)">🤖 Waymo</a>
-  </div>
-  <div class="delivery-row">
-    <a class="ride-btn doordash-app-btn" href="#" onclick="return rideClick('doordash', null, event)">🛵 DoorDash</a>
-    <a class="ride-btn ubereats-app-btn" href="#" onclick="return rideClick('ubereats', null, event)">🍔 Uber Eats</a>
-  </div>
   <div class="bottom-nav">
     <button class="bottom-btn" id="bottomBackBtn" onclick="goBack()" disabled>← Back</button>
     <button class="bottom-btn" id="bottomHomeBtn" onclick="goHome()">⌂ Home</button>
@@ -1056,8 +1047,10 @@ function showMainMenu() {
     'Book a restaurant',
     'Show all restaurants',
     'Live music tonight',
-    'Best hot chicken',
     'Things to do',
+    'Get a ride',
+    'Order delivery',
+    'Best hot chicken',
     'Local tips'
   ]);
 }
