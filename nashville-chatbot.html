@@ -1027,9 +1027,17 @@ function handleUserMessage(text) {
   if (hdr) hdr.classList.add('slim');
   addMessage(text, 'user');
   addTyping();
+  const stackLenBefore = menuStack.length;
   setTimeout(() => {
     removeTyping();
     routeIntent(text);
+    setTimeout(() => {
+      if (menuStack.length === stackLenBefore && menuStack.length > 0) {
+        const top = menuStack[menuStack.length - 1];
+        menuStack.push(top);
+        updateBackBtn();
+      }
+    }, 50);
   }, 600);
 }
 
