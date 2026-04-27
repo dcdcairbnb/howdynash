@@ -896,33 +896,45 @@ function closeDisclaimer() {
   document.getElementById('disclaimerModal').classList.remove('open');
 }
 
+// Menu-based back navigation
+let menuStack = ['main'];
 function snapshot(label) {
-  messageSnapshots.push({ label, html: messagesEl.innerHTML });
-  if (messageSnapshots.length > 20) messageSnapshots.shift();
+  // legacy hook, no longer drives back nav
+}
+function pushMenu(menuName) {
+  if (menuStack[menuStack.length - 1] !== menuName) {
+    menuStack.push(menuName);
+  }
   updateBackBtn();
 }
-
 function updateBackBtn() {
-  const disabled = messageSnapshots.length < 1;
+  const disabled = menuStack.length < 2;
   backBtn.disabled = disabled;
   const bottomBack = document.getElementById('bottomBackBtn');
   if (bottomBack) bottomBack.disabled = disabled;
 }
 
 function goBack() {
-  if (messageSnapshots.length < 1) return;
-  const popped = messageSnapshots.pop();
-  messagesEl.innerHTML = popped.html;
-  reservationState = null;
+  if (menuStack.length < 2) return;
+  menuStack.pop();
+  const target = menuStack[menuStack.length - 1];
+  messagesEl.innerHTML = '';
   scrollAnchor = null;
-  rebindQuickReplies();
-  messagesEl.scrollTop = messagesEl.scrollHeight;
+  reservationState = null;
+  const hdr = document.getElementById('appHeader');
+  if (hdr) hdr.classList.add('slim');
+  if (target === 'eat') showEatDrinkMenu(true);
+  else if (target === 'do') showThingsToDoMenu(true);
+  else if (target === 'around') showGetAroundMenu(true);
+  else if (target === 'essentials') showEssentialsMenu(true);
+  else showMainMenu();
   updateBackBtn();
 }
 
 function goHome() {
   messagesEl.innerHTML = '';
   messageSnapshots = [];
+  menuStack = ['main'];
   reservationState = null;
   scrollAnchor = null;
   const hdr = document.getElementById('appHeader');
@@ -930,7 +942,6 @@ function goHome() {
   updateBackBtn();
   addMessage("Back to the start. What can I help you find?", 'bot');
   setTimeout(() => showMainMenu(), 300);
-  setTimeout(() => snapshot('home'), 350);
 }
 
 function rebindQuickReplies() {
@@ -1266,7 +1277,8 @@ function showMainMenu() {
   ]);
 }
 
-function showEatDrinkMenu() {
+function showEatDrinkMenu(skipPush) {
+  if (!skipPush) pushMenu('eat');
   addMessage("What sounds good?", 'bot');
   addQuickReplies([
     'Book a restaurant',
@@ -1280,7 +1292,8 @@ function showEatDrinkMenu() {
   ]);
 }
 
-function showThingsToDoMenu() {
+function showThingsToDoMenu(skipPush) {
+  if (!skipPush) pushMenu('do');
   addMessage("Pick a vibe:", 'bot');
   addQuickReplies([
     'Live music tonight',
@@ -1292,7 +1305,8 @@ function showThingsToDoMenu() {
   ]);
 }
 
-function showGetAroundMenu() {
+function showGetAroundMenu(skipPush) {
+  if (!skipPush) pushMenu('around');
   addMessage("Where are you headed?", 'bot');
   addQuickReplies([
     'Hotels nearby',
@@ -1302,8 +1316,9 @@ function showGetAroundMenu() {
   ]);
 }
 
-function showEssentialsMenu() {
+function showEssentialsMenu(skipPush) {
   addMessage("Stocking up?", 'bot');
+  if (!skipPush) pushMenu('essentials');
   addQuickReplies([
     'Liquor stores',
     'Groceries',
