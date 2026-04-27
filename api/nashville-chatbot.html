@@ -1,0 +1,1405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#d62828">
+<title>Music City Retreat - Nashville Chatbot</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+    min-height: 100vh;
+    min-height: 100dvh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  .container {
+    width: 100%;
+    max-width: 480px;
+    height: 90vh;
+    max-height: 800px;
+    background: #fff;
+    border-radius: 20px;
+    box-shadow: 0 25px 60px rgba(0,0,0,0.4);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  @media (max-width: 600px) {
+    body {
+      padding: 0;
+      align-items: stretch;
+      background: #fff;
+    }
+    .container {
+      max-width: 100%;
+      width: 100%;
+      height: 100vh;
+      height: 100dvh;
+      max-height: none;
+      border-radius: 0;
+      box-shadow: none;
+    }
+    .header {
+      padding-top: max(18px, env(safe-area-inset-top));
+    }
+    .bottom-nav {
+      padding-bottom: max(14px, env(safe-area-inset-bottom));
+    }
+    .ride-row, .delivery-row {
+      flex-wrap: wrap;
+    }
+    .ride-btn {
+      font-size: 12px;
+      padding: 10px 8px;
+    }
+    .input-area input { font-size: 16px; }
+    .header h1 { font-size: 16px; }
+    .message { max-width: 85%; }
+    .quick-reply { font-size: 12px; padding: 7px 12px; }
+  }
+  .header {
+    background: linear-gradient(135deg, #d62828 0%, #f77f00 100%);
+    color: #fff;
+    padding: 18px 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .header-text { flex: 1; }
+  .nav-btn {
+    background: rgba(255,255,255,0.2);
+    border: none;
+    color: #fff;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background 0.15s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .nav-btn:hover { background: rgba(255,255,255,0.35); }
+  .nav-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+  }
+  .header-text h1 {
+    font-size: 17px;
+    font-weight: 600;
+  }
+  .header-text p {
+    font-size: 12px;
+    opacity: 0.9;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .status-dot {
+    width: 8px;
+    height: 8px;
+    background: #4ade80;
+    border-radius: 50%;
+    display: inline-block;
+  }
+  .messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+    background: #f7f7f9;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .message {
+    max-width: 80%;
+    padding: 12px 16px;
+    border-radius: 18px;
+    font-size: 14px;
+    line-height: 1.5;
+    word-wrap: break-word;
+    animation: fadeIn 0.3s ease;
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .bot {
+    background: #fff;
+    color: #222;
+    align-self: flex-start;
+    border-bottom-left-radius: 4px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  }
+  .user {
+    background: #d62828;
+    color: #fff;
+    align-self: flex-end;
+    border-bottom-right-radius: 4px;
+  }
+  .card {
+    background: #fff;
+    border: 1px solid #e5e5e5;
+    border-radius: 12px;
+    padding: 12px;
+    margin-top: 6px;
+  }
+  .card-title {
+    font-weight: 600;
+    color: #d62828;
+    margin-bottom: 4px;
+    font-size: 14px;
+  }
+  .card-meta {
+    font-size: 12px;
+    color: #666;
+    margin-bottom: 6px;
+  }
+  .card-desc {
+    font-size: 13px;
+    color: #333;
+    margin-bottom: 8px;
+  }
+  .card a {
+    display: inline-block;
+    background: #f77f00;
+    color: #fff;
+    padding: 6px 12px;
+    border-radius: 6px;
+    text-decoration: none;
+    font-size: 12px;
+    font-weight: 600;
+    margin-right: 6px;
+    margin-top: 4px;
+  }
+  .card a:hover { background: #d62828; }
+  .card .opentable-btn { background: #da3743; }
+  .card .resy-btn { background: #ff4d4d; }
+  .card .tock-btn { background: #1d3b53; }
+  .card .yelp-btn { background: #c41200; }
+  .card .call-btn { background: #2563eb; }
+  .card .doordash-btn { background: #ef2a23; }
+  .card .ubereats-btn { background: #06c167; }
+  .card .walkin-tag {
+    display: inline-block;
+    background: #fef3c7;
+    color: #92400e;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    margin-bottom: 6px;
+  }
+  .quick-replies {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 8px;
+  }
+  .quick-reply {
+    background: #fff;
+    border: 1px solid #d62828;
+    color: #d62828;
+    padding: 8px 14px;
+    border-radius: 16px;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .quick-reply:hover {
+    background: #d62828;
+    color: #fff;
+  }
+  .input-area {
+    border-top: 1px solid #e5e5e5;
+    padding: 12px 16px;
+    background: #fff;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+  .input-area input {
+    flex: 1;
+    border: 1px solid #ddd;
+    border-radius: 20px;
+    padding: 10px 16px;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .input-area input:focus { border-color: #d62828; }
+  .input-area button {
+    background: #d62828;
+    color: #fff;
+    border: none;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    cursor: pointer;
+    font-size: 18px;
+    transition: background 0.2s;
+  }
+  .input-area button:hover { background: #f77f00; }
+  .bottom-nav {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    padding: 10px 16px 14px;
+    background: #fff;
+    border-top: 1px solid #f0f0f0;
+  }
+  .bottom-btn {
+    flex: 1;
+    max-width: 180px;
+    background: #fff;
+    border: 1.5px solid #d62828;
+    color: #d62828;
+    padding: 9px 14px;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+  }
+  .bottom-btn:hover:not(:disabled) {
+    background: #d62828;
+    color: #fff;
+  }
+  .bottom-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+  .ride-row {
+    display: flex;
+    gap: 8px;
+    padding: 0 16px 8px;
+    background: #fff;
+  }
+  .delivery-row {
+    display: flex;
+    gap: 8px;
+    padding: 0 16px 12px;
+    background: #fff;
+  }
+  .doordash-app-btn {
+    background: #ef2a23;
+    color: #fff;
+  }
+  .ubereats-app-btn {
+    background: #06c167;
+    color: #fff;
+  }
+  .ride-btn {
+    flex: 1;
+    padding: 10px 14px;
+    border-radius: 10px;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    transition: opacity 0.15s;
+  }
+  .ride-btn:hover { opacity: 0.85; }
+  .uber-btn {
+    background: #000;
+    color: #fff;
+  }
+  .lyft-btn {
+    background: #ff00bf;
+    color: #fff;
+  }
+  .waymo-btn {
+    background: #5f6df1;
+    color: #fff;
+  }
+  .location-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 16px;
+    background: #fff8ec;
+    border-top: 1px solid #f0e6d2;
+    font-size: 12px;
+    color: #8b6914;
+  }
+  .location-bar.active {
+    background: #ecfdf5;
+    color: #065f46;
+    border-color: #d1fae5;
+  }
+  .location-bar button {
+    background: transparent;
+    border: 1px solid currentColor;
+    color: inherit;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .location-bar button:hover { opacity: 0.8; }
+  .typing {
+    display: flex;
+    gap: 4px;
+    padding: 14px 18px;
+    background: #fff;
+    border-radius: 18px;
+    align-self: flex-start;
+    width: fit-content;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  }
+  .typing span {
+    width: 7px;
+    height: 7px;
+    background: #999;
+    border-radius: 50%;
+    animation: bounce 1.2s infinite;
+  }
+  .typing span:nth-child(2) { animation-delay: 0.15s; }
+  .typing span:nth-child(3) { animation-delay: 0.3s; }
+  @keyframes bounce {
+    0%, 60%, 100% { transform: translateY(0); opacity: 0.5; }
+    30% { transform: translateY(-6px); opacity: 1; }
+  }
+  .messages::-webkit-scrollbar { width: 6px; }
+  .messages::-webkit-scrollbar-thumb { background: #ccc; border-radius: 3px; }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <button class="nav-btn" id="backBtn" onclick="goBack()" title="Back" disabled>←</button>
+    <div class="avatar">🎸</div>
+    <div class="header-text">
+      <h1>Music City Retreat</h1>
+      <p><span class="status-dot" id="statusDot"></span> <span id="statusText">Your Nashville guide</span></p>
+    </div>
+    <button class="nav-btn" id="homeBtn" onclick="goHome()" title="Home">⌂</button>
+  </div>
+  <div class="messages" id="messages"></div>
+  <div class="input-area">
+    <input type="text" id="userInput" placeholder="Ask about Nashville..." autocomplete="off">
+    <button onclick="handleSend()">➤</button>
+  </div>
+  <div class="location-bar" id="locationBar">
+    <span id="locationStatus">📍 Location not shared</span>
+    <button onclick="requestLocation()" id="locationBtn">Share location</button>
+  </div>
+  <div class="bottom-nav">
+    <button class="bottom-btn" id="bottomBackBtn" onclick="goBack()" disabled>← Back</button>
+    <button class="bottom-btn" id="bottomHomeBtn" onclick="goHome()">⌂ Home</button>
+  </div>
+</div>
+
+<script>
+const NASHVILLE_DATA = {
+  restaurants: [
+    { name: "The Catbird Seat", cuisine: "Tasting menu", neighborhood: "Midtown", price: "$$$$", vibe: "upscale, chef-driven, intimate", phone: "(615) 810-8200", booking: { tock: "https://www.exploretock.com/thecatbirdseatnashville", opentable: "https://www.opentable.com/r/the-catbird-seat-nashville" } },
+    { name: "Husk Nashville", cuisine: "Southern", neighborhood: "Rutledge Hill", price: "$$$", vibe: "farm-to-table, historic mansion", phone: "(615) 256-6565", booking: { opentable: "https://www.opentable.com/r/husk-nashville", resy: "https://resy.com/cities/nashville-tn/venues/husk-nashville" } },
+    { name: "Hattie B's Hot Chicken", cuisine: "Hot chicken", neighborhood: "Multiple locations", price: "$", vibe: "casual, iconic, walk-in", phone: "(615) 678-4794", note: "Walk-in only. Expect a 30-60 min line on weekends.", booking: { walkin: true, yelp: "https://www.yelp.com/biz/hattie-bs-hot-chicken-nashville" } },
+    { name: "Prince's Hot Chicken", cuisine: "Hot chicken", neighborhood: "East Nashville", price: "$", vibe: "the original, casual", phone: "(615) 810-9388", note: "Walk-in. Call ahead for large groups.", booking: { walkin: true, yelp: "https://www.yelp.com/biz/princes-hot-chicken-shack-nashville" } },
+    { name: "Bolton's Spicy Chicken & Fish", cuisine: "Hot chicken", neighborhood: "East Nashville", price: "$", vibe: "no-frills, fiery", phone: "(615) 254-8015", note: "Walk-in.", booking: { walkin: true, yelp: "https://www.yelp.com/biz/boltons-spicy-chicken-and-fish-nashville" } },
+    { name: "Pepperfire Hot Chicken", cuisine: "Hot chicken", neighborhood: "East Nashville", price: "$", vibe: "spicier than the legends", phone: "(615) 582-4824", booking: { walkin: true, yelp: "https://www.yelp.com/biz/pepperfire-hot-chicken-nashville" } },
+    { name: "400 Degrees", cuisine: "Hot chicken", neighborhood: "Charlotte Pike", price: "$", vibe: "named after spice levels", phone: "(615) 244-4467", booking: { walkin: true, yelp: "https://www.yelp.com/biz/400-degrees-nashville" } },
+    { name: "Rolf and Daughters", cuisine: "Italian", neighborhood: "Germantown", price: "$$$", vibe: "modern Italian, handmade pasta", phone: "(615) 866-9897", booking: { resy: "https://resy.com/cities/nashville-tn/venues/rolf-and-daughters", opentable: "https://www.opentable.com/r/rolf-and-daughters-nashville" } },
+    { name: "City House", cuisine: "Italian", neighborhood: "Germantown", price: "$$$", vibe: "wood-fired pizza, Sunday Suppa", phone: "(615) 736-5838", booking: { opentable: "https://www.opentable.com/r/city-house-nashville" } },
+    { name: "Pinewood Social", cuisine: "American", neighborhood: "SoBro", price: "$$", vibe: "social hub, bowling lanes", phone: "(615) 751-8111", booking: { resy: "https://resy.com/cities/nashville-tn/venues/pinewood-social" } },
+    { name: "Bastion", cuisine: "Modern American", neighborhood: "Wedgewood-Houston", price: "$$$", vibe: "tiny tasting room, only 24 seats", phone: "(615) 490-8434", booking: { tock: "https://www.exploretock.com/bastion", resy: "https://resy.com/cities/nashville-tn/venues/bastion" } },
+    { name: "Loveless Cafe", cuisine: "Southern breakfast", neighborhood: "Bellevue", price: "$$", vibe: "biscuits, country ham, tourist favorite", phone: "(615) 646-9700", booking: { opentable: "https://www.opentable.com/r/loveless-cafe-nashville" } },
+    { name: "Arnold's Country Kitchen", cuisine: "Meat-and-three", neighborhood: "8th Ave South", price: "$", vibe: "lunch only, cafeteria-style classic", phone: "(615) 256-4455", note: "Lunch only Mon-Fri 10:30-2:45.", booking: { walkin: true, yelp: "https://www.yelp.com/biz/arnolds-country-kitchen-nashville" } },
+    { name: "Monell's", cuisine: "Southern family-style", neighborhood: "Germantown", price: "$$", vibe: "shared tables, all-you-can-eat Southern", phone: "(615) 248-4747", booking: { walkin: true, yelp: "https://www.yelp.com/biz/monells-dining-and-catering-nashville" } },
+    { name: "Biscuit Love", cuisine: "Southern brunch", neighborhood: "The Gulch", price: "$$", vibe: "famous bonuts, no reservations", phone: "(615) 490-9584", note: "Walk-in. Get there before 10am.", booking: { walkin: true, yelp: "https://www.yelp.com/biz/biscuit-love-nashville" } },
+    { name: "Pancake Pantry", cuisine: "Breakfast", neighborhood: "Hillsboro Village", price: "$$", vibe: "iconic line, 23 pancake varieties", phone: "(615) 383-9333", booking: { walkin: true, yelp: "https://www.yelp.com/biz/pancake-pantry-nashville" } },
+    { name: "Marche Artisan Foods", cuisine: "European brunch", neighborhood: "East Nashville", price: "$$", vibe: "European cafe, weekend brunch", phone: "(615) 262-1111", booking: { opentable: "https://www.opentable.com/r/marche-artisan-foods-nashville" } },
+    { name: "Sky Blue Cafe", cuisine: "Breakfast", neighborhood: "East Nashville", price: "$", vibe: "neighborhood diner, no fuss", phone: "(615) 770-7097", booking: { walkin: true } },
+    { name: "Martin's BBQ", cuisine: "BBQ", neighborhood: "Belmont/Multiple", price: "$$", vibe: "whole-hog pit BBQ", phone: "(615) 200-1181", booking: { opentable: "https://www.opentable.com/r/martins-bar-b-que-joint-nashville" } },
+    { name: "Edley's Bar-B-Que", cuisine: "BBQ", neighborhood: "12 South/Multiple", price: "$$", vibe: "casual, brisket and tots", phone: "(615) 269-6212", booking: { walkin: true, yelp: "https://www.yelp.com/biz/edleys-bar-b-que-nashville" } },
+    { name: "Peg Leg Porker", cuisine: "BBQ", neighborhood: "The Gulch", price: "$$", vibe: "Memphis-style, dry rub ribs", phone: "(615) 829-6023", booking: { walkin: true, yelp: "https://www.yelp.com/biz/peg-leg-porker-nashville" } },
+    { name: "Jack's Bar-B-Que", cuisine: "BBQ", neighborhood: "Broadway", price: "$", vibe: "downtown classic, quick service", phone: "(615) 254-5715", booking: { walkin: true, yelp: "https://www.yelp.com/biz/jacks-bar-b-que-nashville" } },
+    { name: "Two Ten Jack", cuisine: "Japanese izakaya", neighborhood: "East Nashville", price: "$$", vibe: "ramen and small plates", phone: "(615) 454-2731", booking: { resy: "https://resy.com/cities/nashville-tn/venues/two-ten-jack" } },
+    { name: "Otaku Ramen", cuisine: "Ramen", neighborhood: "The Gulch", price: "$$", vibe: "Tonkotsu and tantanmen", phone: "(615) 942-8281", booking: { walkin: true, yelp: "https://www.yelp.com/biz/otaku-ramen-nashville" } },
+    { name: "International Market", cuisine: "Thai", neighborhood: "Belmont", price: "$", vibe: "longtime cafeteria-style Thai", phone: "(615) 297-4453", booking: { walkin: true, yelp: "https://www.yelp.com/biz/international-market-nashville" } },
+    { name: "Mas Tacos Por Favor", cuisine: "Mexican", neighborhood: "East Nashville", price: "$", vibe: "started as a food truck, fresh tortillas", phone: "(615) 543-6271", booking: { walkin: true, yelp: "https://www.yelp.com/biz/mas-tacos-por-favor-nashville" } },
+    { name: "Bakersfield", cuisine: "Mexican", neighborhood: "The Gulch", price: "$$", vibe: "tequila, tacos, mezcal", phone: "(615) 891-1500", booking: { opentable: "https://www.opentable.com/r/bakersfield-nashville" } },
+    { name: "Five Points Pizza", cuisine: "Pizza", neighborhood: "East Nashville", price: "$$", vibe: "NY-style by the slice", phone: "(615) 915-4666", booking: { walkin: true, yelp: "https://www.yelp.com/biz/five-points-pizza-nashville" } },
+    { name: "Nicoletto's Italian Kitchen", cuisine: "Pizza/Italian", neighborhood: "East Nashville", price: "$$", vibe: "handmade pasta, casual", phone: "(615) 928-7330", booking: { resy: "https://resy.com/cities/nashville-tn/venues/nicolettos" } },
+    { name: "Kayne Prime", cuisine: "Steakhouse", neighborhood: "The Gulch", price: "$$$$", vibe: "modern steakhouse, dry-aged", phone: "(615) 259-0050", booking: { opentable: "https://www.opentable.com/r/kayne-prime-nashville" } },
+    { name: "Bourbon Steak", cuisine: "Steakhouse", neighborhood: "Downtown", price: "$$$$", vibe: "Michael Mina at the JW Marriott", phone: "(615) 622-1110", booking: { opentable: "https://www.opentable.com/r/bourbon-steak-nashville" } },
+    { name: "Margot Cafe & Bar", cuisine: "French/Italian", neighborhood: "East Nashville", price: "$$$", vibe: "menu changes daily, refined", phone: "(615) 227-4668", booking: { resy: "https://resy.com/cities/nashville-tn/venues/margot-cafe" } },
+    { name: "Henrietta Red", cuisine: "Seafood", neighborhood: "Germantown", price: "$$$", vibe: "raw bar, oysters", phone: "(615) 490-8042", booking: { resy: "https://resy.com/cities/nashville-tn/venues/henrietta-red" } },
+    { name: "Folk", cuisine: "Pizza/Italian", neighborhood: "East Nashville", price: "$$$", vibe: "wood-fired pies, natural wine", phone: "(615) 610-2595", booking: { resy: "https://resy.com/cities/nashville-tn/venues/folk" } },
+    { name: "Locust", cuisine: "Tasting menu", neighborhood: "12 South", price: "$$$", vibe: "shaved ice and broth, James Beard", phone: "(615) 730-7077", booking: { tock: "https://www.exploretock.com/locustnashville" } },
+    { name: "Le Sel", cuisine: "French", neighborhood: "12 South", price: "$$$", vibe: "French brasserie, cocktails", phone: "(615) 490-8550", booking: { resy: "https://resy.com/cities/nashville-tn/venues/le-sel" } },
+    { name: "The Patterson House", cuisine: "Cocktail bar", neighborhood: "Midtown", price: "$$", vibe: "speakeasy-style cocktails", phone: "(615) 636-7724", booking: { walkin: true, yelp: "https://www.yelp.com/biz/the-patterson-house-nashville" } },
+    { name: "Old Glory", cuisine: "Cocktail bar", neighborhood: "Edgehill", price: "$$", vibe: "stunning converted boiler room", phone: "(615) 679-0509", booking: { walkin: true, yelp: "https://www.yelp.com/biz/old-glory-nashville" } },
+    { name: "Avo", cuisine: "Vegan", neighborhood: "The Gulch", price: "$$$", vibe: "raw, plant-based fine dining", phone: "(615) 248-3531", booking: { opentable: "https://www.opentable.com/r/avo-nashville" } },
+    { name: "Sunflower Cafe", cuisine: "Vegetarian", neighborhood: "Berry Hill", price: "$", vibe: "veggie comfort food", phone: "(615) 457-2568", booking: { walkin: true, yelp: "https://www.yelp.com/biz/sunflower-cafe-nashville" } },
+    { name: "Crema", cuisine: "Coffee", neighborhood: "SoBro", price: "$", vibe: "third-wave coffee, light food", phone: "(615) 255-8311", booking: { walkin: true, yelp: "https://www.yelp.com/biz/crema-coffee-nashville" } },
+    { name: "Barista Parlor", cuisine: "Coffee", neighborhood: "East Nashville/Multiple", price: "$", vibe: "design-forward, breakfast biscuits", phone: "(615) 712-9766", booking: { walkin: true, yelp: "https://www.yelp.com/biz/barista-parlor-nashville" } },
+    { name: "Frothy Monkey", cuisine: "Cafe", neighborhood: "12 South/Multiple", price: "$$", vibe: "all-day cafe, brunch and dinner", phone: "(615) 292-1808", booking: { walkin: true, yelp: "https://www.yelp.com/biz/frothy-monkey-nashville" } }
+  ],
+  attractions: [
+    { name: "Grand Ole Opry", type: "Live music", desc: "The home of country music. Shows most nights.", url: "https://www.opry.com" },
+    { name: "Country Music Hall of Fame", type: "Museum", desc: "Two-floor museum covering country music history.", url: "https://countrymusichalloffame.org" },
+    { name: "Ryman Auditorium", type: "Historic venue", desc: "Mother Church of Country Music. Tours daily, shows nightly.", url: "https://ryman.com" },
+    { name: "Broadway Honky Tonks", type: "Bar district", desc: "Free live music starting at 10am on Lower Broadway. Tootsie's, Robert's, The Stage.", url: null },
+    { name: "Centennial Park & Parthenon", type: "Park", desc: "Full-scale replica of the Athenian Parthenon with art museum inside.", url: "https://www.nashville.gov/departments/parks/parthenon" },
+    { name: "Johnny Cash Museum", type: "Museum", desc: "Largest collection of Cash artifacts in the world.", url: "https://www.johnnycashmuseum.com" },
+    { name: "Belle Meade Historic Site", type: "Historic", desc: "Antebellum estate with winery tastings.", url: "https://bellemeade.com" },
+    { name: "Frist Art Museum", type: "Museum", desc: "Rotating exhibitions in a beautiful art deco building.", url: "https://fristartmuseum.org" },
+    { name: "Bicentennial Capitol Mall", type: "Park", desc: "Walking park with Nashville history exhibits.", url: null },
+    { name: "Music Row", type: "Historic district", desc: "Heart of the music industry. RCA Studio B tours available.", url: "https://studiob.org" }
+  ],
+  events: [
+    { name: "Grand Ole Opry Show", date: "Tue, Fri, Sat nightly", venue: "Grand Ole Opry House", url: "https://www.opry.com/shows" },
+    { name: "Nashville Sounds Baseball", date: "Home games April-September", venue: "First Horizon Park", url: "https://www.milb.com/nashville" },
+    { name: "Bluebird Cafe Songwriter Rounds", date: "Nightly, reservations required", venue: "Bluebird Cafe", url: "https://bluebirdcafe.com" },
+    { name: "CMA Fest", date: "June (annual)", venue: "Downtown Nashville", url: "https://www.cmafest.com" },
+    { name: "Tomato Art Fest", date: "August (annual)", venue: "East Nashville", url: "https://www.tomatoartfest.com" }
+  ],
+  neighborhoods: {
+    "downtown": "Lower Broadway honky tonks, Ryman, Country Music Hall of Fame. Loud, touristy, fun.",
+    "the gulch": "Trendy area with rooftop bars, the famous wings mural, and great brunch spots.",
+    "east nashville": "Hipster neighborhood with indie shops, vintage stores, and creative restaurants. Try Five Points.",
+    "germantown": "Historic, walkable, foodie destination. Quieter than Broadway.",
+    "12 south": "Cute shopping street with boutiques, the I Believe in Nashville mural, and Reese Witherspoon's Draper James store.",
+    "midtown": "Between downtown and Vanderbilt. Good mix of restaurants and bars.",
+    "wedgewood-houston": "Up-and-coming area with breweries, art galleries, and the Nashville Fairgrounds."
+  },
+  tips: [
+    "Tip: Most honky tonks on Broadway have free live music starting at 10am.",
+    "Tip: Book Bluebird Cafe shows weeks in advance - they sell out fast.",
+    "Tip: Hot chicken comes in heat levels from mild to 'shut the cluck up' - start mild.",
+    "Tip: Uber/Lyft surge prices badly downtown on weekends. Walk if you can.",
+    "Tip: The free Music City Circuit bus runs through downtown.",
+    "Tip: Tennessee has no state income tax but expect ~9.25% sales tax."
+  ]
+};
+
+let reservationState = null;
+let navHistory = [];
+let messageSnapshots = [];
+let userLocation = null;
+
+// API config. When deployed to Vercel, leave as relative path.
+// For local dev pointing at a hosted backend, change to your Vercel URL.
+const API_BASE = '';
+let apiServices = { foursquare: false, google: false, ticketmaster: false, nashville: false };
+
+async function checkApiHealth() {
+  try {
+    const r = await fetch(`${API_BASE}/api/health`, { signal: AbortSignal.timeout(3000) });
+    if (!r.ok) return;
+    const data = await r.json();
+    apiServices = data.services || apiServices;
+    updateStatusBadge();
+  } catch (e) {
+    updateStatusBadge();
+  }
+}
+
+function updateStatusBadge() {
+  const text = document.getElementById('statusText');
+  const dot = document.getElementById('statusDot');
+  if (!text || !dot) return;
+  const active = Object.entries(apiServices).filter(([_, v]) => v).map(([k]) => k);
+  if (active.length === 0) {
+    text.textContent = 'Curated mode';
+    dot.style.background = '#fbbf24';
+  } else {
+    text.textContent = `Live: ${active.join(', ')}`;
+    dot.style.background = '#4ade80';
+  }
+}
+
+async function apiSearchRestaurants(term, category, limit = 10) {
+  if (!apiServices.foursquare) return null;
+  try {
+    const url = new URL(`${API_BASE}/api/restaurants/search`, window.location.origin);
+    if (term) url.searchParams.set('term', term);
+    if (category) url.searchParams.set('category', category);
+    url.searchParams.set('limit', limit);
+    const r = await fetch(url, { signal: AbortSignal.timeout(8000) });
+    if (!r.ok) return null;
+    const data = await r.json();
+    return (data.results || []).map(b => ({
+      name: b.name,
+      cuisine: b.cuisine || 'Restaurant',
+      neighborhood: b.neighborhood || b.address || 'Nashville',
+      price: b.price || '$$',
+      vibe: `${b.rating ? '★' + b.rating : ''}${b.description ? ' · ' + b.description.slice(0, 80) : ''}`.trim(),
+      phone: b.phone || '',
+      booking: { yelp: b.website }
+    }));
+  } catch (e) {
+    return null;
+  }
+}
+
+async function apiSearchEvents(keyword, classificationName) {
+  if (!apiServices.ticketmaster) return null;
+  try {
+    const url = new URL(`${API_BASE}/api/events`, window.location.origin);
+    if (keyword) url.searchParams.set('keyword', keyword);
+    if (classificationName) url.searchParams.set('classificationName', classificationName);
+    const r = await fetch(url, { signal: AbortSignal.timeout(8000) });
+    if (!r.ok) return null;
+    const data = await r.json();
+    return data.events || [];
+  } catch (e) {
+    return null;
+  }
+}
+
+async function apiSearchPlaces(q, type) {
+  if (!apiServices.google) return null;
+  try {
+    const url = new URL(`${API_BASE}/api/places/search`, window.location.origin);
+    url.searchParams.set('q', q);
+    if (type) url.searchParams.set('type', type);
+    const r = await fetch(url, { signal: AbortSignal.timeout(8000) });
+    if (!r.ok) return null;
+    const data = await r.json();
+    return data.results || [];
+  } catch (e) {
+    return null;
+  }
+}
+
+function requestLocation() {
+  const bar = document.getElementById('locationBar');
+  const status = document.getElementById('locationStatus');
+  const btn = document.getElementById('locationBtn');
+
+  if (!navigator.geolocation) {
+    status.textContent = '📍 Location not supported on this device';
+    btn.style.display = 'none';
+    return;
+  }
+
+  status.textContent = '📍 Getting location...';
+  btn.disabled = true;
+
+  navigator.geolocation.getCurrentPosition(
+    pos => {
+      userLocation = {
+        lat: pos.coords.latitude,
+        lng: pos.coords.longitude
+      };
+      bar.classList.add('active');
+      status.textContent = `📍 Pickup location set (${userLocation.lat.toFixed(3)}, ${userLocation.lng.toFixed(3)})`;
+      btn.textContent = 'Refresh';
+      btn.disabled = false;
+      updateRideLinks();
+    },
+    err => {
+      status.textContent = '📍 Could not get location. Apps will use your phone location instead.';
+      btn.textContent = 'Try again';
+      btn.disabled = false;
+    },
+    { enableHighAccuracy: true, timeout: 10000 }
+  );
+}
+
+function isMobile() {
+  return /android|iphone|ipad|ipod/i.test(navigator.userAgent);
+}
+function isIOS() {
+  return /iphone|ipad|ipod/i.test(navigator.userAgent);
+}
+function isAndroid() {
+  return /android/i.test(navigator.userAgent);
+}
+
+function buildUberLink(dropoffName) {
+  const params = ['action=setPickup'];
+  if (userLocation) {
+    params.push(`pickup[latitude]=${userLocation.lat}`);
+    params.push(`pickup[longitude]=${userLocation.lng}`);
+    params.push('pickup[nickname]=Current+Location');
+  } else {
+    params.push('pickup=my_location');
+  }
+  if (dropoffName) {
+    params.push('dropoff[nickname]=' + encodeURIComponent(dropoffName + ' Nashville TN'));
+  }
+  return 'https://m.uber.com/ul/?' + params.join('&');
+}
+
+function buildUberAppScheme(dropoffName) {
+  const params = ['action=setPickup', 'client_id='];
+  if (userLocation) {
+    params.push(`pickup[latitude]=${userLocation.lat}`);
+    params.push(`pickup[longitude]=${userLocation.lng}`);
+  } else {
+    params.push('pickup=my_location');
+  }
+  if (dropoffName) {
+    params.push('dropoff[nickname]=' + encodeURIComponent(dropoffName + ' Nashville TN'));
+  }
+  return 'uber://?' + params.join('&');
+}
+
+function buildLyftLink(dropoffName) {
+  const params = ['id=lyft'];
+  if (userLocation) {
+    params.push(`pickup[latitude]=${userLocation.lat}`);
+    params.push(`pickup[longitude]=${userLocation.lng}`);
+  }
+  if (dropoffName) {
+    params.push('destination[name]=' + encodeURIComponent(dropoffName + ' Nashville TN'));
+  }
+  return 'https://ride.lyft.com/ridetype?' + params.join('&');
+}
+
+function buildLyftAppScheme(dropoffName) {
+  const params = ['id=lyft'];
+  if (userLocation) {
+    params.push(`pickup[latitude]=${userLocation.lat}`);
+    params.push(`pickup[longitude]=${userLocation.lng}`);
+  }
+  if (dropoffName) {
+    params.push('destination[name]=' + encodeURIComponent(dropoffName + ' Nashville TN'));
+  }
+  return 'lyft://ridetype?' + params.join('&');
+}
+
+function buildWaymoLink(dropoffName) {
+  if (dropoffName) {
+    return 'https://waymo.com/waymo-one/?dest=' + encodeURIComponent(dropoffName + ' Nashville TN');
+  }
+  return 'https://waymo.com/waymo-one/';
+}
+
+function buildWaymoAppScheme(dropoffName) {
+  return 'waymo://';
+}
+
+function buildDoorDashLink(restaurantName) {
+  if (restaurantName) {
+    return 'https://www.doordash.com/search/store/' + encodeURIComponent(restaurantName + ' Nashville') + '/';
+  }
+  return 'https://www.doordash.com/';
+}
+
+function buildDoorDashAppScheme(restaurantName) {
+  if (restaurantName) {
+    return 'doordash://search?query=' + encodeURIComponent(restaurantName);
+  }
+  return 'doordash://';
+}
+
+function buildUberEatsLink(restaurantName) {
+  if (restaurantName) {
+    return 'https://www.ubereats.com/search?q=' + encodeURIComponent(restaurantName + ' Nashville');
+  }
+  return 'https://www.ubereats.com/';
+}
+
+function buildUberEatsAppScheme(restaurantName) {
+  if (restaurantName) {
+    return 'ubereats://search?q=' + encodeURIComponent(restaurantName);
+  }
+  return 'ubereats://';
+}
+
+function openApp(appScheme, webFallback, storeUrl) {
+  if (!isMobile()) {
+    window.open(webFallback, '_blank');
+    return;
+  }
+  const start = Date.now();
+  const timeout = setTimeout(() => {
+    if (Date.now() - start < 2500 && document.visibilityState === 'visible') {
+      window.location.href = webFallback;
+    }
+  }, 1200);
+  document.addEventListener('visibilitychange', function handler() {
+    if (document.visibilityState === 'hidden') {
+      clearTimeout(timeout);
+      document.removeEventListener('visibilitychange', handler);
+    }
+  });
+  window.location.href = appScheme;
+}
+
+function rideClick(service, dropoffName, event) {
+  if (event) event.preventDefault();
+  if (service === 'uber') {
+    openApp(buildUberAppScheme(dropoffName), buildUberLink(dropoffName));
+  } else if (service === 'lyft') {
+    openApp(buildLyftAppScheme(dropoffName), buildLyftLink(dropoffName));
+  } else if (service === 'waymo') {
+    openApp(buildWaymoAppScheme(dropoffName), buildWaymoLink(dropoffName));
+  } else if (service === 'doordash') {
+    openApp(buildDoorDashAppScheme(dropoffName), buildDoorDashLink(dropoffName));
+  } else if (service === 'ubereats') {
+    openApp(buildUberEatsAppScheme(dropoffName), buildUberEatsLink(dropoffName));
+  }
+  return false;
+}
+
+function updateRideLinks() {
+  // Buttons handle clicks via rideClick(); this stays as a no-op hook for future updates.
+}
+
+const messagesEl = document.getElementById('messages');
+const inputEl = document.getElementById('userInput');
+const backBtn = document.getElementById('backBtn');
+
+function snapshot(label) {
+  messageSnapshots.push({ label, html: messagesEl.innerHTML });
+  if (messageSnapshots.length > 20) messageSnapshots.shift();
+  updateBackBtn();
+}
+
+function updateBackBtn() {
+  const disabled = messageSnapshots.length < 2;
+  backBtn.disabled = disabled;
+  const bottomBack = document.getElementById('bottomBackBtn');
+  if (bottomBack) bottomBack.disabled = disabled;
+}
+
+function goBack() {
+  if (messageSnapshots.length < 2) return;
+  messageSnapshots.pop();
+  const prev = messageSnapshots[messageSnapshots.length - 1];
+  messagesEl.innerHTML = prev.html;
+  reservationState = null;
+  scrollAnchor = null;
+  rebindQuickReplies();
+  messagesEl.scrollTop = messagesEl.scrollHeight;
+  updateBackBtn();
+}
+
+function goHome() {
+  messagesEl.innerHTML = '';
+  messageSnapshots = [];
+  reservationState = null;
+  scrollAnchor = null;
+  updateBackBtn();
+  addMessage("Back to the start. What can I help you find?", 'bot');
+  setTimeout(() => showMainMenu(), 300);
+  setTimeout(() => snapshot('home'), 350);
+}
+
+function rebindQuickReplies() {
+  document.querySelectorAll('.quick-replies').forEach(wrap => {
+    wrap.querySelectorAll('.quick-reply').forEach(btn => {
+      const text = btn.textContent;
+      btn.onclick = () => {
+        wrap.remove();
+        handleUserMessage(text);
+      };
+    });
+  });
+}
+
+inputEl.addEventListener('keypress', e => {
+  if (e.key === 'Enter') handleSend();
+});
+
+let scrollAnchor = null;
+
+function addMessage(text, sender, html = false) {
+  const div = document.createElement('div');
+  div.className = 'message ' + sender;
+  if (html) div.innerHTML = text;
+  else div.textContent = text;
+  messagesEl.appendChild(div);
+  if (sender === 'user') {
+    scrollAnchor = div;
+  }
+  scrollToView();
+  return div;
+}
+
+function scrollToView() {
+  if (scrollAnchor && messagesEl.contains(scrollAnchor)) {
+    scrollAnchor.scrollIntoView({ block: 'start', behavior: 'smooth' });
+  } else {
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+  }
+}
+
+function addTyping() {
+  const div = document.createElement('div');
+  div.className = 'typing';
+  div.id = 'typing';
+  div.innerHTML = '<span></span><span></span><span></span>';
+  messagesEl.appendChild(div);
+  scrollToView();
+}
+
+function removeTyping() {
+  const t = document.getElementById('typing');
+  if (t) t.remove();
+}
+
+function addQuickReplies(options) {
+  const wrap = document.createElement('div');
+  wrap.className = 'quick-replies';
+  options.forEach(opt => {
+    const btn = document.createElement('button');
+    btn.className = 'quick-reply';
+    btn.textContent = opt;
+    btn.onclick = () => {
+      wrap.remove();
+      handleUserMessage(opt);
+    };
+    wrap.appendChild(btn);
+  });
+  messagesEl.appendChild(wrap);
+  scrollToView();
+}
+
+function handleSend() {
+  const text = inputEl.value.trim();
+  if (!text) return;
+  inputEl.value = '';
+  handleUserMessage(text);
+}
+
+function handleUserMessage(text) {
+  snapshot('before:' + text);
+  addMessage(text, 'user');
+  addTyping();
+  setTimeout(() => {
+    removeTyping();
+    routeIntent(text);
+  }, 600);
+}
+
+function routeIntent(text) {
+  const lower = text.toLowerCase();
+
+  if (reservationState) {
+    handleReservationFlow(text);
+    return;
+  }
+
+  if (matches(lower, ['reservation', 'book a table', 'book a restaurant', 'reserve', 'dinner table', 'lunch table', 'opentable', 'resy'])) {
+    startReservation();
+    return;
+  }
+
+  if (matches(lower, ['show all', 'all restaurants', 'every restaurant', 'list all', 'show me everything', 'all of them'])) {
+    showAllRestaurants();
+    return;
+  }
+
+  if (matches(lower, ['hot chicken'])) {
+    showRestaurants(NASHVILLE_DATA.restaurants.filter(r => r.cuisine.toLowerCase().includes('hot chicken')), 'Hot chicken spots:');
+    return;
+  }
+
+  if (matches(lower, ['bbq', 'barbecue', 'barbeque'])) {
+    showRestaurants(NASHVILLE_DATA.restaurants.filter(r => /bbq/i.test(r.cuisine)), 'BBQ spots:');
+    return;
+  }
+
+  if (matches(lower, ['breakfast', 'brunch', 'biscuit'])) {
+    showRestaurants(NASHVILLE_DATA.restaurants.filter(r => /breakfast|brunch|cafe/i.test(r.cuisine)), 'Breakfast and brunch spots:');
+    return;
+  }
+
+  if (matches(lower, ['italian', 'pasta', 'pizza'])) {
+    showRestaurants(NASHVILLE_DATA.restaurants.filter(r => /italian|pizza/i.test(r.cuisine)), 'Italian and pizza:');
+    return;
+  }
+
+  if (matches(lower, ['steak', 'steakhouse'])) {
+    showRestaurants(NASHVILLE_DATA.restaurants.filter(r => /steakhouse/i.test(r.cuisine)), 'Steakhouses:');
+    return;
+  }
+
+  if (matches(lower, ['mexican', 'taco'])) {
+    showRestaurants(NASHVILLE_DATA.restaurants.filter(r => /mexican/i.test(r.cuisine)), 'Mexican spots:');
+    return;
+  }
+
+  if (matches(lower, ['sushi', 'japanese', 'ramen', 'asian', 'thai'])) {
+    showRestaurants(NASHVILLE_DATA.restaurants.filter(r => /japanese|ramen|thai/i.test(r.cuisine)), 'Asian spots:');
+    return;
+  }
+
+  if (matches(lower, ['vegan', 'vegetarian', 'plant'])) {
+    showRestaurants(NASHVILLE_DATA.restaurants.filter(r => /vegan|vegetarian/i.test(r.cuisine)), 'Plant-based spots:');
+    return;
+  }
+
+  if (matches(lower, ['coffee', 'cafe'])) {
+    showRestaurants(NASHVILLE_DATA.restaurants.filter(r => /coffee|cafe/i.test(r.cuisine)), 'Coffee shops:');
+    return;
+  }
+
+  if (matches(lower, ['cocktail', 'bar', 'drinks', 'speakeasy'])) {
+    showRestaurants(NASHVILLE_DATA.restaurants.filter(r => /cocktail/i.test(r.cuisine)), 'Cocktail bars:');
+    return;
+  }
+
+  if (matches(lower, ['upscale', 'fancy', 'fine dining', 'tasting menu', 'date night'])) {
+    showRestaurants(NASHVILLE_DATA.restaurants.filter(r => /tasting|french|seafood|steakhouse/i.test(r.cuisine) || r.price === '$$$$'), 'Upscale spots:');
+    return;
+  }
+
+  if (matches(lower, ['southern', 'meat-and-three', 'biscuit'])) {
+    showRestaurants(NASHVILLE_DATA.restaurants.filter(r => /southern|meat-and-three|family/i.test(r.cuisine)), 'Southern classics:');
+    return;
+  }
+
+  if (matches(lower, ['restaurant', 'eat', 'food', 'dinner', 'lunch', 'where to eat'])) {
+    showRestaurantOptions();
+    return;
+  }
+
+  if (matches(lower, ['live music', 'honky tonk', 'broadway', 'concert', 'show tonight', 'opry', 'ryman', 'bluebird'])) {
+    showLiveMusic();
+    return;
+  }
+
+  if (matches(lower, ['event', 'happening', 'going on', 'this week', 'tonight', 'weekend'])) {
+    showEvents();
+    return;
+  }
+
+  if (matches(lower, ['attraction', 'see', 'visit', 'museum', 'tour', 'sightseeing', 'do in nashville', 'things to do'])) {
+    showAttractions();
+    return;
+  }
+
+  if (matches(lower, ['neighborhood', 'area', 'where to stay', 'gulch', 'east nashville', '12 south', 'germantown', 'midtown', 'downtown'])) {
+    showNeighborhoods(lower);
+    return;
+  }
+
+  if (matches(lower, ['share my location', 'share location', 'use my location', 'gps'])) {
+    requestLocation();
+    addMessage("Tap allow on the location prompt and your pickup point will be set across Uber, Lyft, and Waymo.", 'bot');
+    return;
+  }
+
+  if (matches(lower, ['uber', 'lyft', 'waymo', 'ride', 'taxi', 'get a ride', 'rideshare'])) {
+    showRideOptions();
+    return;
+  }
+
+  if (matches(lower, ['doordash', 'door dash', 'uber eats', 'ubereats', 'delivery', 'order food', 'deliver'])) {
+    showDeliveryOptions();
+    return;
+  }
+
+  if (matches(lower, ['tip', 'advice', 'know before', 'first time'])) {
+    addMessage("Here are some local tips:", 'bot');
+    NASHVILLE_DATA.tips.forEach(tip => addMessage(tip, 'bot'));
+    return;
+  }
+
+  if (matches(lower, ['hi', 'hello', 'hey', 'howdy', 'help', 'start'])) {
+    showWelcome();
+    return;
+  }
+
+  if (matches(lower, ['thanks', 'thank you', 'awesome', 'cool', 'great'])) {
+    addMessage("You got it. Anything else I can help with?", 'bot');
+    showMainMenu();
+    return;
+  }
+
+  addMessage("I'm still learning, but I do know about Nashville restaurants, events, attractions, and reservations. Try one of these:", 'bot');
+  showMainMenu();
+}
+
+function matches(text, keywords) {
+  return keywords.some(k => text.includes(k));
+}
+
+function showWelcome() {
+  addMessage("Howdy. Welcome to Music City Retreat. I can help you find restaurants, book reservations, discover live music, and plan your visit to Nashville. What sounds good?", 'bot');
+  showMainMenu();
+}
+
+function showMainMenu() {
+  addQuickReplies([
+    'Book a restaurant',
+    'Show all restaurants',
+    'Live music tonight',
+    'Things to do',
+    'Get a ride',
+    'Order delivery',
+    'Best hot chicken',
+    'Local tips'
+  ]);
+}
+
+function showDeliveryOptions() {
+  addMessage("Order Nashville food to your hotel or Airbnb:", 'bot');
+  const html = `<div class="card">
+    <div class="card-title">Delivery apps</div>
+    <div class="card-desc">Tap to open the app and pick any restaurant.</div>
+    <a class="doordash-btn" href="#" onclick="return rideClick('doordash',null,event)">Open DoorDash</a>
+    <a class="ubereats-btn" href="#" onclick="return rideClick('ubereats',null,event)">Open Uber Eats</a>
+  </div>`;
+  addMessage(html, 'bot', true);
+}
+
+function showRideOptions() {
+  if (!userLocation) {
+    addMessage("Share your location for one-tap pickup, or just tap to open an app:", 'bot');
+  } else {
+    addMessage("Pickup location is set. Tap to ride:", 'bot');
+  }
+  const html = `<div class="card">
+    <div class="card-title">Ride options</div>
+    <div class="card-desc">Surge prices spike downtown on weekend nights. Walking is often faster on Lower Broadway.</div>
+    <a href="#" onclick="return rideClick('uber',null,event)" style="background:#000;">Open Uber</a>
+    <a href="#" onclick="return rideClick('lyft',null,event)" style="background:#ff00bf;">Open Lyft</a>
+    <a href="#" onclick="return rideClick('waymo',null,event)" style="background:#5f6df1;">Open Waymo</a>
+  </div>`;
+  addMessage(html, 'bot', true);
+  if (!userLocation) {
+    setTimeout(() => {
+      addQuickReplies(['Share my location']);
+    }, 300);
+  }
+}
+
+function renderRestaurantCard(r) {
+  const safeName = r.name.replace(/'/g, "\\'");
+  const b = r.booking || {};
+  const isWalkin = !!b.walkin;
+  let html = `<div class="card">
+    <div class="card-title">${r.name}</div>
+    <div class="card-meta">${r.cuisine} · ${r.neighborhood} · ${r.price}</div>`;
+  if (isWalkin) html += `<div class="walkin-tag">Walk-in / call ahead</div>`;
+  html += `<div class="card-desc">${r.vibe}${r.note ? '. ' + r.note : ''}</div>`;
+  if (b.opentable) html += `<a class="opentable-btn" href="${b.opentable}" target="_blank">OpenTable</a>`;
+  if (b.resy) html += `<a class="resy-btn" href="${b.resy}" target="_blank">Resy</a>`;
+  if (b.tock) html += `<a class="tock-btn" href="${b.tock}" target="_blank">Tock</a>`;
+  if (b.yelp) html += `<a class="yelp-btn" href="${b.yelp}" target="_blank">Yelp</a>`;
+  html += `<a class="call-btn" href="tel:${r.phone}">Call ${r.phone}</a>`;
+  html += `<a class="doordash-btn" href="#" onclick="return rideClick('doordash','${safeName}',event)">DoorDash</a>`;
+  html += `<a class="ubereats-btn" href="#" onclick="return rideClick('ubereats','${safeName}',event)">Uber Eats</a>`;
+  html += `<a href="#" onclick="return rideClick('uber','${safeName}',event)" style="background:#000;">Uber here</a>`;
+  html += `<a href="#" onclick="return rideClick('lyft','${safeName}',event)" style="background:#ff00bf;">Lyft here</a>`;
+  html += `<a href="#" onclick="return rideClick('waymo','${safeName}',event)" style="background:#5f6df1;">Waymo here</a>`;
+  html += `</div>`;
+  return html;
+}
+
+function showRestaurantOptions() {
+  addMessage(`I have ${NASHVILLE_DATA.restaurants.length} curated Nashville spots. What sounds good?`, 'bot');
+  addQuickReplies([
+    'Hot chicken',
+    'BBQ',
+    'Southern',
+    'Italian',
+    'Steakhouse',
+    'Mexican',
+    'Asian',
+    'Brunch',
+    'Coffee',
+    'Cocktails',
+    'Upscale dinner',
+    'Show all restaurants'
+  ]);
+}
+
+async function showAllRestaurants() {
+  if (apiServices.foursquare) {
+    addMessage("Pulling live restaurant data from Foursquare...", 'bot');
+    const live = await apiSearchRestaurants('restaurants', '', 50);
+    if (live && live.length) {
+      addMessage(`Found ${live.length} live Nashville restaurants. Sorted by Yelp ratings.`, 'bot');
+      showRestaurantsPaged(live, 0);
+      return;
+    }
+    addMessage("Live API hiccup. Falling back to curated list.", 'bot');
+  }
+  addMessage(`Here are all ${NASHVILLE_DATA.restaurants.length} curated restaurants.`, 'bot');
+  showRestaurantsPaged(NASHVILLE_DATA.restaurants, 0);
+}
+
+function showRestaurantsPaged(list, startIdx) {
+  const pageSize = 8;
+  const slice = list.slice(startIdx, startIdx + pageSize);
+  slice.forEach(r => addMessage(renderRestaurantCard(r), 'bot', true));
+  const remaining = list.length - (startIdx + pageSize);
+  if (remaining > 0) {
+    setTimeout(() => {
+      addMessage(`${remaining} more to go.`, 'bot');
+      const wrap = document.createElement('div');
+      wrap.className = 'quick-replies';
+      const btn = document.createElement('button');
+      btn.className = 'quick-reply';
+      btn.textContent = `Show next ${Math.min(pageSize, remaining)}`;
+      btn.onclick = () => {
+        wrap.remove();
+        showRestaurantsPaged(list, startIdx + pageSize);
+      };
+      wrap.appendChild(btn);
+      messagesEl.appendChild(wrap);
+      scrollToView();
+    }, 300);
+  } else {
+    setTimeout(() => addMessage("That's the full curated list.", 'bot'), 200);
+  }
+}
+
+function showRestaurants(list, header) {
+  if (list.length === 0) {
+    addMessage("Nothing matched that. Try another category?", 'bot');
+    showRestaurantOptions();
+    return;
+  }
+  addMessage(`${header} (${list.length} found)`, 'bot');
+  list.forEach(r => {
+    addMessage(renderRestaurantCard(r), 'bot', true);
+  });
+  setTimeout(() => {
+    addMessage("Want me to start a reservation request?", 'bot');
+    addQuickReplies(['Yes, book a table', 'Show me more options', 'Something else']);
+  }, 400);
+}
+
+function showLiveMusic() {
+  addMessage("Nashville is built on live music. Here is where to find it:", 'bot');
+  const venues = [
+    { name: "Lower Broadway Honky Tonks", desc: "Free live music starting at 10am daily. Tootsie's, Robert's, Acme.", url: null },
+    { name: "Grand Ole Opry", desc: "The institution. Shows Tue, Fri, Sat. Get tickets in advance.", url: "https://www.opry.com" },
+    { name: "Bluebird Cafe", desc: "Intimate songwriter rounds. Reservations open weeks ahead.", url: "https://bluebirdcafe.com" },
+    { name: "Ryman Auditorium", desc: "Touring artists in the historic venue.", url: "https://ryman.com" },
+    { name: "Station Inn", desc: "Bluegrass every night in The Gulch.", url: "https://stationinn.com" }
+  ];
+  venues.forEach(v => {
+    let html = `<div class="card">
+      <div class="card-title">${v.name}</div>
+      <div class="card-desc">${v.desc}</div>`;
+    if (v.url) html += `<a href="${v.url}" target="_blank">Get tickets</a>`;
+    html += `</div>`;
+    addMessage(html, 'bot', true);
+  });
+}
+
+async function showEvents() {
+  if (apiServices.ticketmaster) {
+    addMessage("Pulling live events from Ticketmaster...", 'bot');
+    const live = await apiSearchEvents('', '');
+    if (live && live.length) {
+      addMessage(`${live.length} upcoming Nashville events:`, 'bot');
+      live.slice(0, 10).forEach(e => {
+        const dateStr = e.date + (e.time ? ' at ' + e.time : '');
+        let html = `<div class="card">
+          <div class="card-title">${e.name}</div>
+          <div class="card-meta">${dateStr} · ${e.venue || ''}</div>
+          <div class="card-desc">${e.genre || e.classification || ''}${e.priceMin ? ' · From $' + e.priceMin : ''}</div>`;
+        if (e.url) html += `<a href="${e.url}" target="_blank">Get tickets</a>`;
+        html += `</div>`;
+        addMessage(html, 'bot', true);
+      });
+      return;
+    }
+  }
+  addMessage("Here's what's happening around town:", 'bot');
+  NASHVILLE_DATA.events.forEach(e => {
+    let html = `<div class="card">
+      <div class="card-title">${e.name}</div>
+      <div class="card-meta">${e.date} · ${e.venue}</div>`;
+    if (e.url) html += `<a href="${e.url}" target="_blank">Tickets & info</a>`;
+    html += `</div>`;
+    addMessage(html, 'bot', true);
+  });
+}
+
+async function showAttractions() {
+  if (apiServices.google) {
+    addMessage("Pulling live attractions from Google Places...", 'bot');
+    const live = await apiSearchPlaces('top tourist attractions', 'tourist_attraction');
+    if (live && live.length) {
+      addMessage(`${live.length} top attractions in Nashville:`, 'bot');
+      live.slice(0, 8).forEach(a => {
+        let html = `<div class="card">
+          <div class="card-title">${a.name}</div>
+          <div class="card-meta">${a.rating ? '★' + a.rating : ''} ${a.reviewCount ? '(' + a.reviewCount + ' reviews)' : ''}</div>
+          <div class="card-desc">${a.address || ''}</div>`;
+        if (a.mapsUrl) html += `<a href="${a.mapsUrl}" target="_blank">Open in Maps</a>`;
+        if (a.website) html += `<a href="${a.website}" target="_blank">Website</a>`;
+        html += `</div>`;
+        addMessage(html, 'bot', true);
+      });
+      return;
+    }
+  }
+  addMessage("Top things to see and do:", 'bot');
+  NASHVILLE_DATA.attractions.slice(0, 6).forEach(a => {
+    let html = `<div class="card">
+      <div class="card-title">${a.name}</div>
+      <div class="card-meta">${a.type}</div>
+      <div class="card-desc">${a.desc}</div>`;
+    if (a.url) html += `<a href="${a.url}" target="_blank">Learn more</a>`;
+    html += `</div>`;
+    addMessage(html, 'bot', true);
+  });
+}
+
+function showNeighborhoods(text) {
+  const found = Object.keys(NASHVILLE_DATA.neighborhoods).find(n => text.includes(n));
+  if (found) {
+    addMessage(`${found.charAt(0).toUpperCase() + found.slice(1)}: ${NASHVILLE_DATA.neighborhoods[found]}`, 'bot');
+    return;
+  }
+  addMessage("Nashville's main neighborhoods:", 'bot');
+  Object.entries(NASHVILLE_DATA.neighborhoods).forEach(([name, desc]) => {
+    const html = `<div class="card">
+      <div class="card-title">${name.charAt(0).toUpperCase() + name.slice(1)}</div>
+      <div class="card-desc">${desc}</div>
+    </div>`;
+    addMessage(html, 'bot', true);
+  });
+}
+
+function handleRestaurantPicked(match) {
+  reservationState.restaurant = match;
+  if (match.booking && match.booking.walkin) {
+    addMessage(`${match.name} is walk-in only. ${match.note || ''}`, 'bot');
+    let html = `<div class="card">
+      <div class="card-title">${match.name}</div>
+      <div class="walkin-tag">Walk-in / call ahead</div>
+      <div class="card-desc">Best move: call ahead to confirm hours and wait time, then head over.</div>
+      <a class="call-btn" href="tel:${match.phone}">Call ${match.phone}</a>`;
+    if (match.booking.yelp) html += `<a class="yelp-btn" href="${match.booking.yelp}" target="_blank">Yelp page</a>`;
+    const safeName = match.name.replace(/'/g, "\\'");
+    html += `<a href="#" onclick="return rideClick('uber','${safeName}',event)" style="background:#000;">Uber here</a>`;
+    html += `<a href="#" onclick="return rideClick('lyft','${safeName}',event)" style="background:#ff00bf;">Lyft here</a>`;
+    html += `</div>`;
+    addMessage(html, 'bot', true);
+    reservationState = null;
+    setTimeout(() => showMainMenu(), 600);
+    return;
+  }
+  reservationState.step = 'party_size';
+  addMessage(`Got it, ${match.name}. How many people?`, 'bot');
+  addQuickReplies(['2', '4', '6', '8']);
+}
+
+function startReservation() {
+  reservationState = { step: 'restaurant' };
+  addMessage("Let's get you a table. Which restaurant?", 'bot');
+  const bookable = NASHVILLE_DATA.restaurants.filter(r => r.booking && !r.booking.walkin).slice(0, 4).map(r => r.name);
+  addQuickReplies([...bookable, 'Pick another spot']);
+}
+
+function handleReservationFlow(text) {
+  const lower = text.toLowerCase();
+
+  if (reservationState.step === 'restaurant') {
+    if (lower.includes('pick another')) {
+      addMessage("Which restaurant did you have in mind? Type the name and I'll find it.", 'bot');
+      reservationState.step = 'restaurant_search';
+      return;
+    }
+    const match = NASHVILLE_DATA.restaurants.find(r => r.name.toLowerCase() === lower || lower.includes(r.name.toLowerCase()));
+    if (match) {
+      handleRestaurantPicked(match);
+      return;
+    }
+    addMessage("I don't recognize that one. Try one of these:", 'bot');
+    addQuickReplies(NASHVILLE_DATA.restaurants.filter(r => r.booking && !r.booking.walkin).slice(0, 4).map(r => r.name));
+    return;
+  }
+
+  if (reservationState.step === 'restaurant_search') {
+    const match = NASHVILLE_DATA.restaurants.find(r => r.name.toLowerCase().includes(lower) || lower.includes(r.name.toLowerCase()));
+    if (match) {
+      handleRestaurantPicked(match);
+      return;
+    }
+    addMessage("I don't have that one in my list yet. Try a different name or pick from these:", 'bot');
+    reservationState.step = 'restaurant';
+    addQuickReplies(NASHVILLE_DATA.restaurants.filter(r => r.booking && !r.booking.walkin).slice(0, 4).map(r => r.name));
+    return;
+  }
+
+  if (reservationState.step === 'party_size') {
+    const num = parseInt(text);
+    if (isNaN(num) || num < 1 || num > 20) {
+      addMessage("Give me a number between 1 and 20.", 'bot');
+      return;
+    }
+    reservationState.partySize = num;
+    reservationState.step = 'date';
+    addMessage("What day?", 'bot');
+    addQuickReplies(['Tonight', 'Tomorrow', 'This weekend', 'Next week']);
+    return;
+  }
+
+  if (reservationState.step === 'date') {
+    reservationState.date = text;
+    reservationState.step = 'time';
+    addMessage("What time works?", 'bot');
+    addQuickReplies(['6:00 PM', '6:30 PM', '7:00 PM', '7:30 PM', '8:00 PM']);
+    return;
+  }
+
+  if (reservationState.step === 'time') {
+    reservationState.time = text;
+    reservationState.step = 'confirm';
+    const r = reservationState.restaurant;
+    const b = r.booking || {};
+    let html = `<div class="card">
+      <div class="card-title">Reservation Summary</div>
+      <div class="card-desc">
+        <strong>${r.name}</strong><br>
+        ${reservationState.partySize} people · ${reservationState.date} at ${reservationState.time}
+      </div>
+      <div class="card-desc" style="font-size:12px;color:#666;margin-top:6px;">Try platforms in this order. The first with availability wins.</div>`;
+    if (b.opentable) html += `<a class="opentable-btn" href="${b.opentable}" target="_blank">1. OpenTable</a>`;
+    if (b.resy) html += `<a class="resy-btn" href="${b.resy}" target="_blank">${b.opentable ? '2.' : '1.'} Resy</a>`;
+    if (b.tock) html += `<a class="tock-btn" href="${b.tock}" target="_blank">Tock</a>`;
+    if (b.yelp) html += `<a class="yelp-btn" href="${b.yelp}" target="_blank">Yelp</a>`;
+    html += `<a class="call-btn" href="tel:${r.phone}">Call direct: ${r.phone}</a></div>`;
+    addMessage(html, 'bot', true);
+    addMessage("If none have your time slot, calling direct usually unlocks tables that aren't online.", 'bot');
+    reservationState = null;
+    setTimeout(() => showMainMenu(), 600);
+    return;
+  }
+}
+
+checkApiHealth();
+setTimeout(() => {
+  addMessage("Howdy. Welcome to Music City Retreat. I can help with restaurants, reservations, live music, and tourist info.", 'bot');
+  setTimeout(() => showMainMenu(), 400);
+  setTimeout(() => snapshot('initial'), 500);
+  if (navigator.permissions) {
+    navigator.permissions.query({ name: 'geolocation' }).then(p => {
+      if (p.state === 'granted') requestLocation();
+    }).catch(() => {});
+  }
+}, 300);
+</script>
+</body>
+</html>
