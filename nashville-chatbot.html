@@ -598,7 +598,6 @@ const NASHVILLE_DATA = {
   ]
 };
 
-let reservationState = null;
 let navHistory = [];
 let messageSnapshots = [];
 let userLocation = null;
@@ -920,7 +919,6 @@ function goBack() {
   const target = menuStack[menuStack.length - 1];
   messagesEl.innerHTML = '';
   scrollAnchor = null;
-  reservationState = null;
   const hdr = document.getElementById('appHeader');
   if (hdr) hdr.classList.add('slim');
   if (target === 'eat') showEatDrinkMenu(true);
@@ -935,7 +933,6 @@ function goHome() {
   messagesEl.innerHTML = '';
   messageSnapshots = [];
   menuStack = ['main'];
-  reservationState = null;
   scrollAnchor = null;
   const hdr = document.getElementById('appHeader');
   if (hdr) hdr.classList.remove('slim');
@@ -1043,16 +1040,6 @@ function handleUserMessage(text) {
 
 function routeIntent(text) {
   const lower = text.toLowerCase();
-
-  if (reservationState) {
-    handleReservationFlow(text);
-    return;
-  }
-
-  if (matches(lower, ['reservation', 'book a table', 'book a restaurant', 'reserve', 'dinner table', 'lunch table', 'opentable', 'resy'])) {
-    startReservation();
-    return;
-  }
 
   if (lower.includes('🍽️') || matches(lower, ['eat & drink', 'eat and drink', 'food menu', 'drinks menu'])) {
     showEatDrinkMenu();
@@ -1289,7 +1276,6 @@ function showEatDrinkMenu(skipPush) {
   if (!skipPush) pushMenu('eat');
   addMessage("What sounds good?", 'bot');
   addQuickReplies([
-    'Book a restaurant',
     'Show all restaurants',
     'Best hot chicken',
     'Order delivery',
@@ -1673,117 +1659,9 @@ function showNeighborhoods(text) {
   });
 }
 
-function handleRestaurantPicked(match) {
-  reservationState.restaurant = match;
-  if (match.booking && match.booking.walkin) {
-    addMessage(`${match.name} is walk-in only. ${match.note || ''}`, 'bot');
-    let html = `<div class="card">
-      <div class="card-title">${match.name}</div>
-      <div class="walkin-tag">Walk-in / call ahead</div>
-      <div class="card-desc">Best move: call ahead to confirm hours and wait time, then head over.</div>
-      <a class="call-btn" href="tel:${match.phone}">Call ${match.phone}</a>`;
-    if (match.booking.yelp) html += `<a class="yelp-btn" href="${match.booking.yelp}" target="_blank">Yelp page</a>`;
-    const safeName = match.name.replace(/'/g, "\\'");
-    html += `<a href="#" onclick="return rideClick('uber','${safeName}',event)" style="background:#000;">Uber here</a>`;
-    html += `<a href="#" onclick="return rideClick('lyft','${safeName}',event)" style="background:#ff00bf;">Lyft here</a>`;
-    html += `</div>`;
-    addMessage(html, 'bot', true);
-    reservationState = null;
-    setTimeout(() => showMainMenu(), 600);
-    return;
-  }
-  reservationState.step = 'party_size';
-  addMessage(`Got it, ${match.name}. How many people?`, 'bot');
-  addQuickReplies(['2', '4', '6', '8']);
-}
-
-function startReservation() {
-  reservationState = { step: 'restaurant' };
-  addMessage("Let's get you a table. Which restaurant?", 'bot');
-  const bookable = NASHVILLE_DATA.restaurants.filter(r => r.booking && !r.booking.walkin).slice(0, 4).map(r => r.name);
-  addQuickReplies([...bookable, 'Pick another spot']);
-}
-
-function handleReservationFlow(text) {
-  const lower = text.toLowerCase();
-
-  if (reservationState.step === 'restaurant') {
-    if (lower.includes('pick another')) {
-      addMessage("Which restaurant did you have in mind? Type the name and I'll find it.", 'bot');
-      reservationState.step = 'restaurant_search';
-      return;
-    }
-    const match = NASHVILLE_DATA.restaurants.find(r => r.name.toLowerCase() === lower || lower.includes(r.name.toLowerCase()));
-    if (match) {
-      handleRestaurantPicked(match);
-      return;
-    }
-    addMessage("I don't recognize that one. Try one of these:", 'bot');
-    addQuickReplies(NASHVILLE_DATA.restaurants.filter(r => r.booking && !r.booking.walkin).slice(0, 4).map(r => r.name));
-    return;
-  }
-
-  if (reservationState.step === 'restaurant_search') {
-    const match = NASHVILLE_DATA.restaurants.find(r => r.name.toLowerCase().includes(lower) || lower.includes(r.name.toLowerCase()));
-    if (match) {
-      handleRestaurantPicked(match);
-      return;
-    }
-    addMessage("I don't have that one in my list yet. Try a different name or pick from these:", 'bot');
-    reservationState.step = 'restaurant';
-    addQuickReplies(NASHVILLE_DATA.restaurants.filter(r => r.booking && !r.booking.walkin).slice(0, 4).map(r => r.name));
-    return;
-  }
-
-  if (reservationState.step === 'party_size') {
-    const num = parseInt(text);
-    if (isNaN(num) || num < 1 || num > 20) {
-      addMessage("Give me a number between 1 and 20.", 'bot');
-      return;
-    }
-    reservationState.partySize = num;
-    reservationState.step = 'date';
-    addMessage("What day?", 'bot');
-    addQuickReplies(['Tonight', 'Tomorrow', 'This weekend', 'Next week']);
-    return;
-  }
-
-  if (reservationState.step === 'date') {
-    reservationState.date = text;
-    reservationState.step = 'time';
-    addMessage("What time works?", 'bot');
-    addQuickReplies(['6:00 PM', '6:30 PM', '7:00 PM', '7:30 PM', '8:00 PM']);
-    return;
-  }
-
-  if (reservationState.step === 'time') {
-    reservationState.time = text;
-    reservationState.step = 'confirm';
-    const r = reservationState.restaurant;
-    const b = r.booking || {};
-    let html = `<div class="card">
-      <div class="card-title">Reservation Summary</div>
-      <div class="card-desc">
-        <strong>${r.name}</strong><br>
-        ${reservationState.partySize} people · ${reservationState.date} at ${reservationState.time}
-      </div>
-      <div class="card-desc" style="font-size:12px;color:#666;margin-top:6px;">Try platforms in this order. The first with availability wins.</div>`;
-    if (b.opentable) html += `<a class="opentable-btn" href="${b.opentable}" target="_blank">1. OpenTable</a>`;
-    if (b.resy) html += `<a class="resy-btn" href="${b.resy}" target="_blank">${b.opentable ? '2.' : '1.'} Resy</a>`;
-    if (b.tock) html += `<a class="tock-btn" href="${b.tock}" target="_blank">Tock</a>`;
-    if (b.yelp) html += `<a class="yelp-btn" href="${b.yelp}" target="_blank">Yelp</a>`;
-    html += `<a class="call-btn" href="tel:${r.phone}">Call direct: ${r.phone}</a></div>`;
-    addMessage(html, 'bot', true);
-    addMessage("If none have your time slot, calling direct usually unlocks tables that aren't online.", 'bot');
-    reservationState = null;
-    setTimeout(() => showMainMenu(), 600);
-    return;
-  }
-}
-
 checkApiHealth();
 setTimeout(() => {
-  addMessage("Howdy. Welcome to Music City Retreat. I can help with restaurants, reservations, live music, and tourist info.", 'bot');
+  addMessage("Howdy. Welcome to Music City Retreat. I can help with restaurants, live music, events, and tourist info.", 'bot');
   setTimeout(() => showMainMenu(), 400);
   setTimeout(() => snapshot('initial'), 500);
   if (navigator.permissions) {
