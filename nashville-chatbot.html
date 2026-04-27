@@ -1076,10 +1076,28 @@ function isFollowUp(text) {
   return false;
 }
 
+function isNaturalLanguageQuery(text) {
+  const lower = text.toLowerCase().trim();
+  const wordCount = lower.split(/\s+/).length;
+  if (wordCount < 4) return false;
+  const questionWords = ['where', 'what', 'when', 'how', 'why', 'which', 'who', 'whats'];
+  const intentWords = ['good', 'best', 'any', 'find me', 'show me', 'looking for', 'want', 'need', 'recommend', 'suggest', 'should i'];
+  const phrasePatterns = [' in ', ' near ', ' close to ', ' for ', ' with ', ' under '];
+  if (questionWords.some(w => lower.startsWith(w + ' ') || lower.startsWith(w + "'") || lower.includes(' ' + w + ' '))) return true;
+  if (intentWords.some(w => lower.includes(w))) return true;
+  if (phrasePatterns.some(p => lower.includes(p)) && wordCount >= 5) return true;
+  return false;
+}
+
 function routeIntent(text) {
   const lower = text.toLowerCase();
 
   if (isFollowUp(text)) {
+    askClaude(text);
+    return;
+  }
+
+  if (isNaturalLanguageQuery(text)) {
     askClaude(text);
     return;
   }
