@@ -361,6 +361,66 @@
     cursor: pointer;
   }
   .location-bar button:hover { opacity: 0.8; }
+  .disclaimer-bar {
+    text-align: center;
+    padding: 6px 16px;
+    background: #f7f7f9;
+    border-top: 1px solid #eee;
+    font-size: 10px;
+    color: #888;
+  }
+  .disclaimer-bar a {
+    color: #888;
+    text-decoration: underline;
+    cursor: pointer;
+  }
+  .disclaimer-bar a:hover { color: #d62828; }
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.6);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal-box {
+    background: #fff;
+    border-radius: 14px;
+    max-width: 520px;
+    width: 100%;
+    max-height: 85vh;
+    overflow-y: auto;
+    padding: 22px;
+    font-size: 13px;
+    line-height: 1.5;
+    color: #333;
+  }
+  .modal-box h2 {
+    font-size: 17px;
+    color: #d62828;
+    margin-bottom: 8px;
+  }
+  .modal-box h3 {
+    font-size: 13px;
+    color: #1a1a2e;
+    margin-top: 14px;
+    margin-bottom: 4px;
+  }
+  .modal-box p { margin-bottom: 8px; }
+  .modal-close {
+    background: #d62828;
+    color: #fff;
+    border: none;
+    padding: 9px 18px;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 12px;
+    width: 100%;
+  }
   .typing {
     display: flex;
     gap: 4px;
@@ -411,6 +471,38 @@
   <div class="bottom-nav">
     <button class="bottom-btn" id="bottomBackBtn" onclick="goBack()" disabled>← Back</button>
     <button class="bottom-btn" id="bottomHomeBtn" onclick="goHome()">⌂ Home</button>
+  </div>
+  <div class="disclaimer-bar">
+    © Music City Retreat · <a onclick="openDisclaimer()">Disclaimer & Privacy</a>
+  </div>
+</div>
+<div class="modal-overlay" id="disclaimerModal" onclick="if(event.target===this)closeDisclaimer()">
+  <div class="modal-box">
+    <h2>Disclaimer & Privacy</h2>
+    <p>Music City Retreat is an independent Nashville tourism guide. We aggregate data from third-party services to help you discover the city.</p>
+
+    <h3>Data Accuracy</h3>
+    <p>Restaurant info, hours, prices, ratings, and event details come from third parties including Foursquare, Google Places, Ticketmaster, SeatGeek, and the City of Nashville Open Data Portal. Information may be inaccurate or outdated. Verify with the venue before going.</p>
+
+    <h3>Location Data</h3>
+    <p>If you share your location, we use it only to find nearby restaurants, events, and stores. Your location is not stored on our servers, sold, or shared with third parties beyond the API providers needed to fulfill your request.</p>
+
+    <h3>Booking & Transactions</h3>
+    <p>We do not process reservations, payments, or rides. All bookings happen on third-party platforms (OpenTable, Resy, Tock, Yelp, Uber, Lyft, Waymo, DoorDash, Uber Eats). Music City Retreat is not responsible for service quality, cancellations, refunds, or disputes with these providers.</p>
+
+    <h3>Affiliate Disclosure</h3>
+    <p>Some links on this site may be affiliate links. We may earn a commission at no extra cost to you when you book or sign up through these links.</p>
+
+    <h3>Alcohol</h3>
+    <p>You must be 21 or older to purchase alcohol in Tennessee. Drink responsibly. Do not drive under the influence.</p>
+
+    <h3>Trademarks</h3>
+    <p>Uber, Lyft, Waymo, DoorDash, Uber Eats, OpenTable, Resy, Tock, Yelp, Foursquare, Google, Ticketmaster, and SeatGeek are trademarks of their respective owners. Music City Retreat is not affiliated with, endorsed by, or sponsored by any of these companies.</p>
+
+    <h3>Limitation of Liability</h3>
+    <p>This service is provided "as is" without warranties of any kind. Music City Retreat is not liable for any damages arising from your use of this site or the third-party services it links to.</p>
+
+    <button class="modal-close" onclick="closeDisclaimer()">Close</button>
   </div>
 </div>
 
@@ -542,20 +634,26 @@ async function apiSearchRestaurants(term, category, limit = 10) {
     if (term) url.searchParams.set('term', term);
     if (category) url.searchParams.set('category', category);
     url.searchParams.set('limit', limit);
+    if (userLocation) {
+      url.searchParams.set('lat', userLocation.lat);
+      url.searchParams.set('lng', userLocation.lng);
+    }
     const r = await fetch(url, { signal: AbortSignal.timeout(12000) });
     if (!r.ok) return null;
     const data = await r.json();
     return (data.results || []).map(b => {
+      const distPart = b.distanceMiles != null ? `📍 ${b.distanceMiles} mi` : '';
       const ratingPart = b.rating ? '★' + b.rating : '';
       const reviewPart = b.reviewCount ? ` (${b.reviewCount} reviews)` : '';
       const sourcesPart = (b.sources && b.sources.length > 1) ? ' · verified' : '';
       const descPart = b.description ? ' · ' + b.description.slice(0, 80) : '';
+      const vibe = [distPart, ratingPart + reviewPart + sourcesPart + descPart].filter(Boolean).join(' · ').trim();
       return {
         name: b.name,
         cuisine: b.cuisine || 'Restaurant',
         neighborhood: b.neighborhood || (b.address ? b.address.split(',')[0] : 'Nashville'),
         price: b.price || '',
-        vibe: (ratingPart + reviewPart + sourcesPart + descPart).trim(),
+        vibe: vibe,
         phone: b.phone || '',
         booking: { yelp: b.website || b.mapsUrl }
       };
@@ -566,12 +664,16 @@ async function apiSearchRestaurants(term, category, limit = 10) {
 }
 
 async function apiSearchEvents(keyword, classificationName) {
-  if (!apiServices.ticketmaster) return null;
+  if (!apiServices.ticketmaster && !apiServices.seatgeek) return null;
   try {
     const url = new URL(`${API_BASE}/api/events`, window.location.origin);
     if (keyword) url.searchParams.set('keyword', keyword);
     if (classificationName) url.searchParams.set('classificationName', classificationName);
-    const r = await fetch(url, { signal: AbortSignal.timeout(8000) });
+    if (userLocation) {
+      url.searchParams.set('lat', userLocation.lat);
+      url.searchParams.set('lng', userLocation.lng);
+    }
+    const r = await fetch(url, { signal: AbortSignal.timeout(10000) });
     if (!r.ok) return null;
     const data = await r.json();
     return data.events || [];
@@ -586,6 +688,10 @@ async function apiSearchPlaces(q, type) {
     const url = new URL(`${API_BASE}/api/places/search`, window.location.origin);
     url.searchParams.set('q', q);
     if (type) url.searchParams.set('type', type);
+    if (userLocation) {
+      url.searchParams.set('lat', userLocation.lat);
+      url.searchParams.set('lng', userLocation.lng);
+    }
     const r = await fetch(url, { signal: AbortSignal.timeout(8000) });
     if (!r.ok) return null;
     const data = await r.json();
@@ -776,6 +882,13 @@ const messagesEl = document.getElementById('messages');
 const inputEl = document.getElementById('userInput');
 const backBtn = document.getElementById('backBtn');
 
+function openDisclaimer() {
+  document.getElementById('disclaimerModal').classList.add('open');
+}
+function closeDisclaimer() {
+  document.getElementById('disclaimerModal').classList.remove('open');
+}
+
 function snapshot(label) {
   messageSnapshots.push({ label, html: messagesEl.innerHTML });
   if (messageSnapshots.length > 20) messageSnapshots.shift();
@@ -912,6 +1025,31 @@ function routeIntent(text) {
     return;
   }
 
+  if (lower.includes('🍽️') || matches(lower, ['eat & drink', 'eat and drink', 'food menu', 'drinks menu'])) {
+    showEatDrinkMenu();
+    return;
+  }
+
+  if (lower.includes('🎵')) {
+    showThingsToDoMenu();
+    return;
+  }
+
+  if (lower.includes('🏨') || matches(lower, ['stay & get around', 'stay and get around'])) {
+    showGetAroundMenu();
+    return;
+  }
+
+  if (lower.includes('🛒') || lower.trim() === 'essentials') {
+    showEssentialsMenu();
+    return;
+  }
+
+  if (matches(lower, ['main menu', '← main menu', 'back to menu', 'home menu'])) {
+    showMainMenu();
+    return;
+  }
+
   if (matches(lower, ['show all', 'all restaurants', 'every restaurant', 'list all', 'show me everything', 'all of them'])) {
     showAllRestaurants();
     return;
@@ -987,6 +1125,66 @@ function routeIntent(text) {
     return;
   }
 
+  if (matches(lower, ['festival', 'street fest', 'cma fest', 'tomato', 'pilgrimage'])) {
+    showFestivals();
+    return;
+  }
+
+  if (matches(lower, ['liquor', 'wine store', 'whiskey shop', 'booze', 'beer store', 'package store'])) {
+    showLiquorStores();
+    return;
+  }
+
+  if (matches(lower, ['grocery', 'groceries', 'supermarket', 'market', 'food store', 'kroger', 'publix', 'whole foods', 'trader joe'])) {
+    showGroceries();
+    return;
+  }
+
+  if (matches(lower, ['honky tonk', 'honky-tonk', 'broadway bar', 'country bar', "tootsie", "robert's"])) {
+    showHonkyTonks();
+    return;
+  }
+
+  if (matches(lower, ['rooftop', 'sky bar', 'l.a. jackson', 'white limozeen'])) {
+    showRooftopBars();
+    return;
+  }
+
+  if (matches(lower, ['distillery', 'distilleries', 'jack daniel', 'bourbon tour', 'whiskey tour', 'nelson', 'corsair'])) {
+    showDistilleries();
+    return;
+  }
+
+  if (matches(lower, ['photo spot', 'mural', 'instagram', 'pictures', 'i believe in nashville', 'wings', 'photo op'])) {
+    showPhotoSpots();
+    return;
+  }
+
+  if (matches(lower, ['bachelorette', 'bach party', 'pedal tavern', 'party bus', 'bach weekend'])) {
+    showBachelorette();
+    return;
+  }
+
+  if (matches(lower, ['hotel', 'hotels', 'lodging', 'where to stay', 'place to stay', 'airbnb'])) {
+    showHotels();
+    return;
+  }
+
+  if (matches(lower, ['pharmacy', 'pharmacies', 'urgent care', 'cvs', 'walgreens', 'drugstore', 'medicine'])) {
+    showPharmacy();
+    return;
+  }
+
+  if (matches(lower, ['atm', 'cash', 'bank machine'])) {
+    showATMs();
+    return;
+  }
+
+  if (matches(lower, ['gas station', 'gas', 'fuel', 'fill up'])) {
+    showGasStations();
+    return;
+  }
+
   if (matches(lower, ['event', 'happening', 'going on', 'this week', 'tonight', 'weekend'])) {
     showEvents();
     return;
@@ -1050,15 +1248,166 @@ function showWelcome() {
 
 function showMainMenu() {
   addQuickReplies([
-    'Book a restaurant',
-    'Show all restaurants',
-    'Live music tonight',
-    'Things to do',
-    'Get a ride',
-    'Order delivery',
-    'Best hot chicken',
+    '🍽️ Eat & Drink',
+    '🎵 Things to Do',
+    '🏨 Stay & Get Around',
+    '🛒 Essentials',
     'Local tips'
   ]);
+}
+
+function showEatDrinkMenu() {
+  addMessage("What sounds good?", 'bot');
+  addQuickReplies([
+    'Book a restaurant',
+    'Show all restaurants',
+    'Best hot chicken',
+    'Order delivery',
+    'Honky tonks',
+    'Rooftop bars',
+    'Distilleries',
+    '← Main menu'
+  ]);
+}
+
+function showThingsToDoMenu() {
+  addMessage("Pick a vibe:", 'bot');
+  addQuickReplies([
+    'Live music tonight',
+    'Festivals',
+    'Things to do',
+    'Photo spots',
+    'Bachelorette',
+    '← Main menu'
+  ]);
+}
+
+function showGetAroundMenu() {
+  addMessage("Where are you headed?", 'bot');
+  addQuickReplies([
+    'Hotels nearby',
+    'Get a ride',
+    'Gas stations',
+    '← Main menu'
+  ]);
+}
+
+function showEssentialsMenu() {
+  addMessage("Stocking up?", 'bot');
+  addQuickReplies([
+    'Liquor stores',
+    'Groceries',
+    'Pharmacy',
+    'ATMs',
+    '← Main menu'
+  ]);
+}
+
+function showHonkyTonks() {
+  showStoreType('honky tonk live music bar', 'bar', 'honky tonks');
+}
+function showRooftopBars() {
+  showStoreType('rooftop bar', 'bar', 'rooftop bars');
+}
+function showDistilleries() {
+  showStoreType('whiskey distillery tour', 'tourist_attraction', 'distilleries');
+}
+function showPhotoSpots() {
+  showStoreType('instagram mural photo spot landmark', 'tourist_attraction', 'photo spots');
+}
+function showBachelorette() {
+  showStoreType('bachelorette party pedal tavern party bus', 'tourist_attraction', 'bachelorette spots');
+}
+function showHotels() {
+  showStoreType('hotel', 'lodging', 'hotels');
+}
+function showPharmacy() {
+  showStoreType('pharmacy urgent care', 'pharmacy', 'pharmacies and urgent care');
+}
+function showATMs() {
+  showStoreType('ATM', 'atm', 'ATMs');
+}
+function showGasStations() {
+  showStoreType('gas station', 'gas_station', 'gas stations');
+}
+
+async function showStoreType(query, type, label) {
+  if (!apiServices.google) {
+    addMessage(`Need Google Places API for live ${label} data. Showing curated link instead.`, 'bot');
+    const fallbackUrl = userLocation
+      ? `https://www.google.com/maps/search/${encodeURIComponent(query)}/@${userLocation.lat},${userLocation.lng},14z`
+      : `https://www.google.com/maps/search/${encodeURIComponent(query + ' Nashville TN')}`;
+    addMessage(`<div class="card"><div class="card-title">${label}</div><a href="${fallbackUrl}" target="_blank">Open in Google Maps</a></div>`, 'bot', true);
+    return;
+  }
+  if (!userLocation) {
+    addMessage(`Share your location for nearby ${label}. Tap "Share location" at the bottom of the screen.`, 'bot');
+  } else {
+    addMessage(`Finding ${label} near you...`, 'bot');
+  }
+  const list = await apiSearchPlaces(query, type);
+  if (!list || !list.length) {
+    addMessage(`No ${label} found nearby. Try sharing your location or check Google Maps.`, 'bot');
+    return;
+  }
+  addMessage(`Found ${list.length} ${label} ${userLocation ? 'sorted by distance' : 'in Nashville'}:`, 'bot');
+  list.slice(0, 8).forEach(s => {
+    const distStr = s.distanceMiles != null ? ` · 📍 ${s.distanceMiles} mi` : '';
+    const ratingStr = s.rating ? `★ ${s.rating}` : '';
+    const reviewStr = s.reviewCount ? ` (${s.reviewCount})` : '';
+    const safeName = (s.name || '').replace(/'/g, "\\'");
+    let html = `<div class="card">
+      <div class="card-title">${s.name}</div>
+      <div class="card-meta">${ratingStr}${reviewStr}${distStr}</div>
+      <div class="card-desc">${s.address || ''}</div>`;
+    if (s.mapsUrl) html += `<a href="${s.mapsUrl}" target="_blank">Open in Maps</a>`;
+    if (s.website) html += `<a href="${s.website}" target="_blank">Website</a>`;
+    html += `<a href="#" onclick="return rideClick('uber','${safeName}',event)" style="background:#000;">Uber here</a>`;
+    html += `<a href="#" onclick="return rideClick('lyft','${safeName}',event)" style="background:#ff00bf;">Lyft here</a>`;
+    html += `</div>`;
+    addMessage(html, 'bot', true);
+  });
+}
+
+function showLiquorStores() {
+  showStoreType('liquor store', 'liquor_store', 'liquor stores');
+}
+
+function showGroceries() {
+  showStoreType('grocery store', 'supermarket', 'grocery stores');
+}
+
+async function showFestivals() {
+  addMessage("Pulling Nashville festivals and street events...", 'bot');
+  try {
+    const url = new URL(`${API_BASE}/api/festivals`, window.location.origin);
+    if (userLocation) {
+      url.searchParams.set('lat', userLocation.lat);
+      url.searchParams.set('lng', userLocation.lng);
+    }
+    const r = await fetch(url, { signal: AbortSignal.timeout(10000) });
+    if (!r.ok) throw new Error('API error');
+    const data = await r.json();
+    const list = data.festivals || [];
+    if (!list.length) {
+      addMessage("No festivals found right now. Big ones come every June (CMA Fest), August (Tomato Art Fest), September (Pilgrimage).", 'bot');
+      return;
+    }
+    addMessage(`Found ${list.length} upcoming Nashville festivals and special events:`, 'bot');
+    list.slice(0, 12).forEach(f => {
+      const dateStr = f.date + (f.time ? ' at ' + f.time : '');
+      const distStr = f.distanceMiles != null ? ` · 📍 ${f.distanceMiles} mi` : '';
+      let html = `<div class="card">
+        <div class="card-title">${f.name}</div>
+        <div class="card-meta">${dateStr || 'TBA'} · ${f.venue || ''}${distStr}</div>
+        <div class="card-desc">${f.genre || ''}${f.priceMin ? ' · From $' + f.priceMin : ''}</div>`;
+      if (f.url) html += `<a href="${f.url}" target="_blank">Tickets & info</a>`;
+      html += `</div>`;
+      addMessage(html, 'bot', true);
+    });
+  } catch (e) {
+    addMessage("Couldn't pull live festival data. The classics: CMA Fest (June), Tomato Art Fest (August), Pilgrimage (September), Beale Street (May).", 'bot');
+  }
 }
 
 function showDeliveryOptions() {
@@ -1218,9 +1567,10 @@ async function showEvents() {
       addMessage(`${live.length} upcoming Nashville events:`, 'bot');
       live.slice(0, 10).forEach(e => {
         const dateStr = e.date + (e.time ? ' at ' + e.time : '');
+        const distStr = e.distanceMiles != null ? ` · 📍 ${e.distanceMiles} mi` : '';
         let html = `<div class="card">
           <div class="card-title">${e.name}</div>
-          <div class="card-meta">${dateStr} · ${e.venue || ''}</div>
+          <div class="card-meta">${dateStr} · ${e.venue || ''}${distStr}</div>
           <div class="card-desc">${e.genre || e.classification || ''}${e.priceMin ? ' · From $' + e.priceMin : ''}</div>`;
         if (e.url) html += `<a href="${e.url}" target="_blank">Get tickets</a>`;
         html += `</div>`;
@@ -1247,9 +1597,10 @@ async function showAttractions() {
     if (live && live.length) {
       addMessage(`${live.length} top attractions in Nashville:`, 'bot');
       live.slice(0, 8).forEach(a => {
+        const distStr = a.distanceMiles != null ? ` · 📍 ${a.distanceMiles} mi` : '';
         let html = `<div class="card">
           <div class="card-title">${a.name}</div>
-          <div class="card-meta">${a.rating ? '★' + a.rating : ''} ${a.reviewCount ? '(' + a.reviewCount + ' reviews)' : ''}</div>
+          <div class="card-meta">${a.rating ? '★' + a.rating : ''} ${a.reviewCount ? '(' + a.reviewCount + ' reviews)' : ''}${distStr}</div>
           <div class="card-desc">${a.address || ''}</div>`;
         if (a.mapsUrl) html += `<a href="${a.mapsUrl}" target="_blank">Open in Maps</a>`;
         if (a.website) html += `<a href="${a.website}" target="_blank">Website</a>`;
