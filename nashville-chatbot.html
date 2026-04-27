@@ -1075,6 +1075,26 @@ function routeIntent(text) {
     return;
   }
 
+  if (lower === 'weather' || matches(lower, ['weather', 'forecast', 'temperature', 'rainy today', 'how cold', 'how hot today'])) {
+    showWeather();
+    return;
+  }
+
+  if (lower === 'book a tour' || matches(lower, ['book a tour', 'tours', 'pub crawl', 'day trip', 'viator', 'getyourguide'])) {
+    showTours();
+    return;
+  }
+
+  if (lower === 'bna flight tracker' || matches(lower, ['flight tracker', 'flights', 'bna', 'airport arrival', 'airport departure', 'flight status'])) {
+    showFlights();
+    return;
+  }
+
+  if (lower === 'vacation rentals' || matches(lower, ['airbnb', 'vrbo', 'vacation rental', 'short term rental', 'rental house', 'rental home'])) {
+    showVacationRentals();
+    return;
+  }
+
   if (lower.includes('🍽️') || matches(lower, ['eat & drink', 'eat and drink', 'food menu', 'drinks menu'])) {
     showEatDrinkMenu();
     return;
@@ -1215,11 +1235,6 @@ function routeIntent(text) {
     return;
   }
 
-  if (matches(lower, ['airbnb', 'vrbo', 'vacation rental', 'vacation rentals', 'short term rental', 'rental house', 'rental home'])) {
-    showVacationRentals();
-    return;
-  }
-
   if (matches(lower, ['hotel', 'hotels', 'lodging', 'where to stay', 'place to stay'])) {
     showHotels();
     return;
@@ -1268,21 +1283,6 @@ function routeIntent(text) {
 
   if (matches(lower, ['doordash', 'door dash', 'uber eats', 'ubereats', 'delivery', 'order food', 'deliver'])) {
     showDeliveryOptions();
-    return;
-  }
-
-  if (matches(lower, ['weather', 'forecast', 'temperature', 'rain', 'cold', 'hot today'])) {
-    showWeather();
-    return;
-  }
-
-  if (matches(lower, ['book a tour', 'tours', 'tour', 'experience', 'viator', 'getyourguide', 'pub crawl', 'day trip'])) {
-    showTours();
-    return;
-  }
-
-  if (matches(lower, ['flight tracker', 'flights', 'bna', 'airport arrival', 'airport departure', 'flight status', 'plane'])) {
-    showFlights();
     return;
   }
 
