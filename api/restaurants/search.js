@@ -1,6 +1,5 @@
 // Restaurant search combining Foursquare Places + Google Places (New)
-// Foursquare gives wide coverage (50/req). Google adds rich data (20/req).
-// We dedupe by normalized name + address.
+// When lat/lng are provided, sorts by distance from user.
 
 const PRICE_MAP_FSQ = { 1: '$', 2: '$$', 3: '$$$', 4: '$$$$' };
 const PRICE_MAP_GOOGLE = {
@@ -11,15 +10,37 @@ const PRICE_MAP_GOOGLE = {
   PRICE_LEVEL_VERY_EXPENSIVE: '$$$$'
 };
 
-async function searchFoursquare(term, category, limit) {
+function metersToMiles(m) {
+  if (typeof m !== 'number') return null;
+  return Number((m / 1609.34).toFixed(2));
+}
+
+function haversineMiles(a, b) {
+  if (!a || !b) return null;
+  const R = 3958.8;
+  const dLat = (b.latitude - a.latitude) * Math.PI / 180;
+  const dLng = (b.longitude - a.longitude) * Math.PI / 180;
+  const lat1 = a.latitude * Math.PI / 180;
+  const lat2 = b.latitude * Math.PI / 180;
+  const x = Math.sin(dLat/2)**2 + Math.sin(dLng/2)**2 * Math.cos(lat1) * Math.cos(lat2);
+  return Number((R * 2 * Math.atan2(Math.sqrt(x), Math.sqrt(1-x))).toFixed(2));
+}
+
+async function searchFoursquare(term, category, limit, lat, lng) {
   if (!process.env.FOURSQUARE_API_KEY) return [];
   try {
     const url = new URL('https://places-api.foursquare.com/places/search');
-    url.searchParams.set('near', 'Nashville, TN');
+    if (lat && lng) {
+      url.searchParams.set('ll', `${lat},${lng}`);
+      url.searchParams.set('radius', '16000');
+      url.searchParams.set('sort', 'DISTANCE');
+    } else {
+      url.searchParams.set('near', 'Nashville, TN');
+      url.searchParams.set('sort', 'RATING');
+    }
     if (term) url.searchParams.set('query', term);
     if (category) url.searchParams.set('fsq_category_ids', category);
     url.searchParams.set('limit', String(limit));
-    url.searchParams.set('sort', 'RATING');
 
     const r = await fetch(url, {
       headers: {
@@ -42,6 +63,7 @@ async function searchFoursquare(term, category, limit) {
       phone: b.tel || '',
       website: b.website || '',
       coords: (b.latitude && b.longitude) ? { latitude: b.latitude, longitude: b.longitude } : (b.geocodes?.main || null),
+      distanceMiles: metersToMiles(b.distance),
       description: b.description || '',
       sources: ['foursquare'],
       booking: {}
@@ -51,9 +73,24 @@ async function searchFoursquare(term, category, limit) {
   }
 }
 
-async function searchGoogle(term) {
+async function searchGoogle(term, lat, lng) {
   if (!process.env.GOOGLE_PLACES_KEY) return [];
   try {
+    const body = {
+      textQuery: `${term || 'restaurants'} in Nashville, TN`,
+      includedType: 'restaurant',
+      maxResultCount: 20
+    };
+    if (lat && lng) {
+      body.locationBias = {
+        circle: {
+          center: { latitude: Number(lat), longitude: Number(lng) },
+          radius: 16000
+        }
+      };
+      body.rankPreference = 'DISTANCE';
+    }
+
     const r = await fetch('https://places.googleapis.com/v1/places:searchText', {
       method: 'POST',
       headers: {
@@ -61,14 +98,11 @@ async function searchGoogle(term) {
         'X-Goog-Api-Key': process.env.GOOGLE_PLACES_KEY,
         'X-Goog-FieldMask': 'places.id,places.displayName,places.formattedAddress,places.rating,places.userRatingCount,places.priceLevel,places.location,places.types,places.googleMapsUri,places.websiteUri,places.nationalPhoneNumber,places.primaryTypeDisplayName'
       },
-      body: JSON.stringify({
-        textQuery: `${term || 'restaurants'} in Nashville, TN`,
-        includedType: 'restaurant',
-        maxResultCount: 20
-      })
+      body: JSON.stringify(body)
     });
     if (!r.ok) return [];
     const data = await r.json();
+    const userPos = (lat && lng) ? { latitude: Number(lat), longitude: Number(lng) } : null;
     return (data.places || []).map(p => ({
       id: 'google:' + p.id,
       name: p.displayName?.text || '',
@@ -82,6 +116,7 @@ async function searchGoogle(term) {
       website: p.websiteUri || '',
       mapsUrl: p.googleMapsUri || '',
       coords: p.location || null,
+      distanceMiles: userPos && p.location ? haversineMiles(userPos, p.location) : null,
       description: '',
       sources: ['google'],
       booking: {}
@@ -109,6 +144,7 @@ function dedupe(combined) {
       if (!existing.mapsUrl && r.mapsUrl) existing.mapsUrl = r.mapsUrl;
       if (!existing.price && r.price) existing.price = r.price;
       if (!existing.description && r.description) existing.description = r.description;
+      if (!existing.distanceMiles && r.distanceMiles) existing.distanceMiles = r.distanceMiles;
     } else {
       seen.set(key, r);
     }
@@ -117,29 +153,36 @@ function dedupe(combined) {
 }
 
 export default async function handler(req, res) {
-  const { term = 'restaurant', category = '', limit = 50 } = req.query;
+  const { term = 'restaurant', category = '', limit = 50, lat, lng } = req.query;
 
   try {
     const [fsq, google] = await Promise.all([
-      searchFoursquare(term, category, limit),
-      searchGoogle(term)
+      searchFoursquare(term, category, limit, lat, lng),
+      searchGoogle(term, lat, lng)
     ]);
 
     const combined = dedupe([...fsq, ...google]);
 
-    combined.sort((a, b) => {
-      const ra = a.rating || 0;
-      const rb = b.rating || 0;
-      if (rb !== ra) return rb - ra;
-      const ca = a.reviewCount || 0;
-      const cb = b.reviewCount || 0;
-      return cb - ca;
-    });
+    if (lat && lng) {
+      combined.sort((a, b) => {
+        const da = a.distanceMiles ?? 9999;
+        const db = b.distanceMiles ?? 9999;
+        return da - db;
+      });
+    } else {
+      combined.sort((a, b) => {
+        const ra = a.rating || 0;
+        const rb = b.rating || 0;
+        if (rb !== ra) return rb - ra;
+        return (b.reviewCount || 0) - (a.reviewCount || 0);
+      });
+    }
 
-    res.setHeader('Cache-Control', 's-maxage=600, stale-while-revalidate');
+    res.setHeader('Cache-Control', 's-maxage=300, stale-while-revalidate');
     res.status(200).json({
       source: 'combined',
       sources: { foursquare: fsq.length, google: google.length, deduped: combined.length },
+      sortedBy: (lat && lng) ? 'distance' : 'rating',
       results: combined,
       total: combined.length
     });

@@ -1,43 +1,170 @@
-// Ticketmaster Discovery API. Sign up: https://developer.ticketmaster.com
-export default async function handler(req, res) {
-  if (!process.env.TICKETMASTER_KEY) {
-    return res.status(503).json({ error: 'TICKETMASTER_KEY not configured' });
-  }
-  const { keyword = '', classificationName = '', startDateTime, endDateTime } = req.query;
+// Events: Ticketmaster Discovery + SeatGeek combined.
+// When lat/lng provided, sorts by distance from user.
 
+function haversineMiles(a, b) {
+  if (!a || !b) return null;
+  const R = 3958.8;
+  const dLat = (b.latitude - a.latitude) * Math.PI / 180;
+  const dLng = (b.longitude - a.longitude) * Math.PI / 180;
+  const lat1 = a.latitude * Math.PI / 180;
+  const lat2 = b.latitude * Math.PI / 180;
+  const x = Math.sin(dLat/2)**2 + Math.sin(dLng/2)**2 * Math.cos(lat1) * Math.cos(lat2);
+  return Number((R * 2 * Math.atan2(Math.sqrt(x), Math.sqrt(1-x))).toFixed(2));
+}
+
+async function fetchTicketmaster(keyword, classificationName, startDateTime, endDateTime, lat, lng) {
+  if (!process.env.TICKETMASTER_KEY) return [];
   try {
     const url = new URL('https://app.ticketmaster.com/discovery/v2/events.json');
     url.searchParams.set('apikey', process.env.TICKETMASTER_KEY);
-    url.searchParams.set('city', 'Nashville');
-    url.searchParams.set('stateCode', 'TN');
     url.searchParams.set('size', '20');
-    url.searchParams.set('sort', 'date,asc');
+    if (lat && lng) {
+      url.searchParams.set('latlong', `${lat},${lng}`);
+      url.searchParams.set('radius', '25');
+      url.searchParams.set('unit', 'miles');
+      url.searchParams.set('sort', 'distance,asc');
+    } else {
+      url.searchParams.set('city', 'Nashville');
+      url.searchParams.set('stateCode', 'TN');
+      url.searchParams.set('sort', 'date,asc');
+    }
     if (keyword) url.searchParams.set('keyword', keyword);
     if (classificationName) url.searchParams.set('classificationName', classificationName);
     if (startDateTime) url.searchParams.set('startDateTime', startDateTime);
     if (endDateTime) url.searchParams.set('endDateTime', endDateTime);
 
     const r = await fetch(url);
+    if (!r.ok) return [];
     const data = await r.json();
-    if (!r.ok) return res.status(r.status).json(data);
+    const userPos = (lat && lng) ? { latitude: Number(lat), longitude: Number(lng) } : null;
+    return (data._embedded?.events || []).map(e => {
+      const venue = e._embedded?.venues?.[0];
+      const venueCoords = venue?.location ? {
+        latitude: Number(venue.location.latitude),
+        longitude: Number(venue.location.longitude)
+      } : null;
+      return {
+        id: 'tm:' + e.id,
+        name: e.name,
+        date: e.dates?.start?.localDate,
+        time: e.dates?.start?.localTime,
+        venue: venue?.name,
+        address: venue?.address?.line1,
+        coords: venueCoords,
+        distanceMiles: userPos && venueCoords ? haversineMiles(userPos, venueCoords) : null,
+        url: e.url,
+        image: e.images?.[0]?.url,
+        classification: e.classifications?.[0]?.segment?.name,
+        genre: e.classifications?.[0]?.genre?.name,
+        priceMin: e.priceRanges?.[0]?.min,
+        priceMax: e.priceRanges?.[0]?.max,
+        source: 'ticketmaster'
+      };
+    });
+  } catch (e) {
+    return [];
+  }
+}
 
-    const events = (data._embedded?.events || []).map(e => ({
-      id: e.id,
-      name: e.name,
-      date: e.dates?.start?.localDate,
-      time: e.dates?.start?.localTime,
-      venue: e._embedded?.venues?.[0]?.name,
-      address: e._embedded?.venues?.[0]?.address?.line1,
-      url: e.url,
-      image: e.images?.[0]?.url,
-      classification: e.classifications?.[0]?.segment?.name,
-      genre: e.classifications?.[0]?.genre?.name,
-      priceMin: e.priceRanges?.[0]?.min,
-      priceMax: e.priceRanges?.[0]?.max
-    }));
+async function fetchSeatGeek(keyword, lat, lng) {
+  if (!process.env.SEATGEEK_CLIENT_ID) return [];
+  try {
+    const url = new URL('https://api.seatgeek.com/2/events');
+    url.searchParams.set('client_id', process.env.SEATGEEK_CLIENT_ID);
+    url.searchParams.set('per_page', '20');
+    if (lat && lng) {
+      url.searchParams.set('lat', String(lat));
+      url.searchParams.set('lon', String(lng));
+      url.searchParams.set('range', '25mi');
+    } else {
+      url.searchParams.set('venue.city', 'Nashville');
+      url.searchParams.set('venue.state', 'TN');
+    }
+    url.searchParams.set('sort', 'datetime_local.asc');
+    if (keyword) url.searchParams.set('q', keyword);
 
-    res.setHeader('Cache-Control', 's-maxage=600, stale-while-revalidate');
-    res.status(200).json({ source: 'ticketmaster', events, total: data.page?.totalElements });
+    const r = await fetch(url);
+    if (!r.ok) return [];
+    const data = await r.json();
+    const userPos = (lat && lng) ? { latitude: Number(lat), longitude: Number(lng) } : null;
+    return (data.events || []).map(e => {
+      const venueCoords = e.venue?.location ? {
+        latitude: e.venue.location.lat,
+        longitude: e.venue.location.lon
+      } : null;
+      return {
+        id: 'sg:' + e.id,
+        name: e.title || e.short_title,
+        date: e.datetime_local ? e.datetime_local.split('T')[0] : null,
+        time: e.datetime_local ? e.datetime_local.split('T')[1]?.slice(0, 5) : null,
+        venue: e.venue?.name,
+        address: e.venue?.address,
+        coords: venueCoords,
+        distanceMiles: userPos && venueCoords ? haversineMiles(userPos, venueCoords) : null,
+        url: e.url,
+        image: e.performers?.[0]?.image,
+        classification: e.type,
+        genre: e.taxonomies?.[0]?.name,
+        priceMin: e.stats?.lowest_price,
+        priceMax: e.stats?.highest_price,
+        source: 'seatgeek'
+      };
+    });
+  } catch (e) {
+    return [];
+  }
+}
+
+function dedupe(events) {
+  const seen = new Map();
+  for (const e of events) {
+    const key = `${(e.name || '').toLowerCase().slice(0, 30)}|${e.date}|${(e.venue || '').toLowerCase().slice(0, 20)}`;
+    if (!seen.has(key)) {
+      seen.set(key, e);
+    } else {
+      const existing = seen.get(key);
+      if (!existing.priceMin && e.priceMin) existing.priceMin = e.priceMin;
+      if (!existing.priceMax && e.priceMax) existing.priceMax = e.priceMax;
+      if (!existing.image && e.image) existing.image = e.image;
+      if (!existing.distanceMiles && e.distanceMiles) existing.distanceMiles = e.distanceMiles;
+    }
+  }
+  return Array.from(seen.values());
+}
+
+export default async function handler(req, res) {
+  const { keyword = '', classificationName = '', startDateTime, endDateTime, lat, lng } = req.query;
+
+  try {
+    const [tm, sg] = await Promise.all([
+      fetchTicketmaster(keyword, classificationName, startDateTime, endDateTime, lat, lng),
+      fetchSeatGeek(keyword, lat, lng)
+    ]);
+
+    const combined = dedupe([...tm, ...sg]);
+
+    if (lat && lng) {
+      combined.sort((a, b) => {
+        const da = a.distanceMiles ?? 9999;
+        const db = b.distanceMiles ?? 9999;
+        return da - db;
+      });
+    } else {
+      combined.sort((a, b) => {
+        if (!a.date) return 1;
+        if (!b.date) return -1;
+        return a.date.localeCompare(b.date);
+      });
+    }
+
+    res.setHeader('Cache-Control', 's-maxage=300, stale-while-revalidate');
+    res.status(200).json({
+      source: 'combined',
+      sources: { ticketmaster: tm.length, seatgeek: sg.length, deduped: combined.length },
+      sortedBy: (lat && lng) ? 'distance' : 'date',
+      events: combined,
+      total: combined.length
+    });
   } catch (e) {
     res.status(500).json({ error: e.message });
   }
