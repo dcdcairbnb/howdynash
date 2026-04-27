@@ -1,0 +1,15 @@
+{
+  "name": "music-city-retreat",
+  "version": "1.0.0",
+  "description": "Nashville tourism chatbot with multi-API integration",
+  "scripts": {
+    "dev": "vercel dev",
+    "deploy": "vercel --prod"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "devDependencies": {
+    "vercel": "^41.0.0"
+  }
+}
