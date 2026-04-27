@@ -536,24 +536,30 @@ function updateStatusBadge() {
 }
 
 async function apiSearchRestaurants(term, category, limit = 10) {
-  if (!apiServices.foursquare) return null;
+  if (!apiServices.foursquare && !apiServices.google) return null;
   try {
     const url = new URL(`${API_BASE}/api/restaurants/search`, window.location.origin);
     if (term) url.searchParams.set('term', term);
     if (category) url.searchParams.set('category', category);
     url.searchParams.set('limit', limit);
-    const r = await fetch(url, { signal: AbortSignal.timeout(8000) });
+    const r = await fetch(url, { signal: AbortSignal.timeout(12000) });
     if (!r.ok) return null;
     const data = await r.json();
-    return (data.results || []).map(b => ({
-      name: b.name,
-      cuisine: b.cuisine || 'Restaurant',
-      neighborhood: b.neighborhood || b.address || 'Nashville',
-      price: b.price || '$$',
-      vibe: `${b.rating ? '★' + b.rating : ''}${b.description ? ' · ' + b.description.slice(0, 80) : ''}`.trim(),
-      phone: b.phone || '',
-      booking: { yelp: b.website }
-    }));
+    return (data.results || []).map(b => {
+      const ratingPart = b.rating ? '★' + b.rating : '';
+      const reviewPart = b.reviewCount ? ` (${b.reviewCount} reviews)` : '';
+      const sourcesPart = (b.sources && b.sources.length > 1) ? ' · verified' : '';
+      const descPart = b.description ? ' · ' + b.description.slice(0, 80) : '';
+      return {
+        name: b.name,
+        cuisine: b.cuisine || 'Restaurant',
+        neighborhood: b.neighborhood || (b.address ? b.address.split(',')[0] : 'Nashville'),
+        price: b.price || '',
+        vibe: (ratingPart + reviewPart + sourcesPart + descPart).trim(),
+        phone: b.phone || '',
+        booking: { yelp: b.website || b.mapsUrl }
+      };
+    });
   } catch (e) {
     return null;
   }
@@ -1056,28 +1062,14 @@ function showMainMenu() {
 }
 
 function showDeliveryOptions() {
-  addMessage("Order Nashville food to your hotel or Airbnb. Pick a delivery app:", 'bot');
+  addMessage("Order Nashville food to your hotel or Airbnb:", 'bot');
   const html = `<div class="card">
     <div class="card-title">Delivery apps</div>
-    <div class="card-desc">Compare prices and ETAs across both.</div>
+    <div class="card-desc">Tap to open the app and pick any restaurant.</div>
     <a class="doordash-btn" href="#" onclick="return rideClick('doordash',null,event)">Open DoorDash</a>
     <a class="ubereats-btn" href="#" onclick="return rideClick('ubereats',null,event)">Open Uber Eats</a>
   </div>`;
   addMessage(html, 'bot', true);
-  setTimeout(() => {
-    addMessage("Or order from one of these popular spots:", 'bot');
-    const popular = NASHVILLE_DATA.restaurants.filter(r => /hot chicken|brunch|breakfast|southern/i.test(r.cuisine)).slice(0, 4);
-    popular.forEach(r => {
-      const safeName = r.name.replace(/'/g, "\\'");
-      const cardHtml = `<div class="card">
-        <div class="card-title">${r.name}</div>
-        <div class="card-meta">${r.cuisine} · ${r.neighborhood}</div>
-        <a class="doordash-btn" href="#" onclick="return rideClick('doordash','${safeName}',event)">DoorDash</a>
-        <a class="ubereats-btn" href="#" onclick="return rideClick('ubereats','${safeName}',event)">Uber Eats</a>
-      </div>`;
-      addMessage(cardHtml, 'bot', true);
-    });
-  }, 400);
 }
 
 function showRideOptions() {
@@ -1143,11 +1135,11 @@ function showRestaurantOptions() {
 }
 
 async function showAllRestaurants() {
-  if (apiServices.foursquare) {
-    addMessage("Pulling live restaurant data from Foursquare...", 'bot');
+  if (apiServices.foursquare || apiServices.google) {
+    addMessage("Pulling live restaurant data...", 'bot');
     const live = await apiSearchRestaurants('restaurants', '', 50);
     if (live && live.length) {
-      addMessage(`Found ${live.length} live Nashville restaurants. Sorted by Yelp ratings.`, 'bot');
+      addMessage(`Found ${live.length} Nashville restaurants. Sorted by rating.`, 'bot');
       showRestaurantsPaged(live, 0);
       return;
     }
