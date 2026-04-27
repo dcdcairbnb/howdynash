@@ -6,6 +6,7 @@ export default function handler(req, res) {
       google: !!process.env.GOOGLE_PLACES_KEY,
       ticketmaster: !!process.env.TICKETMASTER_KEY,
       seatgeek: !!process.env.SEATGEEK_CLIENT_ID,
+      eventbrite: !!process.env.EVENTBRITE_PRIVATE_TOKEN,
       nashville: true
     }
   });

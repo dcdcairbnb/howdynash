@@ -115,6 +115,61 @@ async function fetchSeatGeek(keyword, lat, lng) {
   }
 }
 
+async function fetchEventbrite(keyword, lat, lng) {
+  if (!process.env.EVENTBRITE_PRIVATE_TOKEN) return [];
+  try {
+    const url = new URL('https://www.eventbriteapi.com/v3/events/search/');
+    if (lat && lng) {
+      url.searchParams.set('location.latitude', String(lat));
+      url.searchParams.set('location.longitude', String(lng));
+      url.searchParams.set('location.within', '25mi');
+    } else {
+      url.searchParams.set('location.address', 'Nashville, TN');
+      url.searchParams.set('location.within', '25mi');
+    }
+    if (keyword) url.searchParams.set('q', keyword);
+    url.searchParams.set('expand', 'venue');
+    url.searchParams.set('sort_by', 'date');
+
+    const r = await fetch(url, {
+      headers: {
+        Authorization: `Bearer ${process.env.EVENTBRITE_PRIVATE_TOKEN}`,
+        'Content-Type': 'application/json'
+      }
+    });
+    if (!r.ok) return [];
+    const data = await r.json();
+    const userPos = (lat && lng) ? { latitude: Number(lat), longitude: Number(lng) } : null;
+    return (data.events || []).map(e => {
+      const venue = e.venue;
+      const venueCoords = (venue?.latitude && venue?.longitude) ? {
+        latitude: Number(venue.latitude),
+        longitude: Number(venue.longitude)
+      } : null;
+      const start = e.start?.local || '';
+      return {
+        id: 'eb:' + e.id,
+        name: e.name?.text || '',
+        date: start ? start.split('T')[0] : null,
+        time: start ? start.split('T')[1]?.slice(0, 5) : null,
+        venue: venue?.name || '',
+        address: venue?.address?.localized_address_display || '',
+        coords: venueCoords,
+        distanceMiles: userPos && venueCoords ? haversineMiles(userPos, venueCoords) : null,
+        url: e.url,
+        image: e.logo?.url,
+        classification: e.category?.name || 'Event',
+        genre: e.subcategory?.name || '',
+        priceMin: null,
+        priceMax: null,
+        source: 'eventbrite'
+      };
+    });
+  } catch (e) {
+    return [];
+  }
+}
+
 function dedupe(events) {
   const seen = new Map();
   for (const e of events) {
@@ -136,12 +191,13 @@ export default async function handler(req, res) {
   const { keyword = '', classificationName = '', startDateTime, endDateTime, lat, lng } = req.query;
 
   try {
-    const [tm, sg] = await Promise.all([
+    const [tm, sg, eb] = await Promise.all([
       fetchTicketmaster(keyword, classificationName, startDateTime, endDateTime, lat, lng),
-      fetchSeatGeek(keyword, lat, lng)
+      fetchSeatGeek(keyword, lat, lng),
+      fetchEventbrite(keyword, lat, lng)
     ]);
 
-    const combined = dedupe([...tm, ...sg]);
+    const combined = dedupe([...tm, ...sg, ...eb]);
 
     if (lat && lng) {
       combined.sort((a, b) => {
@@ -160,7 +216,7 @@ export default async function handler(req, res) {
     res.setHeader('Cache-Control', 's-maxage=300, stale-while-revalidate');
     res.status(200).json({
       source: 'combined',
-      sources: { ticketmaster: tm.length, seatgeek: sg.length, deduped: combined.length },
+      sources: { ticketmaster: tm.length, seatgeek: sg.length, eventbrite: eb.length, deduped: combined.length },
       sortedBy: (lat && lng) ? 'distance' : 'date',
       events: combined,
       total: combined.length
