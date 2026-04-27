@@ -72,7 +72,14 @@
     display: flex;
     align-items: center;
     gap: 12px;
+    transition: padding 0.25s ease;
   }
+  .header.slim { padding: 8px 16px; gap: 10px; }
+  .header.slim .avatar { width: 28px; height: 28px; font-size: 14px; }
+  .header.slim .header-text h1 { font-size: 14px; }
+  .header.slim .header-text p { display: none; }
+  .header.slim .nav-btn { width: 30px; height: 30px; font-size: 13px; }
+  .header .avatar, .header .nav-btn, .header h1 { transition: all 0.25s ease; }
   .header-text { flex: 1; }
   .nav-btn {
     background: rgba(255,255,255,0.2);
@@ -450,7 +457,7 @@
 </head>
 <body>
 <div class="container">
-  <div class="header">
+  <div class="header" id="appHeader">
     <button class="nav-btn" id="backBtn" onclick="goBack()" title="Back" disabled>←</button>
     <div class="avatar">🎸</div>
     <div class="header-text">
@@ -643,16 +650,16 @@ async function apiSearchRestaurants(term, category, limit = 10) {
     const data = await r.json();
     return (data.results || []).map(b => {
       const distPart = b.distanceMiles != null ? `📍 ${b.distanceMiles} mi` : '';
-      const ratingPart = b.rating ? '★' + b.rating : '';
-      const reviewPart = b.reviewCount ? ` (${b.reviewCount} reviews)` : '';
-      const sourcesPart = (b.sources && b.sources.length > 1) ? ' · verified' : '';
-      const descPart = b.description ? ' · ' + b.description.slice(0, 80) : '';
-      const vibe = [distPart, ratingPart + reviewPart + sourcesPart + descPart].filter(Boolean).join(' · ').trim();
+      const sourcesPart = (b.sources && b.sources.length > 1) ? 'verified' : '';
+      const descPart = b.description ? b.description.slice(0, 80) : '';
+      const vibe = [distPart, sourcesPart, descPart].filter(Boolean).join(' · ').trim();
       return {
         name: b.name,
         cuisine: b.cuisine || 'Restaurant',
         neighborhood: b.neighborhood || (b.address ? b.address.split(',')[0] : 'Nashville'),
         price: b.price || '',
+        rating: b.rating || null,
+        reviewCount: b.reviewCount || null,
         vibe: vibe,
         phone: b.phone || '',
         booking: { yelp: b.website || b.mapsUrl }
@@ -919,6 +926,8 @@ function goHome() {
   messageSnapshots = [];
   reservationState = null;
   scrollAnchor = null;
+  const hdr = document.getElementById('appHeader');
+  if (hdr) hdr.classList.remove('slim');
   updateBackBtn();
   addMessage("Back to the start. What can I help you find?", 'bot');
   setTimeout(() => showMainMenu(), 300);
@@ -1004,6 +1013,8 @@ function handleSend() {
 
 function handleUserMessage(text) {
   snapshot('before:' + text);
+  const hdr = document.getElementById('appHeader');
+  if (hdr) hdr.classList.add('slim');
   addMessage(text, 'user');
   addTyping();
   setTimeout(() => {
@@ -1446,9 +1457,10 @@ function renderRestaurantCard(r) {
   const safeName = r.name.replace(/'/g, "\\'");
   const b = r.booking || {};
   const isWalkin = !!b.walkin;
+  const ratingBadge = r.rating ? `<span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:10px;font-size:12px;font-weight:600;margin-left:6px;">⭐ ${r.rating}${r.reviewCount ? ' · ' + r.reviewCount : ''}</span>` : '';
   let html = `<div class="card">
-    <div class="card-title">${r.name}</div>
-    <div class="card-meta">${r.cuisine} · ${r.neighborhood} · ${r.price}</div>`;
+    <div class="card-title">${r.name}${ratingBadge}</div>
+    <div class="card-meta">${r.cuisine}${r.neighborhood ? ' · ' + r.neighborhood : ''}${r.price ? ' · ' + r.price : ''}</div>`;
   if (isWalkin) html += `<div class="walkin-tag">Walk-in / call ahead</div>`;
   html += `<div class="card-desc">${r.vibe}${r.note ? '. ' + r.note : ''}</div>`;
   if (b.opentable) html += `<a class="opentable-btn" href="${b.opentable}" target="_blank">OpenTable</a>`;
@@ -1488,7 +1500,8 @@ async function showAllRestaurants() {
     addMessage("Pulling live restaurant data...", 'bot');
     const live = await apiSearchRestaurants('restaurants', '', 50);
     if (live && live.length) {
-      addMessage(`Found ${live.length} Nashville restaurants. Sorted by rating.`, 'bot');
+      const sortedBy = userLocation ? 'closest first' : 'rating (share location for distance sort)';
+      addMessage(`Found ${live.length} Nashville restaurants. Sorted by ${sortedBy}.`, 'bot');
       showRestaurantsPaged(live, 0);
       return;
     }
