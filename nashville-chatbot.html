@@ -1181,7 +1181,12 @@ function routeIntent(text) {
     return;
   }
 
-  if (matches(lower, ['hotel', 'hotels', 'lodging', 'where to stay', 'place to stay', 'airbnb'])) {
+  if (matches(lower, ['airbnb', 'vrbo', 'vacation rental', 'vacation rentals', 'short term rental', 'rental house', 'rental home'])) {
+    showVacationRentals();
+    return;
+  }
+
+  if (matches(lower, ['hotel', 'hotels', 'lodging', 'where to stay', 'place to stay'])) {
     showHotels();
     return;
   }
@@ -1232,6 +1237,21 @@ function routeIntent(text) {
     return;
   }
 
+  if (matches(lower, ['weather', 'forecast', 'temperature', 'rain', 'cold', 'hot today'])) {
+    showWeather();
+    return;
+  }
+
+  if (matches(lower, ['book a tour', 'tours', 'tour', 'experience', 'viator', 'getyourguide', 'pub crawl', 'day trip'])) {
+    showTours();
+    return;
+  }
+
+  if (matches(lower, ['flight tracker', 'flights', 'bna', 'airport arrival', 'airport departure', 'flight status', 'plane'])) {
+    showFlights();
+    return;
+  }
+
   if (matches(lower, ['tip', 'advice', 'know before', 'first time'])) {
     addMessage("Here are some local tips:", 'bot');
     NASHVILLE_DATA.tips.forEach(tip => addMessage(tip, 'bot'));
@@ -1249,8 +1269,49 @@ function routeIntent(text) {
     return;
   }
 
-  addMessage("I'm still learning, but I do know about Nashville restaurants, events, attractions, and reservations. Try one of these:", 'bot');
-  showMainMenu();
+  askClaude(text);
+}
+
+const llmHistory = [];
+
+async function askClaude(userText) {
+  const typingId = 'typing-' + Date.now();
+  addMessage(`<div id="${typingId}" class="typing">Thinking...</div>`, 'bot', true);
+  try {
+    const r = await fetch(`${API_BASE}/api/chat`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: userText, history: llmHistory })
+    });
+    const typingEl = document.getElementById(typingId);
+    if (typingEl) typingEl.parentElement.remove();
+    if (!r.ok) {
+      const err = await r.json().catch(() => ({}));
+      if (err.error === 'ANTHROPIC_API_KEY not configured') {
+        addMessage("I'm not connected to my smart-answer system yet. Try a menu option instead:", 'bot');
+      } else {
+        addMessage("I had trouble reaching the answer service. Try a menu option:", 'bot');
+      }
+      showMainMenu();
+      return;
+    }
+    const data = await r.json();
+    const reply = (data.reply || '').trim();
+    if (!reply) {
+      addMessage("Hmm, no answer came back. Try rephrasing or pick a menu option:", 'bot');
+      showMainMenu();
+      return;
+    }
+    llmHistory.push({ role: 'user', content: userText });
+    llmHistory.push({ role: 'assistant', content: reply });
+    while (llmHistory.length > 16) llmHistory.shift();
+    addMessage(reply.replace(/\n/g, '<br>'), 'bot', true);
+  } catch (e) {
+    const typingEl = document.getElementById(typingId);
+    if (typingEl) typingEl.parentElement.remove();
+    addMessage("Connection issue. Try a menu option:", 'bot');
+    showMainMenu();
+  }
 }
 
 function matches(text, keywords) {
@@ -1268,6 +1329,7 @@ function showMainMenu() {
     '🎵 Things to Do',
     '🏨 Stay & Get Around',
     '🛒 Essentials',
+    'Weather',
     'Local tips'
   ]);
 }
@@ -1293,6 +1355,7 @@ function showThingsToDoMenu(skipPush) {
     'Live music tonight',
     'Festivals',
     'Things to do',
+    'Book a tour',
     'Photo spots',
     'Bachelorette',
     '← Main menu'
@@ -1304,8 +1367,10 @@ function showGetAroundMenu(skipPush) {
   addMessage("Where are you headed?", 'bot');
   addQuickReplies([
     'Hotels nearby',
+    'Vacation rentals',
     'Get a ride',
     'Gas stations',
+    'BNA flight tracker',
     '← Main menu'
   ]);
 }
@@ -1336,6 +1401,192 @@ function showPhotoSpots() {
 }
 function showBachelorette() {
   showStoreType('bachelorette party pedal tavern party bus', 'tourist_attraction', 'bachelorette spots');
+}
+
+const VIATOR_PID = 'U00808374';
+const GETYOURGUIDE_PID = 'ACQGDWW';
+const AIRBNB_AFFILIATE_TAG = '';
+const VRBO_AFFILIATE_TAG = '';
+
+function buildAirbnbUrl() {
+  const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+  if (isMobile && userLocation) {
+    return `airbnb://s?location=Nashville%2C%20TN&query=Nashville%2C%20TN`;
+  }
+  let url = 'https://www.airbnb.com/s/Nashville--Tennessee--United-States/homes';
+  if (userLocation) {
+    url += `?ne_lat=${userLocation.lat + 0.05}&ne_lng=${userLocation.lng + 0.05}&sw_lat=${userLocation.lat - 0.05}&sw_lng=${userLocation.lng - 0.05}&search_by_map=true`;
+  }
+  if (AIRBNB_AFFILIATE_TAG) {
+    url += (url.includes('?') ? '&' : '?') + 'awin_id=' + AIRBNB_AFFILIATE_TAG;
+  }
+  return url;
+}
+
+function buildVrboUrl() {
+  let url = 'https://www.vrbo.com/search?q=Nashville%2C+Tennessee%2C+United+States+of+America';
+  if (userLocation) {
+    url += `&latLong=${userLocation.lat},${userLocation.lng}`;
+  }
+  if (VRBO_AFFILIATE_TAG) {
+    url += '&clickref=' + VRBO_AFFILIATE_TAG;
+  }
+  return url;
+}
+
+function showVacationRentals() {
+  addMessage("Vacation rentals in Nashville. Both options below open the official site or app.", 'bot');
+
+  const airbnbUrl = buildAirbnbUrl();
+  const vrboUrl = buildVrboUrl();
+  const locationNote = userLocation ? "Centered on your current location." : "Search starts in Nashville. Share your location for nearby filters.";
+
+  const html = `<div class="card">
+    <div class="card-title">Where to stay</div>
+    <div class="card-desc">${locationNote}</div>
+    <a href="${airbnbUrl}" target="_blank" rel="noopener" style="background:#FF5A5F;">Open Airbnb</a>
+    <a href="${vrboUrl}" target="_blank" rel="noopener" style="background:#0F4B8E;">Open VRBO</a>
+    <div class="card-desc" style="font-size:12px;color:#666;margin-top:8px;">Tip: Nashville requires hosts to register with Metro. Check the listing has a permit number to avoid last-minute cancellations.</div>
+  </div>`;
+  addMessage(html, 'bot', true);
+
+  if (!userLocation) {
+    addMessage("Want me to use your location? Tap 'Share my location' from the main menu.", 'bot');
+  }
+}
+
+function showTours() {
+  addMessage("Tours and experiences. Both Viator and GetYourGuide pay commission so the price is the same as booking direct.", 'bot');
+
+  const categories = [
+    {
+      title: 'All Nashville tours',
+      desc: 'Browse every available tour, day trip, and ticket.',
+      viator: `https://www.viator.com/Nashville/d22290?pid=${VIATOR_PID}`,
+      gyg: `https://www.getyourguide.com/nashville-l3231/?partner_id=${GETYOURGUIDE_PID}`
+    },
+    {
+      title: 'Honky tonk and pub crawls',
+      desc: 'Guided tours through Broadway bars, with skip-the-line perks.',
+      viator: `https://www.viator.com/Nashville-tours/Bar-Crawls/d22290-g6-c105?pid=${VIATOR_PID}`,
+      gyg: `https://www.getyourguide.com/nashville-l3231/bar-crawls-tc52/?partner_id=${GETYOURGUIDE_PID}`
+    },
+    {
+      title: 'Music history and Opry',
+      desc: 'Country Music Hall of Fame, Ryman, RCA Studio B, Grand Ole Opry tickets.',
+      viator: `https://www.viator.com/Nashville-tours/Music/d22290-g6-c69?pid=${VIATOR_PID}`,
+      gyg: `https://www.getyourguide.com/nashville-l3231/music-tc55/?partner_id=${GETYOURGUIDE_PID}`
+    },
+    {
+      title: 'Whiskey and distillery tours',
+      desc: 'Jack Daniel\'s day trips, Nelson\'s Green Brier, Corsair tastings.',
+      viator: `https://www.viator.com/Nashville-tours/Distillery-Tours/d22290-g6-c102?pid=${VIATOR_PID}`,
+      gyg: `https://www.getyourguide.com/nashville-l3231/distillery-tc54/?partner_id=${GETYOURGUIDE_PID}`
+    },
+    {
+      title: 'Day trips from Nashville',
+      desc: 'Memphis, Smoky Mountains, Lynchburg, Mammoth Cave.',
+      viator: `https://www.viator.com/Nashville-tours/Day-Trips-and-Excursions/d22290-g6-c11?pid=${VIATOR_PID}`,
+      gyg: `https://www.getyourguide.com/nashville-l3231/day-trips-tc8/?partner_id=${GETYOURGUIDE_PID}`
+    },
+    {
+      title: 'Riverboat and food tours',
+      desc: 'General Jackson cruise, hot chicken food tours, walking tours.',
+      viator: `https://www.viator.com/Nashville-tours/Food-Drink-and-Nightlife/d22290-g6-c30?pid=${VIATOR_PID}`,
+      gyg: `https://www.getyourguide.com/nashville-l3231/food-and-drinks-tc44/?partner_id=${GETYOURGUIDE_PID}`
+    }
+  ];
+
+  categories.forEach(c => {
+    const html = `<div class="card">
+      <div class="card-title">${c.title}</div>
+      <div class="card-desc">${c.desc}</div>
+      <a href="${c.viator}" target="_blank" rel="noopener" style="background:#328e3a;">Browse on Viator</a>
+      <a href="${c.gyg}" target="_blank" rel="noopener" style="background:#ff5533;">Browse on GetYourGuide</a>
+    </div>`;
+    addMessage(html, 'bot', true);
+  });
+}
+
+async function showWeather() {
+  addMessage("Pulling the Nashville forecast...", 'bot');
+  try {
+    const params = new URLSearchParams();
+    if (userLocation) {
+      params.set('lat', userLocation.lat);
+      params.set('lng', userLocation.lng);
+    }
+    const r = await fetch(`${API_BASE}/api/weather?${params}`);
+    if (!r.ok) {
+      addMessage("Couldn't reach the weather service. Try again in a minute.", 'bot');
+      return;
+    }
+    const data = await r.json();
+    const periods = data.forecast || [];
+    if (periods.length === 0) {
+      addMessage("No forecast available right now.", 'bot');
+      return;
+    }
+    const cityName = data.location?.city || 'Nashville';
+    const today = periods[0];
+    const html = `<div class="card">
+      <div class="card-title">${cityName} - ${today.name}</div>
+      <div class="card-desc"><strong>${today.temperature}°${today.temperatureUnit}</strong> · ${today.shortForecast}</div>
+      <div class="card-desc" style="font-size:12px;color:#666;margin-top:4px;">${today.detailedForecast}</div>
+      <div class="card-desc" style="font-size:12px;color:#666;">Wind: ${today.windSpeed} ${today.windDirection}</div>
+    </div>`;
+    addMessage(html, 'bot', true);
+
+    if (periods.length > 1) {
+      const upcoming = periods.slice(1, 5).map(p =>
+        `<div style="padding:6px 0;border-bottom:1px solid #eee;"><strong>${p.name}:</strong> ${p.temperature}°${p.temperatureUnit}, ${p.shortForecast}</div>`
+      ).join('');
+      addMessage(`<div class="card"><div class="card-title">Next 4 periods</div>${upcoming}</div>`, 'bot', true);
+    }
+  } catch (e) {
+    addMessage("Weather service error. Try again later.", 'bot');
+  }
+}
+
+async function showFlights() {
+  addMessage("Pulling live BNA arrivals...", 'bot');
+  try {
+    const r = await fetch(`${API_BASE}/api/flights?airport=BNA&direction=arrivals&limit=15`);
+    if (!r.ok) {
+      const errData = await r.json().catch(() => ({}));
+      if (errData.error === 'AVIATIONSTACK_KEY not configured') {
+        addMessage("Flight tracking is not set up yet. Check the FAA BNA arrival board at flynashville.com.", 'bot');
+      } else {
+        addMessage("Couldn't reach the flight service. Try the BNA website at flynashville.com.", 'bot');
+      }
+      return;
+    }
+    const data = await r.json();
+    const flights = data.flights || [];
+    if (flights.length === 0) {
+      addMessage("No active flight data right now. Try flynashville.com for the official board.", 'bot');
+      return;
+    }
+
+    addMessage(`Showing ${Math.min(flights.length, 10)} recent BNA arrivals:`, 'bot');
+    flights.slice(0, 10).forEach(f => {
+      const status = (f.status || 'scheduled').toUpperCase();
+      const statusColor = status === 'LANDED' ? '#0a7d28' : status === 'CANCELLED' ? '#cc0000' : status === 'ACTIVE' ? '#0066cc' : '#666';
+      const sched = f.arrival?.scheduled ? new Date(f.arrival.scheduled).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) : '';
+      const fromAirport = f.departure?.airport || f.departure?.iata || 'unknown';
+      const html = `<div class="card">
+        <div class="card-title">${f.airline} ${f.flightNumber}</div>
+        <div class="card-desc">From <strong>${fromAirport}</strong></div>
+        <div class="card-desc" style="font-size:12px;">Scheduled: ${sched}</div>
+        <div class="card-desc" style="font-size:12px;color:${statusColor};font-weight:600;">${status}${f.arrival?.delay ? ' · delayed ' + f.arrival.delay + ' min' : ''}</div>
+        ${f.arrival?.gate ? `<div class="card-desc" style="font-size:12px;">Gate ${f.arrival.gate}${f.arrival.baggage ? ' · Baggage ' + f.arrival.baggage : ''}</div>` : ''}
+      </div>`;
+      addMessage(html, 'bot', true);
+    });
+    addMessage("For the official board, visit flynashville.com.", 'bot');
+  } catch (e) {
+    addMessage("Flight service error. Try flynashville.com.", 'bot');
+  }
 }
 function showHotels() {
   showStoreType('hotel', 'lodging', 'hotels');
