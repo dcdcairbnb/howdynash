@@ -73,6 +73,10 @@
     align-items: center;
     gap: 12px;
     transition: padding 0.25s ease;
+    position: relative;
+    z-index: 10;
+    flex-shrink: 0;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
   }
   .header.slim { padding: 8px 16px; gap: 10px; }
   .header.slim .avatar { width: 28px; height: 28px; font-size: 14px; }
@@ -126,13 +130,19 @@
     display: inline-block;
   }
   .messages {
-    flex: 1;
+    flex: 1 1 auto;
     overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
     padding: 20px;
     background: #f7f7f9;
     display: flex;
     flex-direction: column;
     gap: 12px;
+    position: relative;
+    z-index: 1;
+    min-height: 0;
   }
   .message {
     max-width: 80%;
