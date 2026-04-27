@@ -143,7 +143,7 @@
     overflow-x: hidden;
     -webkit-overflow-scrolling: touch;
     overscroll-behavior: contain;
-    padding: 20px;
+    padding: 24px 20px;
     background: #f7f7f9;
     display: flex;
     flex-direction: column;
@@ -151,6 +151,7 @@
     position: relative;
     z-index: 1;
     min-height: 0;
+    scroll-padding-top: 12px;
   }
   .message {
     max-width: 80%;
@@ -646,7 +647,7 @@ function updateStatusBadge() {
     text.textContent = 'Curated mode';
     dot.style.background = '#fbbf24';
   } else {
-    text.textContent = `Live: ${active.join(', ')}`;
+    text.textContent = 'Your Nashville guide';
     dot.style.background = '#4ade80';
   }
 }
