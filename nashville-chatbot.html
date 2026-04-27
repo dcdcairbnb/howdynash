@@ -938,8 +938,8 @@ function rebindQuickReplies() {
     wrap.querySelectorAll('.quick-reply').forEach(btn => {
       const text = btn.textContent;
       btn.onclick = () => {
-        wrap.remove();
         handleUserMessage(text);
+        wrap.remove();
       };
     });
   });
@@ -994,8 +994,8 @@ function addQuickReplies(options) {
     btn.className = 'quick-reply';
     btn.textContent = opt;
     btn.onclick = () => {
-      wrap.remove();
       handleUserMessage(opt);
+      wrap.remove();
     };
     wrap.appendChild(btn);
   });
