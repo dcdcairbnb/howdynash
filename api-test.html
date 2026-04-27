@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>API Test Page</title>
+<style>
+  body { font-family: -apple-system, sans-serif; max-width: 800px; margin: 40px auto; padding: 20px; background: #f5f5f7; }
+  h1 { color: #1a1a2e; }
+  .test {
+    background: #fff;
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 16px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+  }
+  .test h2 { font-size: 16px; margin-bottom: 8px; }
+  .status { display: inline-block; padding: 3px 10px; border-radius: 6px; font-size: 12px; font-weight: 600; }
+  .ok { background: #dcfce7; color: #166534; }
+  .fail { background: #fee2e2; color: #991b1b; }
+  .pending { background: #fef3c7; color: #92400e; }
+  button {
+    background: #d62828;
+    color: #fff;
+    border: none;
+    padding: 8px 14px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+  }
+  pre {
+    background: #1a1a2e;
+    color: #e5e5e5;
+    padding: 12px;
+    border-radius: 6px;
+    overflow-x: auto;
+    font-size: 12px;
+    margin-top: 10px;
+    max-height: 300px;
+  }
+</style>
+</head>
+<body>
+<h1>Music City Retreat - API Test</h1>
+<p>Run this after deploying to verify each API key works.</p>
+
+<div class="test" id="health-test">
+  <h2>Health check <span class="status pending" id="health-status">Pending</span></h2>
+  <button onclick="runHealth()">Test</button>
+  <pre id="health-out"></pre>
+</div>
+
+<div class="test" id="yelp-test">
+  <h2>Foursquare restaurants <span class="status pending" id="yelp-status">Pending</span></h2>
+  <button onclick="runYelp()">Test</button>
+  <pre id="yelp-out"></pre>
+</div>
+
+<div class="test" id="google-test">
+  <h2>Google Places <span class="status pending" id="google-status">Pending</span></h2>
+  <button onclick="runGoogle()">Test</button>
+  <pre id="google-out"></pre>
+</div>
+
+<div class="test" id="tm-test">
+  <h2>Ticketmaster events <span class="status pending" id="tm-status">Pending</span></h2>
+  <button onclick="runTM()">Test</button>
+  <pre id="tm-out"></pre>
+</div>
+
+<div class="test" id="nash-test">
+  <h2>Nashville open data <span class="status pending" id="nash-status">Pending</span></h2>
+  <button onclick="runNash()">Test</button>
+  <pre id="nash-out"></pre>
+</div>
+
+<button onclick="runAll()" style="background:#1a1a2e;padding:12px 20px;font-size:14px;">Run all tests</button>
+
+<script>
+function setStatus(id, ok) {
+  const el = document.getElementById(id);
+  el.className = 'status ' + (ok ? 'ok' : 'fail');
+  el.textContent = ok ? 'Pass' : 'Fail';
+}
+
+async function call(url, outId, statusId) {
+  const out = document.getElementById(outId);
+  out.textContent = 'Loading...';
+  try {
+    const r = await fetch(url);
+    const data = await r.json();
+    out.textContent = JSON.stringify(data, null, 2);
+    setStatus(statusId, r.ok && !data.error);
+  } catch (e) {
+    out.textContent = 'Error: ' + e.message;
+    setStatus(statusId, false);
+  }
+}
+
+const runHealth = () => call('/api/health', 'health-out', 'health-status');
+const runYelp = () => call('/api/restaurants/search?term=hot+chicken&limit=3', 'yelp-out', 'yelp-status');
+const runGoogle = () => call('/api/places/search?q=Grand+Ole+Opry&type=tourist_attraction', 'google-out', 'google-status');
+const runTM = () => call('/api/events?classificationName=Music', 'tm-out', 'tm-status');
+const runNash = () => call('/api/nashville/data?dataset=qbg9-9eq2&limit=3', 'nash-out', 'nash-status');
+
+function runAll() {
+  runHealth();
+  setTimeout(runYelp, 200);
+  setTimeout(runGoogle, 400);
+  setTimeout(runTM, 600);
+  setTimeout(runNash, 800);
+}
+</script>
+</body>
+</html>
