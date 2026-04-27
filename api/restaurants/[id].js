@@ -1,4 +1,4 @@
-// Foursquare place details
+// Foursquare place details (new FSQ OS Places)
 export default async function handler(req, res) {
   if (!process.env.FOURSQUARE_API_KEY) {
     return res.status(503).json({ error: 'FOURSQUARE_API_KEY not configured' });
@@ -6,12 +6,12 @@ export default async function handler(req, res) {
   const { id } = req.query;
 
   try {
-    const url = new URL(`https://api.foursquare.com/v3/places/${id}`);
-    url.searchParams.set('fields', 'fsq_id,name,categories,location,geocodes,rating,price,tel,website,hours,photos,description,tips,menu');
+    const url = new URL(`https://places-api.foursquare.com/places/${id}`);
 
     const r = await fetch(url, {
       headers: {
-        Authorization: process.env.FOURSQUARE_API_KEY,
+        Authorization: `Bearer ${process.env.FOURSQUARE_API_KEY}`,
+        'X-Places-Api-Version': '2025-06-17',
         Accept: 'application/json'
       }
     });

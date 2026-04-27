@@ -1,24 +1,24 @@
-// Foursquare Places API. Sign up: https://foursquare.com/developers
+// Foursquare Places API (new FSQ OS Places). Sign up: https://foursquare.com/developers
 // Free tier: 1,000 calls/day
 export default async function handler(req, res) {
   if (!process.env.FOURSQUARE_API_KEY) {
     return res.status(503).json({ error: 'FOURSQUARE_API_KEY not configured' });
   }
 
-  const { term = 'restaurant', category = '13065', limit = 20, sort = 'RATING' } = req.query;
+  const { term = 'restaurant', category = '', limit = 20, sort = 'RATING' } = req.query;
 
   try {
-    const url = new URL('https://api.foursquare.com/v3/places/search');
+    const url = new URL('https://places-api.foursquare.com/places/search');
     url.searchParams.set('near', 'Nashville, TN');
     if (term) url.searchParams.set('query', term);
-    if (category) url.searchParams.set('categories', category);
+    if (category) url.searchParams.set('fsq_category_ids', category);
     url.searchParams.set('limit', String(limit));
     url.searchParams.set('sort', sort);
-    url.searchParams.set('fields', 'fsq_id,name,categories,location,geocodes,rating,price,tel,website,hours,photos,description,distance');
 
     const r = await fetch(url, {
       headers: {
-        Authorization: process.env.FOURSQUARE_API_KEY,
+        Authorization: `Bearer ${process.env.FOURSQUARE_API_KEY}`,
+        'X-Places-Api-Version': '2025-06-17',
         Accept: 'application/json'
       }
     });
@@ -27,7 +27,7 @@ export default async function handler(req, res) {
 
     const priceMap = { 1: '$', 2: '$$', 3: '$$$', 4: '$$$$' };
     const results = (data.results || []).map(b => ({
-      id: b.fsq_id,
+      id: b.fsq_place_id || b.fsq_id,
       name: b.name,
       cuisine: (b.categories || []).map(c => c.name).join(', '),
       neighborhood: b.location?.neighborhood?.[0] || b.location?.locality || 'Nashville',
@@ -36,8 +36,7 @@ export default async function handler(req, res) {
       rating: b.rating ? (b.rating / 2).toFixed(1) : null,
       phone: b.tel,
       website: b.website,
-      image: b.photos?.[0] ? `${b.photos[0].prefix}original${b.photos[0].suffix}` : null,
-      coords: b.geocodes?.main,
+      coords: b.latitude && b.longitude ? { latitude: b.latitude, longitude: b.longitude } : (b.geocodes?.main || null),
       description: b.description,
       booking: {}
     }));
