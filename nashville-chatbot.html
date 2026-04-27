@@ -903,17 +903,16 @@ function snapshot(label) {
 }
 
 function updateBackBtn() {
-  const disabled = messageSnapshots.length < 2;
+  const disabled = messageSnapshots.length < 1;
   backBtn.disabled = disabled;
   const bottomBack = document.getElementById('bottomBackBtn');
   if (bottomBack) bottomBack.disabled = disabled;
 }
 
 function goBack() {
-  if (messageSnapshots.length < 2) return;
-  messageSnapshots.pop();
-  const prev = messageSnapshots[messageSnapshots.length - 1];
-  messagesEl.innerHTML = prev.html;
+  if (messageSnapshots.length < 1) return;
+  const popped = messageSnapshots.pop();
+  messagesEl.innerHTML = popped.html;
   reservationState = null;
   scrollAnchor = null;
   rebindQuickReplies();
