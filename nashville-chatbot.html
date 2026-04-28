@@ -1709,17 +1709,156 @@ function showEssentialsMenu(skipPush) {
   ]);
 }
 
+async function showCuratedThenLive(curatedList, query, type, label) {
+  addMessage(`Top Nashville ${label}:`, 'bot');
+  curatedList.forEach(s => {
+    const star = renderSaveStar({ name: s.name, note: s.note || s.neighborhood || label, address: s.neighborhood || '' });
+    let html = `<div class="card">
+      <div class="card-title">${star}${s.name}</div>
+      <div class="card-meta">${s.neighborhood || ''}${s.note ? ' · ' + s.note : ''}</div>
+      <div class="card-desc">${s.desc || ''}</div>`;
+    if (s.url) html += `<a href="${s.url}" target="_blank">Website</a>`;
+    const mapsUrl = `https://www.google.com/maps/search/${encodeURIComponent(s.name + ' Nashville TN')}`;
+    html += `<a href="${mapsUrl}" target="_blank" rel="noopener" style="background:#34a853;color:#fff;">Open in Maps</a>`;
+    const safeName = s.name.replace(/'/g, "\\'");
+    html += `<a href="#" onclick="return rideClick('uber','${safeName}',event)" style="background:#000;">Uber here</a>`;
+    html += `<a href="#" onclick="return rideClick('lyft','${safeName}',event)" style="background:#ff00bf;">Lyft here</a>`;
+    html += `</div>`;
+    addMessage(html, 'bot', true);
+  });
+
+  if (!apiServices.google) return;
+  try {
+    const live = await apiSearchPlaces(query, type);
+    if (!live || !live.length) return;
+    const curatedNames = new Set(curatedList.map(c => c.name.toLowerCase()));
+    const extras = live.filter(a => a.name && !curatedNames.has(a.name.toLowerCase())).slice(0, 6);
+    if (extras.length === 0) return;
+    addMessage(`More ${label} nearby:`, 'bot');
+    extras.forEach(s => {
+      const distStr = s.distanceMiles != null ? ` · 📍 ${s.distanceMiles} mi` : '';
+      const ratingStr = s.rating ? `★ ${s.rating}` : '';
+      const reviewStr = s.reviewCount ? ` (${s.reviewCount})` : '';
+      const safeName = (s.name || '').replace(/'/g, "\\'");
+      const star = renderSaveStar({ name: s.name, note: label, address: s.address });
+      let html = `<div class="card">
+        <div class="card-title">${star}${s.name}</div>
+        <div class="card-meta">${ratingStr}${reviewStr}${distStr}</div>
+        <div class="card-desc">${s.address || ''}</div>`;
+      if (s.mapsUrl) html += `<a href="${s.mapsUrl}" target="_blank">Open in Maps</a>`;
+      if (s.website) html += `<a href="${s.website}" target="_blank">Website</a>`;
+      html += `<a href="#" onclick="return rideClick('uber','${safeName}',event)" style="background:#000;">Uber here</a>`;
+      html += `<a href="#" onclick="return rideClick('lyft','${safeName}',event)" style="background:#ff00bf;">Lyft here</a>`;
+      html += `</div>`;
+      addMessage(html, 'bot', true);
+    });
+  } catch (e) {
+    console.warn(`${label} API failed`, e);
+  }
+}
+
+const CURATED_HONKY_TONKS = [
+  // Lower Broadway classics (the strip)
+  { name: "Tootsie's Orchid Lounge", neighborhood: "Lower Broadway", desc: "The original honky tonk. Live music starting at 10am. Hank Williams used to drink here.", url: "https://tootsies.net" },
+  { name: "Robert's Western World", neighborhood: "Lower Broadway", desc: "Boots and burgers. Recession Special: fried bologna sandwich, chips, MoonPie, PBR for $6.", url: "https://robertswesternworld.com" },
+  { name: "The Stage on Broadway", neighborhood: "Lower Broadway", desc: "Three floors, three stages. Live country all day every day.", url: "https://www.thestageonbroadway.com" },
+  { name: "Acme Feed & Seed", neighborhood: "Lower Broadway", desc: "Four floors, rooftop with skyline views. Music, food, drinks.", url: "https://www.theacmenashville.com" },
+  { name: "Legends Corner", neighborhood: "Lower Broadway", desc: "Walls covered in country music history. Free music, busy bar.", url: "https://www.legendscorner.com" },
+  { name: "AJ's Good Time Bar", neighborhood: "Lower Broadway", desc: "Alan Jackson's bar. Three floors of country music.", url: "https://www.ajsgoodtimebar.com" },
+  { name: "Honky Tonk Central", neighborhood: "Lower Broadway", desc: "Three floors, three bands at all times. Big tourist favorite.", url: "https://www.honkytonkcentral.com" },
+  { name: "Layla's Honky Tonk", neighborhood: "Lower Broadway", desc: "Smaller, more local feel. Bluegrass and old country.", url: "https://laylasnashville.com" },
+  { name: "The Second Fiddle", neighborhood: "Lower Broadway", desc: "Traditional honky tonk vibe. Local bands.", url: null },
+  { name: "Nudie's Honky Tonk", neighborhood: "Lower Broadway", desc: "Themed after Nudie Cohn rhinestone suits. Three floors.", url: "https://nudieshonkytonk.com" },
+
+  // Celebrity-owned Broadway bars
+  { name: "Luke's 32 Bridge", neighborhood: "Lower Broadway", desc: "Luke Bryan's six-floor bar with rooftop. Massive party venue.", url: "https://lukes32bridge.com" },
+  { name: "Whiskey Row", neighborhood: "Lower Broadway", desc: "Dierks Bentley's bar. Three floors, mechanical bull.", url: "https://www.dierkswhiskeyrow.com" },
+  { name: "FGL House", neighborhood: "Lower Broadway", desc: "Florida Georgia Line's spot. Four floors, rooftop, food and music.", url: "https://www.fglhouse.com" },
+  { name: "Jason Aldean's Kitchen + Rooftop", neighborhood: "Lower Broadway", desc: "Six floors, rooftop, restaurant, live music.", url: "https://jasonaldeansnashville.com" },
+  { name: "Kid Rock's Big Honky Tonk Steakhouse", neighborhood: "Lower Broadway", desc: "Six-floor monster. Live music, rooftop, big crowds.", url: "https://kidrocknashville.com" },
+  { name: "Ole Red", neighborhood: "Lower Broadway", desc: "Blake Shelton's spot. Four floors plus rooftop. Restaurant and music.", url: "https://olered.com/nashville" },
+  { name: "Miranda Lambert's Casa Rosa", neighborhood: "Lower Broadway", desc: "Pink-themed Tex-Mex with rooftop. Cocktails and live music.", url: "https://www.casarosanashville.com" },
+  { name: "Eric Church's Chief's", neighborhood: "Lower Broadway", desc: "Six-floor venue. Restaurant, music halls, rooftop.", url: "https://chiefsnashville.com" },
+  { name: "Tim McGraw's Tin Roof", neighborhood: "Lower Broadway", desc: "Multiple locations. Rock and country bar with food.", url: "https://www.tinroofbars.com" },
+  { name: "John Rich's Redneck Riviera", neighborhood: "Lower Broadway", desc: "Rooftop, multiple stages, dive-bar feel.", url: "https://redneckrivieranashville.com" },
+
+  // Twelve Thirty Club (JT) and other Broadway upscale
+  { name: "Twelve Thirty Club", neighborhood: "Lower Broadway", desc: "Justin Timberlake's spot. Three floors topped by private rooftop. Reservations needed.", url: "https://www.twelvethirtyclub.com" },
+  { name: "The George Jones", neighborhood: "Lower Broadway", desc: "George Jones tribute. Rooftop with views. Museum included.", url: "https://www.georgejones.com" },
+  { name: "Skydeck on Broadway", neighborhood: "Lower Broadway", desc: "Massive rooftop above Assembly Food Hall. Multi-band setup.", url: "https://www.skydeckonbroadway.com" },
+  { name: "Coyote Joe's", neighborhood: "Lower Broadway", desc: "Country dance bar with mechanical bull. Casual.", url: null },
+  { name: "Tequila Cowboy", neighborhood: "Lower Broadway", desc: "Live music plus karaoke. Two floors.", url: "https://www.tequilacowboynashville.com" },
+
+  // Printers Alley
+  { name: "Skull's Rainbow Room", neighborhood: "Printers Alley", desc: "Historic supper club, jazz, burlesque. Speakeasy vibe in the Alley.", url: "https://www.skullsrainbowroom.com" },
+  { name: "Bourbon Street Blues & Boogie Bar", neighborhood: "Printers Alley", desc: "New Orleans style blues club. Live music nightly.", url: "https://www.bourbonstreetbluesandboogiebar.com" },
+  { name: "The Office at Printers Alley", neighborhood: "Printers Alley", desc: "Cozy alley dive. Locals' spot.", url: null },
+  { name: "Lonnie's Western Room", neighborhood: "Printers Alley", desc: "Karaoke, country covers, all-night fun.", url: "https://lonnieswesternroom.com" },
+  { name: "Fleet Street Pub", neighborhood: "Printers Alley", desc: "British-style pub in the alley.", url: null },
+
+  // Other live music bars (not Broadway)
+  { name: "The Bluebird Cafe", neighborhood: "Green Hills", desc: "Songwriter rounds in an unassuming strip mall. Reservations open weeks ahead. Small, intimate, legendary.", url: "https://bluebirdcafe.com" },
+  { name: "Station Inn", neighborhood: "The Gulch", desc: "Bluegrass legend. Cash only. Tiny, magical.", url: "https://stationinn.com" },
+  { name: "Exit/In", neighborhood: "Elliston Place", desc: "Indie rock and singer-songwriter venue. Historic.", url: "https://exitin.com" },
+  { name: "The 5 Spot", neighborhood: "East Nashville", desc: "Indie bands, dance nights, locals' favorite.", url: "https://www.the5spotnashville.com" },
+  { name: "3rd and Lindsley", neighborhood: "Wedgewood-Houston", desc: "Live music venue with food. Diverse genres.", url: "https://www.3rdandlindsley.com" },
+  { name: "The Basement", neighborhood: "Belmont", desc: "Underground rock club. New artists.", url: "https://thebasementnashville.com" },
+  { name: "Brooklyn Bowl Nashville", neighborhood: "Germantown", desc: "Bowling, food, big-name concerts.", url: "https://www.brooklynbowl.com/nashville" },
+  { name: "City Winery", neighborhood: "Cannery Row", desc: "Singer-songwriter shows in an upscale wine bar.", url: "https://citywinery.com/nashville" },
+
+  // Listening rooms
+  { name: "Listening Room Cafe", neighborhood: "SoBro", desc: "Songwriter showcases, dinner included.", url: "https://www.listeningroomcafe.com" },
+  { name: "Bobby's Idle Hour", neighborhood: "Music Row", desc: "Songwriters' bar that survived Music Row redevelopment.", url: "https://www.bobbysidlehour.com" }
+];
+
+const CURATED_ROOFTOPS = [
+  { name: "L.A. Jackson", neighborhood: "The Gulch", desc: "Top of the Thompson Hotel. Best skyline views in the city.", url: "https://www.lajacksonbar.com" },
+  { name: "White Limozeen", neighborhood: "Midtown", desc: "Pink Dolly-themed rooftop at the Graduate Hotel. Reservations recommended.", url: "https://www.graduatehotels.com/nashville/restaurant/white-limozeen" },
+  { name: "Bobby Hotel Rooftop Lounge", neighborhood: "Downtown", desc: "Vintage bus on the rooftop with a pool. Iconic Nashville view.", url: "https://www.bobbyhotel.com/eat-drink-listen/rooftop-lounge" },
+  { name: "Up Sky Bar", neighborhood: "Downtown", desc: "Top of Sheraton Grand. Solid views, less crowded than newer spots.", url: "https://www.marriott.com/hotels/hotel-information/restaurant/bnasi-sheraton-grand-nashville-downtown" },
+  { name: "Acme Rooftop", neighborhood: "Lower Broadway", desc: "Top floor of Acme Feed & Seed. Honky tonk views.", url: "https://www.theacmenashville.com" },
+  { name: "Rare Bird", neighborhood: "East Nashville", desc: "Rooftop at the Russell Hotel. Quieter, design-forward.", url: "https://www.therussellhotel.com/dine" },
+  { name: "Skydeck on Broadway", neighborhood: "Lower Broadway", desc: "Massive rooftop above Assembly Food Hall. Views of the river.", url: "https://www.skydeckonbroadway.com" },
+  { name: "Twelve Thirty Club", neighborhood: "Lower Broadway", desc: "Justin Timberlake's spot. Three floors topped by a private rooftop. Reservations needed.", url: "https://www.twelvethirtyclub.com" },
+  { name: "Ophelia at JW Marriott", neighborhood: "Downtown", desc: "Sleek rooftop on the 34th floor. Premium cocktails.", url: "https://www.marriott.com" },
+  { name: "George Jones Rooftop", neighborhood: "Downtown", desc: "On top of the Johnny Cash Museum building. Country music views.", url: "https://www.georgejones.com" }
+];
+
+const CURATED_DISTILLERIES = [
+  { name: "Nelson's Green Brier Distillery", neighborhood: "Marathon Village", desc: "Pre-Prohibition Tennessee whiskey brand revived by family descendants. Tour and tasting.", url: "https://www.greenbrierdistillery.com" },
+  { name: "Corsair Distillery", neighborhood: "Marathon Village / Wedgewood-Houston", desc: "Craft small-batch whiskey, gin, and absinthe. Tasting room.", url: "https://www.corsairdistillery.com" },
+  { name: "Tennessee Brew Works (next to distilleries)", neighborhood: "SoBro", desc: "Craft brewery, often paired with distillery walks.", url: "https://tnbrew.com" },
+  { name: "Pennington Distilling Co.", neighborhood: "Nations", desc: "Whisper Creek Tennessee Sipping Cream and craft spirits.", url: "https://www.penningtondistillingco.com" },
+  { name: "Belle Meade Bourbon (Nelson's)", neighborhood: "Marathon Village", desc: "Premium small-batch bourbon. Tastings.", url: "https://www.greenbrierdistillery.com" },
+  { name: "Jack Daniel's Distillery (day trip)", neighborhood: "Lynchburg, TN (90 min from Nashville)", desc: "World-famous Tennessee whiskey. Tours and tastings. Worth the day trip.", url: "https://www.jackdaniels.com/en-us/distillery" },
+  { name: "Uncle Nearest Premium Whiskey (day trip)", neighborhood: "Shelbyville, TN (60 min from Nashville)", desc: "Honoring Nathan Green, the man who taught Jack Daniel. Tours and tastings.", url: "https://unclenearest.com" },
+  { name: "Leiper's Fork Distillery (day trip)", neighborhood: "Leiper's Fork (40 min from Nashville)", desc: "Single barrel Tennessee whiskey. Quaint village setting.", url: "https://leipersforkdistillery.com" }
+];
+
+const CURATED_PHOTO_SPOTS = [
+  { name: "I Believe in Nashville mural", neighborhood: "12 South", desc: "Wood-painted mural on the side of Draper James / 12 South. The classic Nashville Instagram spot.", url: null },
+  { name: "Wings mural (Whatlifters)", neighborhood: "The Gulch", desc: "Painted angel wings. Insanely popular for couples and bachelorettes.", url: null },
+  { name: "Make Music Not War mural", neighborhood: "12 South", desc: "Colorful peace mural on a coffee shop wall.", url: null },
+  { name: "Patsy Cline mural", neighborhood: "Berry Hill", desc: "Stunning portrait mural honoring the country legend.", url: null },
+  { name: "Parthenon at Centennial Park", neighborhood: "West End", desc: "Full-scale replica of the Athens Parthenon. Drone shots are stunning.", url: "https://www.nashville.gov/departments/parks/parthenon" },
+  { name: "Pedestrian Bridge", neighborhood: "Downtown", desc: "Best skyline shot in Nashville. Sunrise and sunset are magic.", url: null },
+  { name: "Hatch Show Print posters", neighborhood: "Lower Broadway", desc: "Inside the iconic letterpress shop. Walls of vintage music posters.", url: "https://hatchshowprint.com" },
+  { name: "Honky Tonk Highway neon", neighborhood: "Lower Broadway", desc: "Night shots of the neon signs along Broadway. Pure Nashville.", url: null },
+  { name: "Loveless Cafe Sign", neighborhood: "Bellevue", desc: "Iconic vintage diner sign. Worth the drive west of town.", url: "https://www.lovelesscafe.com" },
+  { name: "Music Row giant guitar", neighborhood: "Music Row", desc: "Classic photo with the Music Row guitar statue.", url: null }
+];
+
 function showHonkyTonks() {
-  showStoreType('honky tonk live music bar', 'bar', 'honky tonks');
+  showCuratedThenLive(CURATED_HONKY_TONKS, 'honky tonk live music bar', 'bar', 'honky tonks');
 }
 function showRooftopBars() {
-  showStoreType('rooftop bar', 'bar', 'rooftop bars');
+  showCuratedThenLive(CURATED_ROOFTOPS, 'rooftop bar', 'bar', 'rooftop bars');
 }
 function showDistilleries() {
-  showStoreType('whiskey distillery tour', 'tourist_attraction', 'distilleries');
+  showCuratedThenLive(CURATED_DISTILLERIES, 'whiskey distillery tour', 'tourist_attraction', 'distilleries');
 }
 function showPhotoSpots() {
-  showStoreType('instagram mural photo spot landmark', 'tourist_attraction', 'photo spots');
+  showCuratedThenLive(CURATED_PHOTO_SPOTS, 'instagram mural photo spot landmark', 'tourist_attraction', 'photo spots');
 }
 function showBachelorette() {
   addMessage("Bachelorette mode activated. Nashville is the bachelorette capital. Here is everything you need.", 'bot');
