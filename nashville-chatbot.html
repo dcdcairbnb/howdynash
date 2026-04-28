@@ -1463,7 +1463,7 @@ function isFollowUp(text) {
   if (followUpStarters.some(s => lower.startsWith(s) || lower.includes(' ' + s + ' '))) return true;
   const pronouns = [' that ', ' those ', ' there ', ' them ', ' it ', ' this '];
   if (pronouns.some(p => (' ' + lower + ' ').includes(p))) return true;
-  if (lower.length < 20 && !lower.match(/[A-Z]/)) return true;
+  if (text.length < 20 && !text.match(/[A-Z]/) && !text.startsWith('🍽️') && !text.startsWith('🎵') && !text.startsWith('🏨') && !text.startsWith('🛒') && !text.startsWith('★')) return true;
   return false;
 }
 
