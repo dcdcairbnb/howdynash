@@ -9,6 +9,10 @@
   "engines": {
     "node": ">=18"
   },
+  "dependencies": {
+    "pg": "^8.13.1",
+    "resend": "^4.0.1"
+  },
   "devDependencies": {
     "vercel": "^41.0.0"
   }

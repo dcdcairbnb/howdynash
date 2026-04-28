@@ -1122,6 +1122,99 @@ function showSavedSpots() {
     html += `</div>`;
     addMessage(html, 'bot', true);
   });
+  // Email-my-spots capture point. Highest engagement moment.
+  const emailCard = `<div class="card" style="background:#fff5f5;border-left:3px solid #d62828;">
+    <div class="card-title">📧 Email me my list</div>
+    <div class="card-desc">Get your saved spots emailed to you. Forward to friends, open on any device.</div>
+    <button onclick="openSignupModal('saved-spots'); return false;" style="background:#d62828;color:#fff;border:none;padding:10px 16px;border-radius:8px;cursor:pointer;font-weight:600;margin-top:8px;">Email my saved spots</button>
+  </div>`;
+  addMessage(emailCard, 'bot', true);
+}
+
+// Email signup modal. Three sources: cheatsheet, saved-spots, bachelorette, general.
+function openSignupModal(source) {
+  if (document.getElementById('signupModal')) return;
+  const sourceCopy = {
+    'cheatsheet': { title: 'Get the free Nashville Cheat Sheet', sub: 'Our 3-day Nashville cheat sheet emailed to your inbox. Restaurants, music, neighborhoods, all in one PDF.' },
+    'saved-spots': { title: 'Email me my saved spots', sub: 'We will email your starred list. Open it on any device, forward to friends.' },
+    'bachelorette': { title: 'Get the bachelorette planner', sub: 'Pedal taverns, party buses, photo spots, brunch picks. The full Nashville bachelorette guide emailed to you.' },
+    'general': { title: 'Get weekly Nashville picks', sub: 'A short Friday email with new restaurants, weekend events, hotel deals, and tour discounts. Unsubscribe anytime.' }
+  }[source] || { title: 'Stay in the loop', sub: 'Weekly Nashville roundup straight to your inbox.' };
+
+  const modal = document.createElement('div');
+  modal.id = 'signupModal';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;';
+  modal.innerHTML = `
+    <div style="background:#fff;border-radius:12px;padding:24px;max-width:420px;width:100%;box-shadow:0 12px 40px rgba(0,0,0,0.2);">
+      <button onclick="closeSignupModal()" aria-label="Close" style="float:right;background:none;border:none;font-size:24px;cursor:pointer;color:#999;line-height:1;padding:0;margin:-4px -4px 0 0;">&times;</button>
+      <div style="font-size:20px;font-weight:700;color:#d62828;margin-bottom:6px;">${sourceCopy.title}</div>
+      <div style="font-size:14px;color:#666;margin-bottom:16px;line-height:1.5;">${sourceCopy.sub}</div>
+      <form id="signupForm" onsubmit="handleSignupSubmit(event, '${source}'); return false;">
+        <input type="text" id="signupName" placeholder="First name (optional)" maxlength="100" style="width:100%;padding:11px 14px;border:1px solid #ddd;border-radius:8px;font-size:14px;margin-bottom:8px;outline:none;box-sizing:border-box;">
+        <input type="email" id="signupEmail" placeholder="your@email.com" required maxlength="200" style="width:100%;padding:11px 14px;border:1px solid #ddd;border-radius:8px;font-size:14px;margin-bottom:12px;outline:none;box-sizing:border-box;">
+        <button type="submit" id="signupSubmitBtn" style="width:100%;background:#d62828;color:#fff;border:none;padding:12px 16px;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer;">Send it to me</button>
+      </form>
+      <div id="signupStatus" style="font-size:13px;text-align:center;margin-top:10px;color:#666;"></div>
+      <div style="font-size:11px;color:#888;text-align:center;margin-top:12px;line-height:1.5;">We email 1-2 times a week. Unsubscribe anytime. We do not sell your email.</div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+  setTimeout(() => document.getElementById('signupEmail')?.focus(), 100);
+}
+
+function closeSignupModal() {
+  const m = document.getElementById('signupModal');
+  if (m) m.remove();
+}
+
+async function handleSignupSubmit(event, source) {
+  event.preventDefault();
+  const emailEl = document.getElementById('signupEmail');
+  const nameEl = document.getElementById('signupName');
+  const btn = document.getElementById('signupSubmitBtn');
+  const status = document.getElementById('signupStatus');
+  const email = emailEl.value.trim();
+  const name = nameEl.value.trim();
+  if (!email) return;
+
+  btn.disabled = true;
+  btn.textContent = 'Sending...';
+  status.textContent = '';
+  status.style.color = '#666';
+
+  // Include saved spots when source is saved-spots.
+  let savedSpotsPayload = null;
+  if (source === 'saved-spots') {
+    try {
+      const saved = getSavedSpots();
+      if (saved && saved.length) savedSpotsPayload = saved;
+    } catch (e) { /* noop */ }
+  }
+
+  try {
+    const r = await fetch(`${API_BASE}/api/subscribe`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, name, source, savedSpots: savedSpotsPayload })
+    });
+    const data = await r.json().catch(() => ({}));
+    if (!r.ok) {
+      status.textContent = data.error || 'Signup failed, try again.';
+      status.style.color = '#d62828';
+      btn.disabled = false;
+      btn.textContent = 'Send it to me';
+      return;
+    }
+    status.textContent = 'Check your inbox in a minute. Thanks!';
+    status.style.color = '#1b8a3e';
+    btn.textContent = 'Sent';
+    setTimeout(() => closeSignupModal(), 2000);
+  } catch (e) {
+    status.textContent = 'Connection issue. Try again.';
+    status.style.color = '#d62828';
+    btn.disabled = false;
+    btn.textContent = 'Send it to me';
+  }
 }
 
 function renderShareButton(item) {
@@ -2001,6 +2094,18 @@ function matches(text, keywords) {
 function showWelcome() {
   addMessage("Howdy. Welcome to Nashville. I can help you find restaurants, discover live music, and plan your visit. What sounds good?", 'bot');
   showMainMenu();
+  // Cheat sheet capture, shown once per session.
+  if (!sessionStorage.getItem('cheatsheet-shown')) {
+    sessionStorage.setItem('cheatsheet-shown', '1');
+    setTimeout(() => {
+      const card = `<div class="card" style="background:#fff5f5;border-left:3px solid #d62828;">
+        <div class="card-title">📧 Free 3-Day Nashville Cheat Sheet</div>
+        <div class="card-desc">Restaurants, music, neighborhoods, all in one PDF. Emailed to you, free.</div>
+        <button onclick="openSignupModal('cheatsheet'); return false;" style="background:#d62828;color:#fff;border:none;padding:10px 16px;border-radius:8px;cursor:pointer;font-weight:600;margin-top:8px;">Email me the cheat sheet</button>
+      </div>`;
+      addMessage(card, 'bot', true);
+    }, 1500);
+  }
 }
 
 function showMainMenu() {
@@ -2653,6 +2758,13 @@ function showBachelorette() {
   });
 
   addMessage("Pro tip: book Bluebird and party buses 4 to 6 weeks ahead for weekend bachelorettes. They sell out.", 'bot');
+  // Bachelorette email capture. Highest-LTV segment.
+  const card = `<div class="card" style="background:#fff5f5;border-left:3px solid #d62828;">
+    <div class="card-title">📧 Email me the full bachelorette planner</div>
+    <div class="card-desc">All of this in one PDF, plus packing list, group photo spots, and Sunday recovery brunch picks. Forward to your group.</div>
+    <button onclick="openSignupModal('bachelorette'); return false;" style="background:#d62828;color:#fff;border:none;padding:10px 16px;border-radius:8px;cursor:pointer;font-weight:600;margin-top:8px;">Email me the planner</button>
+  </div>`;
+  addMessage(card, 'bot', true);
 }
 
 function getTimeContext() {
