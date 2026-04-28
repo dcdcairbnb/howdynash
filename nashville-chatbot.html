@@ -1637,8 +1637,8 @@ function routeIntent(text) {
     return;
   }
 
-  if (matches(lower, ['cocktail', 'bar', 'drinks', 'speakeasy'])) {
-    showRestaurants(NASHVILLE_DATA.restaurants.filter(r => /cocktail/i.test(r.cuisine)), 'Cocktail bars:');
+  if (matches(lower, ['cocktail', 'cocktails', 'speakeasy', 'craft cocktail'])) {
+    showCocktailBars();
     return;
   }
 
@@ -2085,7 +2085,6 @@ const CURATED_BROADWAY_BARS = [
   { name: "Skydeck on Broadway", neighborhood: "Lower Broadway", desc: "Massive rooftop above Assembly Food Hall. Multi-band setup.", url: "https://www.skydeckonbroadway.com" },
   { name: "Coyote Joe's", neighborhood: "Lower Broadway", desc: "Country dance bar with mechanical bull. Casual.", url: null },
   { name: "Tequila Cowboy", neighborhood: "Lower Broadway", desc: "Live music plus karaoke. Two floors.", url: "https://www.tequilacowboynashville.com" },
-  { name: "Wildhorse Saloon", neighborhood: "Just off Broadway", desc: "Three-floor country dance hall. Free line dancing lessons. Two blocks off the strip.", url: "https://www.wildhorsesaloon.com" },
   { name: "Bridgestone Bar (Pre-game)", neighborhood: "Lower Broadway", desc: "Outside Bridgestone Arena. Predators game day staple.", url: null },
   { name: "Doc Holliday's Saloon", neighborhood: "Lower Broadway", desc: "Wild West themed honky tonk. Three floors with rooftop.", url: null },
   { name: "Whiskey Bent Saloon", neighborhood: "Lower Broadway", desc: "Cowgirl shooters and live country. Casual local-feeling spot.", url: null },
@@ -2113,6 +2112,33 @@ function showBroadwayBars() {
   });
 
   addMessage("Pro tips: Most Broadway bars have free music starting around 10am. No cover. Tip the bands. Head to upper floors for shorter waits and rooftop views. Walk the strip from 1st to 5th Ave to compare crowds.", 'bot');
+}
+
+const CURATED_COCKTAIL_BARS = [
+  { name: "The Patterson House", neighborhood: "Midtown", desc: "Speakeasy-style cocktail bar. House rules apply. Walk-in only.", url: null },
+  { name: "Old Glory", neighborhood: "Edgehill", desc: "Stunning converted boiler room. Craft cocktails in industrial setting.", url: null },
+  { name: "Pinewood Social", neighborhood: "SoBro", desc: "Cocktails plus bowling, pool, food. Day-to-night social hub.", url: "https://pinewoodsocial.com" },
+  { name: "Bastion", neighborhood: "Wedgewood-Houston", desc: "Tiny attached bar to the Bastion restaurant. Tasting-menu vibe.", url: "https://www.bastionnashville.com" },
+  { name: "Pearl Diver", neighborhood: "Inglewood", desc: "Tiki bar with rum-forward menu. Mai tais and frozen drinks.", url: "https://www.pearldivernashville.com" },
+  { name: "The Fox Bar & Cocktail Club", neighborhood: "East Nashville", desc: "Vintage 1970s lounge feel. Strong list of classics.", url: "https://thefoxbarnashville.com" },
+  { name: "Embers Ski Lodge", neighborhood: "Berry Hill", desc: "Ski-lodge themed cocktail bar with hot chocolate cocktails. Cozy.", url: "https://embersskilodge.com" },
+  { name: "Crying Wolf", neighborhood: "East Nashville", desc: "Late-night dive with strong cocktails and food until 3am.", url: "https://thecryingwolf.com" },
+  { name: "Bad Idea", neighborhood: "East Nashville", desc: "Natural wine and craft cocktails in a small neighborhood spot.", url: "https://www.badideanashville.com" },
+  { name: "Mickey's Tavern", neighborhood: "East Nashville", desc: "Casual neighborhood bar with serious cocktails and pizza.", url: "https://www.mickeystavernnashville.com" },
+  { name: "Butterfly's", neighborhood: "East Nashville", desc: "Glamorous craft cocktails. Reservations recommended.", url: null },
+  { name: "Continental Lounge", neighborhood: "Downtown", desc: "Hotel bar at the Hermitage Hotel. Classic, polished, historic.", url: "https://www.thehermitagehotel.com" },
+  { name: "Sinema", neighborhood: "Melrose", desc: "Art-deco theater turned restaurant and bar. Statement cocktails.", url: "https://sinemanashville.com" },
+  { name: "Le Sel", neighborhood: "12 South", desc: "French brasserie with strong cocktail list. Apéritif culture.", url: "https://lesel.com" },
+  { name: "Husk Bar", neighborhood: "Rutledge Hill", desc: "Bar at the Husk restaurant. Southern ingredients in cocktails.", url: "https://husknashville.com" },
+  { name: "Hathorne", neighborhood: "Sylvan Park", desc: "Restaurant with sophisticated bar program. Reservations help.", url: "https://hathornenashville.com" },
+  { name: "Lyra", neighborhood: "12 South", desc: "Mediterranean restaurant with creative cocktails.", url: "https://lyranashville.com" },
+  { name: "Bourbon Steak Bar", neighborhood: "Downtown", desc: "Michael Mina at the JW Marriott. Bourbon-forward, upscale.", url: "https://www.michaelmina.net/bourbon-steak-nashville" },
+  { name: "L.A. Jackson Rooftop", neighborhood: "The Gulch", desc: "Top of Thompson Hotel. Best cocktails with skyline views.", url: "https://www.lajacksonbar.com" },
+  { name: "White Limozeen", neighborhood: "Midtown", desc: "Pink Dolly-themed rooftop. Reservations recommended.", url: "https://www.graduatehotels.com/nashville/restaurant/white-limozeen" }
+];
+
+function showCocktailBars() {
+  showCuratedThenLive(CURATED_COCKTAIL_BARS, 'cocktail bar speakeasy', 'bar', 'cocktail bars');
 }
 
 function showHonkyTonks() {
