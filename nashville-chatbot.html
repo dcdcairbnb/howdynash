@@ -780,7 +780,22 @@ const NASHVILLE_DATA = {
 
 let navHistory = [];
 let messageSnapshots = [];
-let userLocation = null;
+// Restore cached location from sessionStorage so a refresh does not lose it.
+// Cache for 60 minutes max, then re-fetch.
+const LOCATION_CACHE_KEY = 'howdy-nash-location';
+const LOCATION_CACHE_TTL_MS = 60 * 60 * 1000;
+let userLocation = (function loadCachedLocation() {
+  try {
+    const raw = sessionStorage.getItem(LOCATION_CACHE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (!parsed || !parsed.lat || !parsed.lng || !parsed.savedAt) return null;
+    if (Date.now() - parsed.savedAt > LOCATION_CACHE_TTL_MS) return null;
+    return { lat: parsed.lat, lng: parsed.lng };
+  } catch (e) {
+    return null;
+  }
+})();
 
 // API config. When deployed to Vercel, leave as relative path.
 // For local dev pointing at a hosted backend, change to your Vercel URL.
@@ -907,6 +922,14 @@ function requestLocation() {
         lat: pos.coords.latitude,
         lng: pos.coords.longitude
       };
+      // Persist for the session so a refresh does not lose location.
+      try {
+        sessionStorage.setItem(LOCATION_CACHE_KEY, JSON.stringify({
+          lat: userLocation.lat,
+          lng: userLocation.lng,
+          savedAt: Date.now()
+        }));
+      } catch (e) { /* ignore quota errors */ }
       bar.classList.add('active');
       status.textContent = `📍 Pickup location set (${userLocation.lat.toFixed(3)}, ${userLocation.lng.toFixed(3)})`;
       btn.textContent = 'Refresh';
@@ -3776,6 +3799,18 @@ function maybeShowIosInstallHint() {
 }
 
 checkApiHealth();
+// If we restored a cached location, reflect it in the location bar UI immediately.
+if (userLocation) {
+  setTimeout(() => {
+    const bar = document.getElementById('locationBar');
+    const status = document.getElementById('locationStatus');
+    const btn = document.getElementById('locationBtn');
+    if (bar) bar.classList.add('active');
+    if (status) status.textContent = `📍 Pickup location set (${userLocation.lat.toFixed(3)}, ${userLocation.lng.toFixed(3)})`;
+    if (btn) btn.textContent = 'Refresh';
+    if (typeof updateRideLinks === 'function') updateRideLinks();
+  }, 50);
+}
 setTimeout(() => {
   const ctx = getTimeContext();
   const savedStack = restoreMenuState();
