@@ -1707,6 +1707,21 @@ function routeIntent(text) {
     return;
   }
 
+  if (matches(lower, ['nail salon', 'nail bar', 'manicure', 'pedicure', 'mani pedi', 'nails'])) {
+    showNailSalons();
+    return;
+  }
+
+  if (matches(lower, ['spa', 'spas', 'massage', 'facial', 'wellness', 'cryotherapy', 'float tank', 'day spa'])) {
+    showSpas();
+    return;
+  }
+
+  if (matches(lower, ['shopping', 'shops', 'boutique', 'souvenir', 'souvenirs', 'boots store', 'cowboy boots', 'mall', 'outlet', 'record store'])) {
+    showShopping();
+    return;
+  }
+
   if (matches(lower, ['hotel', 'hotels', 'lodging', 'where to stay', 'place to stay'])) {
     showHotels();
     return;
@@ -1888,6 +1903,9 @@ function showThingsToDoMenu(skipPush) {
     'Book a tour',
     'Photo spots',
     'Bachelorette',
+    'Shopping',
+    'Spas',
+    'Nail salons',
     '← Main menu'
   ]);
 }
@@ -2139,6 +2157,109 @@ const CURATED_COCKTAIL_BARS = [
 
 function showCocktailBars() {
   showCuratedThenLive(CURATED_COCKTAIL_BARS, 'cocktail bar speakeasy', 'bar', 'cocktail bars');
+}
+
+const CURATED_SHOPPING = [
+  // Boots and western wear
+  { name: "Boot Country", neighborhood: "Lower Broadway", desc: "Buy 1 get 2 free boots. Tourist favorite right on Broadway.", url: "https://www.bootcountrynashville.com" },
+  { name: "Betty Boots", neighborhood: "Lower Broadway", desc: "Iconic pink boot store. Wide selection of cowboy boots.", url: "https://bettyboots.com" },
+  { name: "Lucchese", neighborhood: "The Gulch", desc: "High-end handcrafted cowboy boots. Custom fittings available.", url: "https://www.lucchese.com" },
+  { name: "Nashville Cowboy", neighborhood: "Lower Broadway", desc: "Boots, hats, western wear. Touristy but full selection.", url: "https://nashvillecowboy.com" },
+
+  // 12 South boutiques
+  { name: "Draper James", neighborhood: "12 South", desc: "Reese Witherspoon's southern-inspired clothing boutique.", url: "https://draperjames.com" },
+  { name: "White's Mercantile", neighborhood: "12 South", desc: "Holly Williams' general store. Gifts, home goods, clothing.", url: "https://whitesmercantile.com" },
+  { name: "Imogene + Willie", neighborhood: "12 South", desc: "Premium denim made in Nashville. Famous jean shop.", url: "https://imogeneandwillie.com" },
+  { name: "Reese Witherspoon's Draper James", neighborhood: "12 South", desc: "Pink-striped boutique. Photo op outside, shopping inside.", url: "https://draperjames.com" },
+
+  // Marathon Village
+  { name: "Marathon Village", neighborhood: "Marathon Village", desc: "Old auto factory turned shopping district. Boutiques, distilleries, food.", url: "https://www.marathonvillage.com" },
+  { name: "Antique Archaeology", neighborhood: "Marathon Village", desc: "American Pickers store. Vintage finds and TV-show memorabilia.", url: "https://antiquearchaeology.com" },
+
+  // Records and music
+  { name: "Third Man Records", neighborhood: "8th Avenue South", desc: "Jack White's record label and store. Vinyl, novelties, live shows.", url: "https://thirdmanrecords.com" },
+  { name: "Grimey's New & Preloved Music", neighborhood: "East Nashville", desc: "Independent record store. New and used vinyl, deep music selection.", url: "https://www.grimeys.com" },
+  { name: "Ernest Tubb Record Shop", neighborhood: "Lower Broadway", desc: "Country music record store since 1947. Classic spot.", url: "https://etrecordshop.com" },
+
+  // Art and prints
+  { name: "Hatch Show Print", neighborhood: "Downtown", desc: "Historic letterpress print shop. Country music posters and tours.", url: "https://hatchshowprint.com" },
+
+  // Outlets and malls
+  { name: "Opry Mills", neighborhood: "Opry Mills", desc: "Massive outlet mall. 200+ stores including Coach, Nike, Polo.", url: "https://www.simon.com/mall/opry-mills" },
+  { name: "The Mall at Green Hills", neighborhood: "Green Hills", desc: "Upscale mall. Nordstrom, Apple, Tiffany, Lululemon.", url: "https://www.shopgreenhills.com" },
+  { name: "CoolSprings Galleria", neighborhood: "Franklin", desc: "Large mall in Franklin. Macy's, Belk, Dillard's, food court.", url: "https://www.coolspringsgalleria.com" },
+
+  // Hillsboro Village and Hillsboro
+  { name: "Hillsboro Village", neighborhood: "Hillsboro Village", desc: "Walkable shopping strip near Vanderbilt. Indie boutiques and bookstores.", url: null },
+  { name: "Parnassus Books", neighborhood: "Green Hills", desc: "Ann Patchett's independent bookstore. Author events.", url: "https://parnassusbooks.net" },
+
+  // Vintage and thrift
+  { name: "Black Shag Vintage", neighborhood: "East Nashville", desc: "Curated vintage clothing. Western, denim, band tees.", url: "https://www.blackshagvintage.com" },
+  { name: "Hip Zipper", neighborhood: "East Nashville", desc: "Vintage clothing store. Five Points neighborhood.", url: "https://www.hipzipper.com" },
+
+  // Gift and souvenir
+  { name: "Goo Goo Cluster Store", neighborhood: "Downtown", desc: "Original Nashville candy. Make-your-own Goo Goo class available.", url: "https://googoo.com" },
+  { name: "Nashville Souvenirs Broadway", neighborhood: "Lower Broadway", desc: "Tourist souvenirs, t-shirts, magnets. Multiple stores on the strip.", url: null },
+
+  // The Gulch shops
+  { name: "Two Old Hippies", neighborhood: "The Gulch", desc: "Boutique with clothing, jewelry, guitars, and live music.", url: "https://www.twooldhippies.com" }
+];
+
+const CURATED_SPAS = [
+  // Hotel spas
+  { name: "Spa at the Hutton", neighborhood: "Midtown", desc: "Hutton Hotel spa. Massages, facials, couples treatments.", url: "https://www.huttonhotel.com/wellness" },
+  { name: "Spa at JW Marriott", neighborhood: "Downtown", desc: "Upscale hotel spa. Skyline views, full menu of treatments.", url: "https://www.marriott.com/hotels/travel/bnajw" },
+  { name: "Spa at Conrad Nashville", neighborhood: "The Gulch", desc: "Luxury spa at Conrad hotel. Couples suites, sauna, steam room.", url: "https://www.hilton.com/en/hotels/bnacici-conrad-nashville" },
+  { name: "Spa at Four Seasons Nashville", neighborhood: "SoBro", desc: "Full-service hotel spa. Premium massage and facial menu.", url: "https://www.fourseasons.com/nashville" },
+  { name: "Spa at Hermitage Hotel", neighborhood: "Downtown", desc: "Historic hotel's polished spa. Classic treatments, intimate setting.", url: "https://www.thehermitagehotel.com" },
+  { name: "Spa at Thompson Nashville", neighborhood: "The Gulch", desc: "Boutique hotel spa. Massage, facials, and wellness packages.", url: "https://www.thompsonhotels.com/hotels/tennessee/nashville" },
+
+  // Day spas
+  { name: "Woodhouse Day Spa", neighborhood: "Hill Center Brentwood", desc: "Full-service day spa. Massages, facials, body treatments.", url: "https://nashville.woodhousespas.com" },
+  { name: "Spa at Two Five", neighborhood: "12 South", desc: "Local day spa with massage, skincare, and bridal party packages.", url: "https://spatwofive.com" },
+  { name: "Massage Envy", neighborhood: "Multiple locations", desc: "Chain massage and facial spa. Walk-ins, appointments, memberships.", url: "https://www.massageenvy.com" },
+  { name: "Hand and Stone Massage and Facial Spa", neighborhood: "Multiple locations", desc: "Chain spa with extended hours. Massage and skincare packages.", url: "https://www.handandstone.com" },
+
+  // Wellness
+  { name: "Float Nashville", neighborhood: "Berry Hill", desc: "Sensory deprivation float tanks. Stress relief, recovery.", url: "https://floatnashville.com" },
+  { name: "Restore Hyper Wellness", neighborhood: "Multiple locations", desc: "Cryotherapy, IV drips, red light therapy, infrared sauna.", url: "https://www.restore.com" },
+  { name: "iCRYO", neighborhood: "Brentwood", desc: "Cryotherapy, IV hydration, compression therapy, body sculpting.", url: "https://icryo.com" },
+
+  // Mobile bachelorette spa
+  { name: "Mobile Spa Nashville", neighborhood: "Comes to you", desc: "In-room massage and bachelorette spa parties. Book to your hotel or rental.", url: "https://www.mobilespanashville.com" },
+  { name: "Belle Meade Mobile Spa", neighborhood: "Comes to you", desc: "Mobile massages and bachelorette packages delivered to your spot.", url: null }
+];
+
+const CURATED_NAIL_SALONS = [
+  // Walk-in friendly
+  { name: "Polished Nail Bar", neighborhood: "12 South", desc: "Trendy nail bar. Manicures, pedicures, gel, dip powder.", url: "https://www.polishednailbar.com" },
+  { name: "Cherry Nail Bar", neighborhood: "East Nashville", desc: "Hip salon with creative nail art. Walk-ins and appointments.", url: "https://www.cherrynailbar.com" },
+  { name: "Bond Nail Studio", neighborhood: "The Gulch", desc: "Modern nail studio. Gel, dip, full nail art menu.", url: null },
+  { name: "Nashville Nail and Spa", neighborhood: "Green Hills", desc: "Full-service nail salon. Manicure, pedicure, waxing.", url: null },
+
+  // Higher-end
+  { name: "Bee's Knees Nail Salon", neighborhood: "Hillsboro Village", desc: "Eco-conscious salon. Non-toxic polishes, organic products.", url: "https://www.beeskneesnashville.com" },
+  { name: "The Nail Bar", neighborhood: "12 South", desc: "Boutique nail bar with bachelorette packages. Champagne available.", url: null },
+
+  // Chains and dependable
+  { name: "Frenchies Modern Nail Care", neighborhood: "Multiple locations", desc: "Chain offering manicures, pedicures, and gel in clean setting.", url: "https://frenchiesnails.com" },
+  { name: "Hammer & Nails", neighborhood: "The Gulch", desc: "Grooming salon for men. Nail care, hand and foot treatments.", url: "https://hammerandnailsgrooming.com" },
+
+  // Bachelorette favorites
+  { name: "Mani Pedi Mobile Nashville", neighborhood: "Comes to you", desc: "Mobile manicure and pedicure parties. Book for bachelorettes.", url: null },
+  { name: "Pampered Bachelorette Nashville", neighborhood: "Comes to you", desc: "In-rental nail parties with champagne. Group bookings.", url: null }
+];
+
+function showShopping() {
+  showCuratedThenLive(CURATED_SHOPPING, 'shopping boutique store', 'store', 'shopping');
+}
+
+function showSpas() {
+  showCuratedThenLive(CURATED_SPAS, 'day spa massage wellness', 'spa', 'spas');
+}
+
+function showNailSalons() {
+  showCuratedThenLive(CURATED_NAIL_SALONS, 'nail salon manicure pedicure', 'beauty_salon', 'nail salons');
 }
 
 function showHonkyTonks() {
