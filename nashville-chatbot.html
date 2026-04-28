@@ -1307,6 +1307,26 @@ function buildIcsEvent(name, date, time, venue, address, url) {
 
 // Menu-based back navigation
 let menuStack = ['main'];
+const MENU_STATE_KEY = 'howdy-nash-menu-state';
+
+function saveMenuState() {
+  try {
+    sessionStorage.setItem(MENU_STATE_KEY, JSON.stringify(menuStack));
+  } catch (e) {}
+}
+
+function restoreMenuState() {
+  try {
+    const raw = sessionStorage.getItem(MENU_STATE_KEY);
+    if (!raw) return null;
+    const stack = JSON.parse(raw);
+    if (!Array.isArray(stack) || stack.length === 0) return null;
+    return stack;
+  } catch (e) {
+    return null;
+  }
+}
+
 function snapshot(label) {
   // legacy hook, no longer drives back nav
 }
@@ -1314,6 +1334,7 @@ function pushMenu(menuName) {
   if (menuStack[menuStack.length - 1] !== menuName) {
     menuStack.push(menuName);
   }
+  saveMenuState();
   updateBackBtn();
 }
 function updateBackBtn() {
@@ -1336,7 +1357,19 @@ function goBack() {
   else if (target === 'around') showGetAroundMenu(true);
   else if (target === 'essentials') showEssentialsMenu(true);
   else showMainMenu();
+  saveMenuState();
   updateBackBtn();
+}
+
+function navigateToSavedMenu(menuName) {
+  const hdr = document.getElementById('appHeader');
+  if (hdr) hdr.classList.add('slim');
+  if (menuName === 'eat') showEatDrinkMenu(true);
+  else if (menuName === 'do') showThingsToDoMenu(true);
+  else if (menuName === 'around') showGetAroundMenu(true);
+  else if (menuName === 'essentials') showEssentialsMenu(true);
+  else if (menuName === 'saved') showSavedSpots();
+  else showMainMenu();
 }
 
 function goHome() {
@@ -1344,6 +1377,7 @@ function goHome() {
   messageSnapshots = [];
   menuStack = ['main'];
   scrollAnchor = null;
+  saveMenuState();
   const hdr = document.getElementById('appHeader');
   if (hdr) hdr.classList.remove('slim');
   updateBackBtn();
@@ -3211,8 +3245,18 @@ function maybeShowIosInstallHint() {
 checkApiHealth();
 setTimeout(() => {
   const ctx = getTimeContext();
-  addMessage(ctx.greeting, 'bot');
-  setTimeout(() => showMainMenu(), 400);
+  const savedStack = restoreMenuState();
+  if (savedStack && savedStack.length > 1) {
+    // Restore prior menu after a brief welcome
+    menuStack = savedStack;
+    addMessage(`Welcome back. Picking up where you were.`, 'bot');
+    const target = savedStack[savedStack.length - 1];
+    setTimeout(() => navigateToSavedMenu(target), 300);
+    setTimeout(() => updateBackBtn(), 350);
+  } else {
+    addMessage(ctx.greeting, 'bot');
+    setTimeout(() => showMainMenu(), 400);
+  }
   setTimeout(() => snapshot('initial'), 500);
   setTimeout(() => maybeShowIosInstallHint(), 1000);
   maybeShowWelcomeTour();
