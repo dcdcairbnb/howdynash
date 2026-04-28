@@ -72,6 +72,33 @@
     flex-direction: column;
     overflow: hidden;
   }
+  /* Tablet (iPad portrait, small laptops) */
+  @media (min-width: 768px) and (max-width: 1199px) {
+    .container {
+      max-width: 720px;
+      height: 92vh;
+      max-height: 1100px;
+    }
+    .messages { padding: 28px 32px; }
+    .header { padding: 22px 28px; }
+    .input-area { padding: 16px 20px; }
+  }
+  /* Laptop and desktop */
+  @media (min-width: 1200px) {
+    .container {
+      max-width: 900px;
+      height: 92vh;
+      max-height: 1300px;
+    }
+    .messages { padding: 32px 40px; }
+    .header { padding: 24px 32px; }
+    .input-area { padding: 18px 24px; }
+    .header-text h1 { font-size: 22px; }
+  }
+  /* Large desktop */
+  @media (min-width: 1600px) {
+    .container { max-width: 1100px; }
+  }
   @media (max-width: 600px) {
     html, body {
       overflow: hidden;
@@ -132,7 +159,7 @@
   .header.slim .header-text p { display: none; }
   .header.slim .nav-btn { width: 30px; height: 30px; font-size: 13px; }
   .header .avatar, .header .nav-btn, .header h1 { transition: all 0.25s ease; }
-  .header-text { flex: 1; }
+  .header-text { flex: 1; text-align: center; }
   .nav-btn {
     background: rgba(255,255,255,0.2);
     border: none;
@@ -693,7 +720,35 @@ const NASHVILLE_DATA = {
     { name: "Belle Meade Historic Site", type: "Historic", desc: "Antebellum estate with winery tastings.", url: "https://bellemeade.com" },
     { name: "Frist Art Museum", type: "Museum", desc: "Rotating exhibitions in a beautiful art deco building.", url: "https://fristartmuseum.org" },
     { name: "Bicentennial Capitol Mall", type: "Park", desc: "Walking park with Nashville history exhibits.", url: null },
-    { name: "Music Row", type: "Historic district", desc: "Heart of the music industry. RCA Studio B tours available.", url: "https://studiob.org" }
+    { name: "Music Row", type: "Historic district", desc: "Heart of the music industry. RCA Studio B tours available.", url: "https://studiob.org" },
+    { name: "National Museum of African American Music", type: "Museum", desc: "First museum dedicated to celebrating Black music's influence on American culture. Newer downtown landmark.", url: "https://nmaam.org" },
+    { name: "RCA Studio B", type: "Music history", desc: "Historic studio where Elvis recorded 200+ songs. Tour through Country Music Hall of Fame.", url: "https://studiob.org" },
+    { name: "The Hermitage", type: "Historic home", desc: "Andrew Jackson's plantation home and museum. 30 minutes east of downtown.", url: "https://thehermitage.com" },
+    { name: "Tennessee State Capitol", type: "Government", desc: "Greek revival statehouse with free guided tours. Andrew Jackson buried out front.", url: "https://www.capitol.tn.gov" },
+    { name: "Tennessee State Museum", type: "Museum", desc: "Free comprehensive museum covering Tennessee history from prehistory to today.", url: "https://tnmuseum.org" },
+    { name: "Cheekwood Estate & Gardens", type: "Gardens", desc: "55-acre botanical gardens with mansion, art museum, sculpture trail. Best in spring and during Holiday Lights.", url: "https://cheekwood.org" },
+    { name: "Nashville Zoo at Grassmere", type: "Zoo", desc: "200-acre zoo with red pandas, giraffes, kangaroo encounters. Family favorite.", url: "https://nashvillezoo.org" },
+    { name: "Adventure Science Center", type: "Family", desc: "Hands-on science museum and planetarium. Great for kids and rainy days.", url: "https://www.adventuresci.org" },
+    { name: "Patsy Cline Museum", type: "Museum", desc: "Tribute to the country queen, located above the Johnny Cash Museum.", url: "https://patsymuseum.com" },
+    { name: "Musicians Hall of Fame", type: "Museum", desc: "Honors session musicians and producers across all genres. Often overlooked but excellent.", url: "https://musicianshalloffame.com" },
+    { name: "George Jones Museum", type: "Museum", desc: "Tribute to the country legend. Includes a rooftop bar with skyline views.", url: "https://georgejones.com" },
+    { name: "Hatch Show Print", type: "Workshop tour", desc: "175-year-old letterpress shop. Tours daily, walls of vintage music posters.", url: "https://hatchshowprint.com" },
+    { name: "Third Man Records", type: "Record store", desc: "Jack White's record label and store with live performance space and recording booth.", url: "https://thirdmanrecords.com" },
+    { name: "Nashville Farmers' Market", type: "Market", desc: "Year-round market with produce, prepared food, restaurants, and artisan vendors.", url: "https://nashvillefarmersmarket.org" },
+    { name: "Schermerhorn Symphony Center", type: "Performance venue", desc: "Home of the Nashville Symphony. Self-guided tours when not in performance.", url: "https://www.nashvillesymphony.org" },
+    { name: "Belmont Mansion", type: "Historic home", desc: "1853 Italianate mansion on Belmont University campus. Free parking, $20 tour.", url: "https://belmontmansion.com" },
+    { name: "Travellers Rest Plantation", type: "Historic home", desc: "1799 home of Judge John Overton, mentor to Andrew Jackson. South of downtown.", url: "https://travellersrestplantation.org" },
+    { name: "Bridgestone Arena", type: "Sports/concerts", desc: "Home of the Nashville Predators (NHL) and major concert tours. On Lower Broadway.", url: "https://www.bridgestonearena.com" },
+    { name: "Nissan Stadium", type: "Sports venue", desc: "Home of the Tennessee Titans (NFL) and Nashville SC (MLS until GEODIS Park). Riverfront.", url: "https://www.tennesseetitans.com/nissan-stadium" },
+    { name: "Radnor Lake State Park", type: "Nature", desc: "85-acre lake with miles of trails. Wildlife sightings (eagles, deer, turkey). 15 min from downtown.", url: "https://tnstateparks.com/parks/radnor-lake" },
+    { name: "Percy Warner Park", type: "Park", desc: "Massive city park with hiking, scenic drives, horse trails, and Steeplechase course.", url: "https://www.nashville.gov/departments/parks/percy-warner" },
+    { name: "Shelby Bottoms Greenway", type: "Park", desc: "5-mile greenway along the Cumberland River. Bike, walk, watch wildlife.", url: "https://www.nashville.gov/departments/parks/shelby-bottoms" },
+    { name: "Pedestrian Bridge", type: "Landmark", desc: "Free walking bridge across the Cumberland River. Best skyline views in Nashville at sunset.", url: null },
+    { name: "Nashville Public Library Downtown", type: "Architecture", desc: "Stunning beaux-arts library on Church Street. Civil rights room exhibit. Free.", url: "https://library.nashville.org" },
+    { name: "Madame Tussauds Nashville", type: "Attraction", desc: "Wax figures of country music stars. In Opry Mills mall area.", url: "https://www.madametussauds.com/nashville" },
+    { name: "General Jackson Showboat", type: "Cruise", desc: "Riverboat with dinner shows on the Cumberland. Multi-hour entertainment cruises.", url: "https://generaljackson.com" },
+    { name: "Marathon Village", type: "District", desc: "Old Marathon Motor Works factory turned shops, distilleries, antiques, and Antique Archaeology (American Pickers).", url: "https://marathonvillage.com" },
+    { name: "Goo Goo Cluster Shop", type: "Quirky", desc: "First combination candy bar in America (1912). Build your own at the flagship downtown.", url: "https://googoo.com" }
   ],
   events: [
     { name: "Grand Ole Opry Show", date: "Tue, Fri, Sat nightly", venue: "Grand Ole Opry House", url: "https://www.opry.com/shows" },
@@ -2219,10 +2274,10 @@ async function showWeather() {
     addMessage(html, 'bot', true);
 
     if (periods.length > 1) {
-      const upcoming = periods.slice(1, 5).map(p =>
+      const upcoming = periods.slice(1, 8).map(p =>
         `<div style="padding:6px 0;border-bottom:1px solid #eee;"><strong>${p.name}:</strong> ${p.temperature}°${p.temperatureUnit}, ${p.shortForecast}</div>`
       ).join('');
-      addMessage(`<div class="card"><div class="card-title">Next 4 periods</div>${upcoming}</div>`, 'bot', true);
+      addMessage(`<div class="card"><div class="card-title">Next few days</div>${upcoming}</div>`, 'bot', true);
     }
   } catch (e) {
     addMessage("Weather service error. Try again later.", 'bot');
@@ -2607,11 +2662,24 @@ function showRestaurants(list, header) {
 function showLiveMusic() {
   addMessage("Nashville is built on live music. Here is where to find it:", 'bot');
   const venues = [
-    { name: "Lower Broadway Honky Tonks", desc: "Free live music starting at 10am daily. Tootsie's, Robert's, Acme.", url: null },
+    { name: "Lower Broadway Honky Tonks", desc: "Free live music starting at 10am daily. Tootsie's, Robert's, Acme, Legends Corner.", url: null },
     { name: "Grand Ole Opry", desc: "The institution. Shows Tue, Fri, Sat. Get tickets in advance.", url: "https://www.opry.com" },
-    { name: "Bluebird Cafe", desc: "Intimate songwriter rounds. Reservations open weeks ahead.", url: "https://bluebirdcafe.com" },
-    { name: "Ryman Auditorium", desc: "Touring artists in the historic venue.", url: "https://ryman.com" },
-    { name: "Station Inn", desc: "Bluegrass every night in The Gulch.", url: "https://stationinn.com" }
+    { name: "Bluebird Cafe", desc: "Intimate songwriter rounds in Green Hills. Reservations open weeks ahead.", url: "https://bluebirdcafe.com" },
+    { name: "Ryman Auditorium", desc: "Mother Church of Country Music. Touring artists nightly in the historic venue.", url: "https://ryman.com" },
+    { name: "Station Inn", desc: "Bluegrass legend in The Gulch. Cash only. Tiny, magical, must-do.", url: "https://stationinn.com" },
+    { name: "Exit/In", desc: "Indie rock and singer-songwriters on Elliston Place. Historic and gritty.", url: "https://exitin.com" },
+    { name: "3rd and Lindsley", desc: "Wedgewood-Houston live venue with food. Diverse genres, big-name artists.", url: "https://www.3rdandlindsley.com" },
+    { name: "The 5 Spot", desc: "East Nashville indie bands and dance nights. Locals' favorite.", url: "https://www.the5spotnashville.com" },
+    { name: "The Basement", desc: "Belmont underground rock club. New artists, intimate space.", url: "https://thebasementnashville.com" },
+    { name: "Brooklyn Bowl Nashville", desc: "Germantown bowling, food, big-name concerts in one venue.", url: "https://www.brooklynbowl.com/nashville" },
+    { name: "City Winery Nashville", desc: "Cannery Row singer-songwriter shows in an upscale wine bar.", url: "https://citywinery.com/nashville" },
+    { name: "Listening Room Cafe", desc: "SoBro songwriter showcases. Dinner and drinks while you listen.", url: "https://www.listeningroomcafe.com" },
+    { name: "Skull's Rainbow Room", desc: "Historic Printers Alley supper club. Jazz, burlesque, supper club vibe.", url: "https://www.skullsrainbowroom.com" },
+    { name: "Bourbon Street Blues Bar", desc: "New Orleans-style blues club in Printers Alley. Live music nightly.", url: "https://www.bourbonstreetbluesandboogiebar.com" },
+    { name: "Bobby's Idle Hour", desc: "Songwriters' bar that survived Music Row redevelopment. Pure tradition.", url: "https://www.bobbysidlehour.com" },
+    { name: "Schermerhorn Symphony Center", desc: "Home of the Nashville Symphony. Classical, pops, and major touring acts.", url: "https://www.nashvillesymphony.org" },
+    { name: "Marathon Music Works", desc: "Mid-size venue in Marathon Village. National touring acts.", url: "https://www.marathonmusicworks.com" },
+    { name: "Cannery Hall", desc: "Reopened 2024. Multi-room music venue in old cannery building.", url: "https://canneryhall.com" }
   ];
   venues.forEach(v => {
     const star = renderSaveStar({ name: v.name, note: v.desc, address: 'Nashville' });
