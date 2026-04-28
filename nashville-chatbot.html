@@ -2655,7 +2655,7 @@ async function showFlights() {
 }
 const AWIN_PUBLISHER_ID = '2873227';
 const AWIN_BOOKING_MERCHANT_ID = '';
-const EXPEDIA_CAMREF = '';
+const EXPEDIA_CAMREF = '1101l5JmBk';
 const EXPEDIA_TPID = '8000';
 
 function buildBookingUrl() {
@@ -2714,8 +2714,14 @@ async function showHotels() {
             <div class="card-desc">${h.address || ''}</div>`;
           if (h.mapsUrl) html += `<a href="${h.mapsUrl}" target="_blank" rel="noopener" style="background:#34a853;color:#fff;">Open in Maps</a>`;
           if (h.website) html += `<a href="${h.website}" target="_blank" rel="noopener">Hotel website</a>`;
-          // Booking search for the specific hotel name
-          const expediaSearch = `https://www.expedia.com/Hotel-Search?destination=${encodeURIComponent(h.name + ' Nashville TN')}`;
+          // Booking search for the specific hotel name with camref tracking
+          const expediaParams = new URLSearchParams();
+          expediaParams.set('destination', h.name + ' Nashville TN');
+          if (EXPEDIA_CAMREF) {
+            expediaParams.set('camref', EXPEDIA_CAMREF);
+            expediaParams.set('tpid', EXPEDIA_TPID);
+          }
+          const expediaSearch = `https://www.expedia.com/Hotel-Search?${expediaParams}`;
           html += `<a href="${expediaSearch}" target="_blank" rel="noopener" style="background:#FFC72C;color:#000;">Check Expedia rates</a>`;
           html += `<a href="#" onclick="return rideClick('uber','${safeName}',event)" style="background:#000;">Uber here</a>`;
           html += `<a href="#" onclick="return rideClick('lyft','${safeName}',event)" style="background:#ff00bf;">Lyft here</a>`;
