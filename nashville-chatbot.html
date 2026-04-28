@@ -2448,37 +2448,45 @@ async function showEvents() {
 }
 
 async function showAttractions() {
-  if (apiServices.google) {
-    addMessage("Pulling live attractions from Google Places...", 'bot');
-    const live = await apiSearchPlaces('top tourist attractions', 'tourist_attraction');
-    if (live && live.length) {
-      addMessage(`${live.length} top attractions in Nashville:`, 'bot');
-      live.slice(0, 8).forEach(a => {
-        const distStr = a.distanceMiles != null ? ` · 📍 ${a.distanceMiles} mi` : '';
-        const star = renderSaveStar({ name: a.name, note: 'Nashville attraction', address: a.address || '' });
-        let html = `<div class="card">
-          <div class="card-title">${star}${a.name}</div>
-          <div class="card-meta">${a.rating ? '★' + a.rating : ''} ${a.reviewCount ? '(' + a.reviewCount + ' reviews)' : ''}${distStr}</div>
-          <div class="card-desc">${a.address || ''}</div>`;
-        if (a.mapsUrl) html += `<a href="${a.mapsUrl}" target="_blank">Open in Maps</a>`;
-        if (a.website) html += `<a href="${a.website}" target="_blank">Website</a>`;
-        html += `</div>`;
-        addMessage(html, 'bot', true);
-      });
-      return;
-    }
-  }
-  addMessage("Top things to see and do:", 'bot');
-  NASHVILLE_DATA.attractions.slice(0, 6).forEach(a => {
+  // Always show curated list first since these are guaranteed Nashville must-sees.
+  addMessage("Top Nashville attractions:", 'bot');
+  NASHVILLE_DATA.attractions.forEach(a => {
     const star = renderSaveStar({ name: a.name, note: a.type, address: 'Nashville' });
     let html = `<div class="card">
       <div class="card-title">${star}${a.name}</div>
       <div class="card-meta">${a.type}</div>
       <div class="card-desc">${a.desc}</div>`;
     if (a.url) html += `<a href="${a.url}" target="_blank">Learn more</a>`;
+    const mapsUrl = `https://www.google.com/maps/search/${encodeURIComponent(a.name + ' Nashville TN')}`;
+    html += `<a href="${mapsUrl}" target="_blank" rel="noopener" style="background:#34a853;color:#fff;">Open in Maps</a>`;
     html += `</div>`;
     addMessage(html, 'bot', true);
   });
+
+  // Then add live API attractions if available.
+  if (!apiServices.google) return;
+  try {
+    const live = await apiSearchPlaces('Nashville tourist attractions museums landmarks', '');
+    if (!live || !live.length) return;
+    const curatedNames = new Set(NASHVILLE_DATA.attractions.map(a => a.name.toLowerCase()));
+    const extras = live.filter(a => a.name && !curatedNames.has(a.name.toLowerCase())).slice(0, 8);
+    if (extras.length === 0) return;
+    addMessage(`${extras.length} more nearby attractions:`, 'bot');
+    extras.forEach(a => {
+      const distStr = a.distanceMiles != null ? ` · 📍 ${a.distanceMiles} mi` : '';
+      const star = renderSaveStar({ name: a.name, note: 'Nashville attraction', address: a.address || '' });
+      let html = `<div class="card">
+        <div class="card-title">${star}${a.name}</div>
+        <div class="card-meta">${a.rating ? '★' + a.rating : ''} ${a.reviewCount ? '(' + a.reviewCount + ' reviews)' : ''}${distStr}</div>
+        <div class="card-desc">${a.address || ''}</div>`;
+      if (a.mapsUrl) html += `<a href="${a.mapsUrl}" target="_blank">Open in Maps</a>`;
+      if (a.website) html += `<a href="${a.website}" target="_blank">Website</a>`;
+      html += `</div>`;
+      addMessage(html, 'bot', true);
+    });
+  } catch (e) {
+    console.warn('attractions API failed', e);
+  }
 }
 
 function showNeighborhoods(text) {
