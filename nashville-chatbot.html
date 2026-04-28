@@ -1466,7 +1466,7 @@ function showBachelorette() {
 
 const VIATOR_PID = 'U00808374';
 const GETYOURGUIDE_PID = 'ACQGDWW';
-const AIRBNB_AFFILIATE_TAG = '';
+const AWIN_AIRBNB_MERCHANT_ID = '11890';
 const VRBO_AFFILIATE_TAG = '';
 
 function buildAirbnbUrl() {
@@ -1478,10 +1478,8 @@ function buildAirbnbUrl() {
   if (userLocation) {
     url += `?ne_lat=${userLocation.lat + 0.05}&ne_lng=${userLocation.lng + 0.05}&sw_lat=${userLocation.lat - 0.05}&sw_lng=${userLocation.lng - 0.05}&search_by_map=true`;
   }
-  if (AIRBNB_AFFILIATE_TAG) {
-    url += (url.includes('?') ? '&' : '?') + 'awin_id=' + AIRBNB_AFFILIATE_TAG;
-  }
-  return url;
+  if (!AWIN_PUBLISHER_ID) return url;
+  return `https://www.awin1.com/cread.php?awinmid=${AWIN_AIRBNB_MERCHANT_ID}&awinaffid=${AWIN_PUBLISHER_ID}&clickref=&p=${encodeURIComponent(url)}`;
 }
 
 function buildVrboUrl() {
@@ -1649,7 +1647,8 @@ async function showFlights() {
     addMessage("Flight service error. Try flynashville.com.", 'bot');
   }
 }
-const BOOKING_AFFILIATE_ID = '';
+const AWIN_PUBLISHER_ID = '2873227';
+const AWIN_BOOKING_MERCHANT_ID = '2103';
 const EXPEDIA_CAMREF = '';
 const EXPEDIA_TPID = '8000';
 
@@ -1660,10 +1659,10 @@ function buildBookingUrl() {
     params.set('latitude', userLocation.lat);
     params.set('longitude', userLocation.lng);
   }
-  if (BOOKING_AFFILIATE_ID) {
-    params.set('aid', BOOKING_AFFILIATE_ID);
-  }
-  return `https://www.booking.com/searchresults.html?${params}`;
+  const directUrl = `https://www.booking.com/searchresults.html?${params}`;
+  if (!AWIN_PUBLISHER_ID) return directUrl;
+  const awinUrl = `https://www.awin1.com/cread.php?awinmid=${AWIN_BOOKING_MERCHANT_ID}&awinaffid=${AWIN_PUBLISHER_ID}&clickref=&p=${encodeURIComponent(directUrl)}`;
+  return awinUrl;
 }
 
 function buildExpediaUrl() {
