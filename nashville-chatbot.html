@@ -1528,12 +1528,12 @@ function routeIntent(text) {
     return;
   }
 
-  if (matches(lower, ['event', 'happening', 'going on', 'this week', 'tonight', 'weekend'])) {
+  if (matches(lower, ['what\'s happening', 'whats happening', 'happening', 'going on', 'this week', 'tonight', 'weekend', 'event'])) {
     showEvents();
     return;
   }
 
-  if (matches(lower, ['attraction', 'see', 'visit', 'museum', 'tour', 'sightseeing', 'do in nashville', 'things to do'])) {
+  if (matches(lower, ['attraction', 'tourist attractions', 'museum', 'sightseeing', 'tourist sites', 'landmarks'])) {
     showAttractions();
     return;
   }
@@ -1663,7 +1663,8 @@ function showThingsToDoMenu(skipPush) {
   addQuickReplies([
     'Live music tonight',
     'Festivals',
-    'Things to do',
+    'What\'s happening',
+    'Tourist attractions',
     'Sports',
     'Book a tour',
     'Photo spots',
@@ -2130,7 +2131,7 @@ function showGroceries() {
 }
 
 async function showFestivals() {
-  addMessage("Pulling Nashville festivals and street events...", 'bot');
+  addMessage("Pulling Nashville festivals and special events...", 'bot');
   try {
     const url = new URL(`${API_BASE}/api/festivals`, window.location.origin);
     if (userLocation) {
@@ -2141,25 +2142,39 @@ async function showFestivals() {
     if (!r.ok) throw new Error('API error');
     const data = await r.json();
     const list = data.festivals || [];
-    if (!list.length) {
-      addMessage("No festivals found right now. Big ones come every June (CMA Fest), August (Tomato Art Fest), September (Pilgrimage).", 'bot');
-      return;
+    if (list.length) {
+      addMessage(`Found ${list.length} upcoming Nashville festivals and special events:`, 'bot');
+      list.slice(0, 15).forEach(f => {
+        const dateStr = f.date + (f.time ? ' at ' + f.time : '');
+        const distStr = f.distanceMiles != null ? ` · 📍 ${f.distanceMiles} mi` : '';
+        let html = `<div class="card">
+          <div class="card-title">${f.name}</div>
+          <div class="card-meta">${dateStr || 'TBA'} · ${f.venue || ''}${distStr}</div>
+          <div class="card-desc">${f.genre || ''}${f.priceMin ? ' · From $' + f.priceMin : ''}</div>`;
+        if (f.url) html += `<a href="${f.url}" target="_blank">Tickets & info</a>`;
+        if (f.date) {
+          const icsUrl = buildIcsEvent(f.name, f.date, f.time, f.venue, f.address || '', f.url);
+          html += `<a href="${icsUrl}" download="howdy-nashville-event.ics" style="background:#2563eb;color:#fff;">📅 Add to calendar</a>`;
+        }
+        html += `</div>`;
+        addMessage(html, 'bot', true);
+      });
+    } else {
+      addMessage("No festivals found in our feeds right now. Try the local sources below for the most complete list.", 'bot');
     }
-    addMessage(`Found ${list.length} upcoming Nashville festivals and special events:`, 'bot');
-    list.slice(0, 12).forEach(f => {
-      const dateStr = f.date + (f.time ? ' at ' + f.time : '');
-      const distStr = f.distanceMiles != null ? ` · 📍 ${f.distanceMiles} mi` : '';
-      let html = `<div class="card">
-        <div class="card-title">${f.name}</div>
-        <div class="card-meta">${dateStr || 'TBA'} · ${f.venue || ''}${distStr}</div>
-        <div class="card-desc">${f.genre || ''}${f.priceMin ? ' · From $' + f.priceMin : ''}</div>`;
-      if (f.url) html += `<a href="${f.url}" target="_blank">Tickets & info</a>`;
-      html += `</div>`;
-      addMessage(html, 'bot', true);
-    });
   } catch (e) {
-    addMessage("Couldn't pull live festival data. The classics: CMA Fest (June), Tomato Art Fest (August), Pilgrimage (September), Beale Street (May).", 'bot');
+    addMessage("Couldn't pull live festival data right now. The classics: CMA Fest (June), Tomato Art Fest (August), Pilgrimage (September), Beale Street (May).", 'bot');
   }
+
+  // Always show local source links so users can dig deeper
+  const localSources = `<div class="card">
+    <div class="card-title">More Nashville events</div>
+    <div class="card-desc">For the most complete local calendar, check these Nashville guides directly:</div>
+    <a href="https://www.visitmusiccity.com/nashville-events/upcoming-events" target="_blank" rel="noopener" style="background:#d62828;color:#fff;">Visit Music City Events</a>
+    <a href="https://nashvilleguru.com/nashville-events" target="_blank" rel="noopener" style="background:#444;color:#fff;">Nashville Guru</a>
+    <a href="https://www.nashvillescene.com/calendar" target="_blank" rel="noopener" style="background:#777;color:#fff;">Nashville Scene Calendar</a>
+  </div>`;
+  addMessage(localSources, 'bot', true);
 }
 
 function showDeliveryOptions() {

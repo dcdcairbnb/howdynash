@@ -1,5 +1,5 @@
-// Festivals: Ticketmaster + Nashville Open Data special events.
-// Uses geolocation when provided.
+// Festivals: Ticketmaster (multiple categories) + Nashville Open Data special events.
+// Pulls events from now through 90 days out, sorted by date or distance.
 
 function haversineMiles(a, b) {
   if (!a || !b) return null;
@@ -12,18 +12,29 @@ function haversineMiles(a, b) {
   return Number((R * 2 * Math.atan2(Math.sqrt(x), Math.sqrt(1-x))).toFixed(2));
 }
 
-async function fetchTicketmasterFestivals(lat, lng) {
+function isoDate(daysOffset = 0) {
+  const d = new Date();
+  d.setDate(d.getDate() + daysOffset);
+  return d.toISOString().split('.')[0] + 'Z';
+}
+
+async function fetchTicketmasterFestivals(lat, lng, classificationName) {
   if (!process.env.TICKETMASTER_KEY) return [];
   try {
     const url = new URL('https://app.ticketmaster.com/discovery/v2/events.json');
     url.searchParams.set('apikey', process.env.TICKETMASTER_KEY);
-    url.searchParams.set('classificationName', 'Festival');
-    url.searchParams.set('size', '20');
+    if (classificationName) {
+      url.searchParams.set('classificationName', classificationName);
+    }
+    url.searchParams.set('size', '40');
+    url.searchParams.set('startDateTime', isoDate(0));
+    url.searchParams.set('endDateTime', isoDate(90));
+
     if (lat && lng) {
       url.searchParams.set('latlong', `${lat},${lng}`);
       url.searchParams.set('radius', '50');
       url.searchParams.set('unit', 'miles');
-      url.searchParams.set('sort', 'distance,asc');
+      url.searchParams.set('sort', 'date,asc');
     } else {
       url.searchParams.set('city', 'Nashville');
       url.searchParams.set('stateCode', 'TN');
@@ -51,10 +62,68 @@ async function fetchTicketmasterFestivals(lat, lng) {
         distanceMiles: userPos && venueCoords ? haversineMiles(userPos, venueCoords) : null,
         url: e.url,
         image: e.images?.[0]?.url,
-        genre: e.classifications?.[0]?.genre?.name,
+        genre: e.classifications?.[0]?.genre?.name || classificationName || 'Event',
         priceMin: e.priceRanges?.[0]?.min,
         priceMax: e.priceRanges?.[0]?.max,
         source: 'ticketmaster'
+      };
+    });
+  } catch (e) {
+    return [];
+  }
+}
+
+async function fetchEventbriteFestivals(lat, lng) {
+  if (!process.env.EVENTBRITE_PRIVATE_TOKEN) return [];
+  try {
+    const url = new URL('https://www.eventbriteapi.com/v3/events/search/');
+    if (lat && lng) {
+      url.searchParams.set('location.latitude', String(lat));
+      url.searchParams.set('location.longitude', String(lng));
+      url.searchParams.set('location.within', '50mi');
+    } else {
+      url.searchParams.set('location.address', 'Nashville, TN');
+      url.searchParams.set('location.within', '50mi');
+    }
+    url.searchParams.set('q', 'festival OR fest OR street fair OR market OR celebration');
+    url.searchParams.set('expand', 'venue');
+    url.searchParams.set('sort_by', 'date');
+    url.searchParams.set('start_date.range_start', new Date().toISOString().split('.')[0] + 'Z');
+    const ninetyDays = new Date();
+    ninetyDays.setDate(ninetyDays.getDate() + 90);
+    url.searchParams.set('start_date.range_end', ninetyDays.toISOString().split('.')[0] + 'Z');
+
+    const r = await fetch(url, {
+      headers: {
+        Authorization: `Bearer ${process.env.EVENTBRITE_PRIVATE_TOKEN}`,
+        'Content-Type': 'application/json'
+      }
+    });
+    if (!r.ok) return [];
+    const data = await r.json();
+    const userPos = (lat && lng) ? { latitude: Number(lat), longitude: Number(lng) } : null;
+    return (data.events || []).map(e => {
+      const venue = e.venue;
+      const venueCoords = (venue?.latitude && venue?.longitude) ? {
+        latitude: Number(venue.latitude),
+        longitude: Number(venue.longitude)
+      } : null;
+      const start = e.start?.local || '';
+      return {
+        id: 'eb:' + e.id,
+        name: e.name?.text || 'Event',
+        date: start ? start.split('T')[0] : null,
+        time: start ? start.split('T')[1]?.slice(0, 5) : null,
+        venue: venue?.name || '',
+        address: venue?.address?.localized_address_display || '',
+        coords: venueCoords,
+        distanceMiles: userPos && venueCoords ? haversineMiles(userPos, venueCoords) : null,
+        url: e.url,
+        image: e.logo?.url,
+        genre: e.category?.name || 'Festival',
+        priceMin: null,
+        priceMax: null,
+        source: 'eventbrite'
       };
     });
   } catch (e) {
@@ -67,7 +136,10 @@ async function fetchNashvilleSpecialEvents() {
     const url = new URL('https://data.nashville.gov/resource/cdmh-mfwx.json');
     url.searchParams.set('$limit', '50');
     const today = new Date().toISOString().split('T')[0];
-    url.searchParams.set('$where', `event_start_date >= '${today}'`);
+    const ninetyDays = new Date();
+    ninetyDays.setDate(ninetyDays.getDate() + 90);
+    const futureLimit = ninetyDays.toISOString().split('T')[0];
+    url.searchParams.set('$where', `event_start_date >= '${today}' AND event_start_date <= '${futureLimit}'`);
     url.searchParams.set('$order', 'event_start_date ASC');
 
     const headers = {};
@@ -97,16 +169,28 @@ async function fetchNashvilleSpecialEvents() {
   }
 }
 
+function dedupe(items) {
+  const seen = new Map();
+  for (const it of items) {
+    const key = `${(it.name || '').toLowerCase().slice(0, 30)}|${it.date || ''}`;
+    if (!seen.has(key)) seen.set(key, it);
+  }
+  return Array.from(seen.values());
+}
+
 export default async function handler(req, res) {
   const { lat, lng } = req.query;
 
   try {
-    const [tm, nash] = await Promise.all([
-      fetchTicketmasterFestivals(lat, lng),
+    const [festivals, music, family, eventbrite, nash] = await Promise.all([
+      fetchTicketmasterFestivals(lat, lng, 'Festival'),
+      fetchTicketmasterFestivals(lat, lng, 'Music'),
+      fetchTicketmasterFestivals(lat, lng, 'Family'),
+      fetchEventbriteFestivals(lat, lng),
       fetchNashvilleSpecialEvents()
     ]);
 
-    let combined = [...tm, ...nash];
+    let combined = dedupe([...festivals, ...music, ...family, ...eventbrite, ...nash]);
 
     if (lat && lng) {
       combined.sort((a, b) => {
@@ -125,7 +209,13 @@ export default async function handler(req, res) {
     res.setHeader('Cache-Control', 's-maxage=1800, stale-while-revalidate');
     res.status(200).json({
       source: 'combined',
-      sources: { ticketmaster: tm.length, nashville: nash.length },
+      sources: {
+        festivals: festivals.length,
+        music: music.length,
+        family: family.length,
+        eventbrite: eventbrite.length,
+        nashville: nash.length
+      },
       sortedBy: (lat && lng) ? 'distance' : 'date',
       festivals: combined,
       total: combined.length
