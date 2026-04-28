@@ -1936,54 +1936,95 @@ function showEssentialsMenu(skipPush) {
   ]);
 }
 
+function nameKey(s) {
+  return (s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+}
+
+function findLiveMatch(curatedItem, liveList) {
+  if (!liveList || !liveList.length) return null;
+  const cKey = nameKey(curatedItem.name);
+  if (!cKey) return null;
+  // Exact match first
+  let match = liveList.find(l => nameKey(l.name) === cKey);
+  if (match) return match;
+  // Substring match: live name contains curated name or vice versa
+  match = liveList.find(l => {
+    const lKey = nameKey(l.name);
+    return lKey && (lKey.includes(cKey) || cKey.includes(lKey));
+  });
+  return match || null;
+}
+
+function renderCuratedCard(s, label, liveMatch) {
+  const distStr = liveMatch && liveMatch.distanceMiles != null ? ` · 📍 ${liveMatch.distanceMiles} mi` : '';
+  const ratingStr = liveMatch && liveMatch.rating ? `★ ${liveMatch.rating}` : '';
+  const reviewStr = liveMatch && liveMatch.reviewCount ? ` (${liveMatch.reviewCount})` : '';
+  const meta = [s.neighborhood || '', s.note ? '· ' + s.note : '', ratingStr + reviewStr + distStr].filter(x => x).join(' ');
+  const star = renderSaveStar({ name: s.name, note: s.note || s.neighborhood || label, address: liveMatch?.address || s.neighborhood || '' });
+  const share = renderShareButton({ name: s.name, desc: `${s.neighborhood || ''} - ${s.desc || label}`, url: s.url || '' });
+  let html = `<div class="card">
+    <div class="card-title">${star}${share}${s.name}</div>
+    <div class="card-meta">${meta}</div>
+    <div class="card-desc">${s.desc || ''}</div>`;
+  if (s.url) html += `<a href="${s.url}" target="_blank">Website</a>`;
+  const mapsUrl = liveMatch?.mapsUrl || `https://www.google.com/maps/search/${encodeURIComponent(s.name + ' Nashville TN')}`;
+  html += `<a href="${mapsUrl}" target="_blank" rel="noopener" style="background:#34a853;color:#fff;">Open in Maps</a>`;
+  const safeName = s.name.replace(/'/g, "\\'");
+  html += `<a href="#" onclick="return rideClick('uber','${safeName}',event)" style="background:#000;">Uber here</a>`;
+  html += `<a href="#" onclick="return rideClick('lyft','${safeName}',event)" style="background:#ff00bf;">Lyft here</a>`;
+  html += `</div>`;
+  return html;
+}
+
 async function showCuratedThenLive(curatedList, query, type, label) {
+  // Fetch live data first so we can attach distance and ratings to curated cards.
+  let live = null;
+  if (apiServices.google) {
+    try {
+      live = await apiSearchPlaces(query, type);
+    } catch (e) {
+      console.warn(`${label} API failed`, e);
+    }
+  }
+
+  // Sort curated items by distance when we have user location and live matches.
+  let items = curatedList.map(c => ({ item: c, match: findLiveMatch(c, live) }));
+  if (userLocation && items.some(x => x.match && x.match.distanceMiles != null)) {
+    items.sort((a, b) => {
+      const da = a.match?.distanceMiles ?? 9999;
+      const db = b.match?.distanceMiles ?? 9999;
+      return da - db;
+    });
+  }
+
   addMessage(`Top Nashville ${label}:`, 'bot');
-  curatedList.forEach(s => {
-    const star = renderSaveStar({ name: s.name, note: s.note || s.neighborhood || label, address: s.neighborhood || '' });
-    const share = renderShareButton({ name: s.name, desc: `${s.neighborhood || ''} - ${s.desc || label}`, url: s.url || '' });
+  items.forEach(({ item, match }) => {
+    addMessage(renderCuratedCard(item, label, match), 'bot', true);
+  });
+
+  if (!live || !live.length) return;
+  const curatedNames = new Set(curatedList.map(c => nameKey(c.name)));
+  const extras = live.filter(a => a.name && !curatedNames.has(nameKey(a.name))).slice(0, 6);
+  if (extras.length === 0) return;
+  addMessage(`More ${label} nearby:`, 'bot');
+  extras.forEach(s => {
+    const distStr = s.distanceMiles != null ? ` · 📍 ${s.distanceMiles} mi` : '';
+    const ratingStr = s.rating ? `★ ${s.rating}` : '';
+    const reviewStr = s.reviewCount ? ` (${s.reviewCount})` : '';
+    const safeName = (s.name || '').replace(/'/g, "\\'");
+    const star = renderSaveStar({ name: s.name, note: label, address: s.address });
+    const share = renderShareButton({ name: s.name, desc: label, url: s.website || s.mapsUrl || '' });
     let html = `<div class="card">
       <div class="card-title">${star}${share}${s.name}</div>
-      <div class="card-meta">${s.neighborhood || ''}${s.note ? ' · ' + s.note : ''}</div>
-      <div class="card-desc">${s.desc || ''}</div>`;
-    if (s.url) html += `<a href="${s.url}" target="_blank">Website</a>`;
-    const mapsUrl = `https://www.google.com/maps/search/${encodeURIComponent(s.name + ' Nashville TN')}`;
-    html += `<a href="${mapsUrl}" target="_blank" rel="noopener" style="background:#34a853;color:#fff;">Open in Maps</a>`;
-    const safeName = s.name.replace(/'/g, "\\'");
+      <div class="card-meta">${ratingStr}${reviewStr}${distStr}</div>
+      <div class="card-desc">${s.address || ''}</div>`;
+    if (s.mapsUrl) html += `<a href="${s.mapsUrl}" target="_blank">Open in Maps</a>`;
+    if (s.website) html += `<a href="${s.website}" target="_blank">Website</a>`;
     html += `<a href="#" onclick="return rideClick('uber','${safeName}',event)" style="background:#000;">Uber here</a>`;
     html += `<a href="#" onclick="return rideClick('lyft','${safeName}',event)" style="background:#ff00bf;">Lyft here</a>`;
     html += `</div>`;
     addMessage(html, 'bot', true);
   });
-
-  if (!apiServices.google) return;
-  try {
-    const live = await apiSearchPlaces(query, type);
-    if (!live || !live.length) return;
-    const curatedNames = new Set(curatedList.map(c => c.name.toLowerCase()));
-    const extras = live.filter(a => a.name && !curatedNames.has(a.name.toLowerCase())).slice(0, 6);
-    if (extras.length === 0) return;
-    addMessage(`More ${label} nearby:`, 'bot');
-    extras.forEach(s => {
-      const distStr = s.distanceMiles != null ? ` · 📍 ${s.distanceMiles} mi` : '';
-      const ratingStr = s.rating ? `★ ${s.rating}` : '';
-      const reviewStr = s.reviewCount ? ` (${s.reviewCount})` : '';
-      const safeName = (s.name || '').replace(/'/g, "\\'");
-      const star = renderSaveStar({ name: s.name, note: label, address: s.address });
-      const share = renderShareButton({ name: s.name, desc: label, url: s.website || s.mapsUrl || '' });
-      let html = `<div class="card">
-        <div class="card-title">${star}${share}${s.name}</div>
-        <div class="card-meta">${ratingStr}${reviewStr}${distStr}</div>
-        <div class="card-desc">${s.address || ''}</div>`;
-      if (s.mapsUrl) html += `<a href="${s.mapsUrl}" target="_blank">Open in Maps</a>`;
-      if (s.website) html += `<a href="${s.website}" target="_blank">Website</a>`;
-      html += `<a href="#" onclick="return rideClick('uber','${safeName}',event)" style="background:#000;">Uber here</a>`;
-      html += `<a href="#" onclick="return rideClick('lyft','${safeName}',event)" style="background:#ff00bf;">Lyft here</a>`;
-      html += `</div>`;
-      addMessage(html, 'bot', true);
-    });
-  } catch (e) {
-    console.warn(`${label} API failed`, e);
-  }
 }
 
 const CURATED_HONKY_TONKS = [
