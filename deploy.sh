@@ -5,7 +5,7 @@
 
 set -e
 
-PROJECT_DIR="/Users/dan/Documents/music-city-retreat-chatbot"
+PROJECT_DIR="/Users/dan/Documents/howdy-nashville"
 REPO_URL="https://github.com/dcdcairbnb/howdy-nashville.git"
 BRANCH="main"
 
