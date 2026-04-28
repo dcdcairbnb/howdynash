@@ -229,6 +229,8 @@ Pitfall 9. Not closing old Terminal windows after folder rename. They point to a
 
 Pitfall 10. Trying to use Vercel API for renames. The web UI is faster and clearer for one-off changes.
 
+Pitfall 11. Wrong destination IDs for affiliate URLs. GetYourGuide Nashville is l1149, not l3231 (which is Kuta, Bali). Viator Nashville is d22290. Verify every destination ID by opening the URL in a browser before committing. Each new city build must verify its own IDs.
+
 ---
 
 ## Curated Data Quality Standards
