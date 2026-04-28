@@ -1,12 +1,12 @@
 #!/bin/bash
-# Music City Retreat deploy script.
+# Howdy Nashville deploy script.
 # Pushes local changes to GitHub, which triggers Vercel auto-deploy.
 # Usage: ./deploy.sh "optional commit message"
 
 set -e
 
 PROJECT_DIR="/Users/dan/Documents/music-city-retreat-chatbot"
-REPO_URL="https://github.com/dcdcairbnb/music-city-retreat-chatbot.git"
+REPO_URL="https://github.com/dcdcairbnb/howdy-nashville.git"
 BRANCH="main"
 
 cd "$PROJECT_DIR"
@@ -70,7 +70,7 @@ git push origin "$BRANCH"
 echo ""
 echo "Deploy initiated."
 echo "Vercel will auto-deploy in 30 to 90 seconds."
-echo "Live URL: https://music-city-retreat-chatbot.vercel.app"
+echo "Live URL: https://howdy-nashville.vercel.app"
 echo ""
 echo "Watch the deployment at:"
 echo "  https://vercel.com/dashboard"

@@ -1649,8 +1649,56 @@ async function showFlights() {
     addMessage("Flight service error. Try flynashville.com.", 'bot');
   }
 }
+const BOOKING_AFFILIATE_ID = '';
+const EXPEDIA_CAMREF = '';
+const EXPEDIA_TPID = '8000';
+
+function buildBookingUrl() {
+  const params = new URLSearchParams();
+  params.set('ss', 'Nashville, Tennessee, United States');
+  if (userLocation) {
+    params.set('latitude', userLocation.lat);
+    params.set('longitude', userLocation.lng);
+  }
+  if (BOOKING_AFFILIATE_ID) {
+    params.set('aid', BOOKING_AFFILIATE_ID);
+  }
+  return `https://www.booking.com/searchresults.html?${params}`;
+}
+
+function buildExpediaUrl() {
+  const params = new URLSearchParams();
+  params.set('destination', 'Nashville, Tennessee, United States');
+  if (userLocation) {
+    params.set('latLong', `${userLocation.lat},${userLocation.lng}`);
+  }
+  if (EXPEDIA_CAMREF) {
+    params.set('camref', EXPEDIA_CAMREF);
+    params.set('TPID', EXPEDIA_TPID);
+  }
+  return `https://www.expedia.com/Hotel-Search?${params}`;
+}
+
 function showHotels() {
-  showStoreType('hotel', 'lodging', 'hotels');
+  addMessage("Hotels in Nashville. Three ways to book.", 'bot');
+
+  const bookingUrl = buildBookingUrl();
+  const expediaUrl = buildExpediaUrl();
+  const locationNote = userLocation ? "Search centered on your current location." : "Search starts in Nashville. Share your location for nearby filters.";
+
+  const html = `<div class="card">
+    <div class="card-title">Where to stay tonight</div>
+    <div class="card-desc">${locationNote}</div>
+    <a href="${bookingUrl}" target="_blank" rel="noopener" style="background:#003580;">Browse on Booking.com</a>
+    <a href="${expediaUrl}" target="_blank" rel="noopener" style="background:#FFC72C;color:#000;">Browse on Expedia</a>
+    <a href="#" onclick="showStoreType('hotel', 'lodging', 'hotels'); return false;" style="background:#34a853;">See nearby on Google Maps</a>
+    <div class="card-desc" style="font-size:12px;color:#666;margin-top:8px;">Tip: Book direct on the hotel's site if you have loyalty status. Otherwise Booking.com and Expedia often have lower rates.</div>
+  </div>`;
+  addMessage(html, 'bot', true);
+
+  if (!userLocation) {
+    addMessage("Want results centered on your spot? Tap 'Share my location' from the main menu.", 'bot');
+  }
 }
 function showPharmacy() {
   showStoreType('pharmacy urgent care', 'pharmacy', 'pharmacies and urgent care');
