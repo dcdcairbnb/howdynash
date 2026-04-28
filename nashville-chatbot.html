@@ -1466,7 +1466,7 @@ function showBachelorette() {
 
 const VIATOR_PID = 'U00808374';
 const GETYOURGUIDE_PID = 'ACQGDWW';
-const AWIN_AIRBNB_MERCHANT_ID = '11890';
+const AWIN_AIRBNB_MERCHANT_ID = '';
 const VRBO_AFFILIATE_TAG = '';
 
 function buildAirbnbUrl() {
@@ -1478,7 +1478,7 @@ function buildAirbnbUrl() {
   if (userLocation) {
     url += `?ne_lat=${userLocation.lat + 0.05}&ne_lng=${userLocation.lng + 0.05}&sw_lat=${userLocation.lat - 0.05}&sw_lng=${userLocation.lng - 0.05}&search_by_map=true`;
   }
-  if (!AWIN_PUBLISHER_ID) return url;
+  if (!AWIN_PUBLISHER_ID || !AWIN_AIRBNB_MERCHANT_ID) return url;
   return `https://www.awin1.com/cread.php?awinmid=${AWIN_AIRBNB_MERCHANT_ID}&awinaffid=${AWIN_PUBLISHER_ID}&clickref=&p=${encodeURIComponent(url)}`;
 }
 
@@ -1517,42 +1517,44 @@ function showVacationRentals() {
 function showTours() {
   addMessage("Tours and experiences. Both Viator and GetYourGuide pay commission so the price is the same as booking direct.", 'bot');
 
+  const viatorBase = `https://www.viator.com/Nashville/d799?pid=${VIATOR_PID}`;
+  const gygBase = `https://www.getyourguide.com/nashville-l1279/?partner_id=${GETYOURGUIDE_PID}`;
   const categories = [
     {
       title: 'All Nashville tours',
       desc: 'Browse every available tour, day trip, and ticket.',
-      viator: `https://www.viator.com/Nashville/d22290?pid=${VIATOR_PID}`,
-      gyg: `https://www.getyourguide.com/nashville-l1149/?partner_id=${GETYOURGUIDE_PID}`
+      viator: viatorBase,
+      gyg: gygBase
     },
     {
       title: 'Honky tonk and pub crawls',
-      desc: 'Guided tours through Broadway bars, with skip-the-line perks.',
-      viator: `https://www.viator.com/Nashville-tours/Bar-Crawls/d22290-g6-c105?pid=${VIATOR_PID}`,
-      gyg: `https://www.getyourguide.com/nashville-l1149/bar-crawls-tc52/?partner_id=${GETYOURGUIDE_PID}`
+      desc: 'Guided tours through Broadway bars, with skip-the-line perks. Search "pub crawl" on the page.',
+      viator: viatorBase,
+      gyg: gygBase
     },
     {
       title: 'Music history and Opry',
-      desc: 'Country Music Hall of Fame, Ryman, RCA Studio B, Grand Ole Opry tickets.',
-      viator: `https://www.viator.com/Nashville-tours/Music/d22290-g6-c69?pid=${VIATOR_PID}`,
-      gyg: `https://www.getyourguide.com/nashville-l1149/music-tc55/?partner_id=${GETYOURGUIDE_PID}`
+      desc: 'Country Music Hall of Fame, Ryman, RCA Studio B, Grand Ole Opry tickets. Filter by "Music" category.',
+      viator: viatorBase,
+      gyg: gygBase
     },
     {
       title: 'Whiskey and distillery tours',
-      desc: 'Jack Daniel\'s day trips, Nelson\'s Green Brier, Corsair tastings.',
-      viator: `https://www.viator.com/Nashville-tours/Distillery-Tours/d22290-g6-c102?pid=${VIATOR_PID}`,
-      gyg: `https://www.getyourguide.com/nashville-l1149/distillery-tc54/?partner_id=${GETYOURGUIDE_PID}`
+      desc: 'Jack Daniel\'s day trips, Nelson\'s Green Brier, Corsair tastings. Filter by "Distillery".',
+      viator: viatorBase,
+      gyg: gygBase
     },
     {
       title: 'Day trips from Nashville',
-      desc: 'Memphis, Smoky Mountains, Lynchburg, Mammoth Cave.',
-      viator: `https://www.viator.com/Nashville-tours/Day-Trips-and-Excursions/d22290-g6-c11?pid=${VIATOR_PID}`,
-      gyg: `https://www.getyourguide.com/nashville-l1149/day-trips-tc8/?partner_id=${GETYOURGUIDE_PID}`
+      desc: 'Memphis, Smoky Mountains, Lynchburg, Mammoth Cave. Filter by "Day Trips".',
+      viator: viatorBase,
+      gyg: gygBase
     },
     {
       title: 'Riverboat and food tours',
-      desc: 'General Jackson cruise, hot chicken food tours, walking tours.',
-      viator: `https://www.viator.com/Nashville-tours/Food-Drink-and-Nightlife/d22290-g6-c30?pid=${VIATOR_PID}`,
-      gyg: `https://www.getyourguide.com/nashville-l1149/food-and-drinks-tc44/?partner_id=${GETYOURGUIDE_PID}`
+      desc: 'General Jackson cruise, hot chicken food tours, walking tours. Filter by "Food & Drink".',
+      viator: viatorBase,
+      gyg: gygBase
     }
   ];
 
@@ -1648,7 +1650,7 @@ async function showFlights() {
   }
 }
 const AWIN_PUBLISHER_ID = '2873227';
-const AWIN_BOOKING_MERCHANT_ID = '2103';
+const AWIN_BOOKING_MERCHANT_ID = '';
 const EXPEDIA_CAMREF = '';
 const EXPEDIA_TPID = '8000';
 
@@ -1660,9 +1662,8 @@ function buildBookingUrl() {
     params.set('longitude', userLocation.lng);
   }
   const directUrl = `https://www.booking.com/searchresults.html?${params}`;
-  if (!AWIN_PUBLISHER_ID) return directUrl;
-  const awinUrl = `https://www.awin1.com/cread.php?awinmid=${AWIN_BOOKING_MERCHANT_ID}&awinaffid=${AWIN_PUBLISHER_ID}&clickref=&p=${encodeURIComponent(directUrl)}`;
-  return awinUrl;
+  if (!AWIN_PUBLISHER_ID || !AWIN_BOOKING_MERCHANT_ID) return directUrl;
+  return `https://www.awin1.com/cread.php?awinmid=${AWIN_BOOKING_MERCHANT_ID}&awinaffid=${AWIN_PUBLISHER_ID}&clickref=&p=${encodeURIComponent(directUrl)}`;
 }
 
 function buildExpediaUrl() {
@@ -1679,19 +1680,20 @@ function buildExpediaUrl() {
 }
 
 function showHotels() {
-  addMessage("Hotels in Nashville. Three ways to book.", 'bot');
+  addMessage("Hotels in Nashville.", 'bot');
 
-  const bookingUrl = buildBookingUrl();
   const expediaUrl = buildExpediaUrl();
+  const mapsUrl = userLocation
+    ? `https://www.google.com/maps/search/hotels/@${userLocation.lat},${userLocation.lng},14z`
+    : `https://www.google.com/maps/search/hotels+in+Nashville+TN`;
   const locationNote = userLocation ? "Search centered on your current location." : "Search starts in Nashville. Share your location for nearby filters.";
 
   const html = `<div class="card">
     <div class="card-title">Where to stay tonight</div>
     <div class="card-desc">${locationNote}</div>
-    <a href="${bookingUrl}" target="_blank" rel="noopener" style="background:#003580;">Browse on Booking.com</a>
     <a href="${expediaUrl}" target="_blank" rel="noopener" style="background:#FFC72C;color:#000;">Browse on Expedia</a>
-    <a href="#" onclick="showStoreType('hotel', 'lodging', 'hotels'); return false;" style="background:#34a853;">See nearby on Google Maps</a>
-    <div class="card-desc" style="font-size:12px;color:#666;margin-top:8px;">Tip: Book direct on the hotel's site if you have loyalty status. Otherwise Booking.com and Expedia often have lower rates.</div>
+    <a href="${mapsUrl}" target="_blank" rel="noopener" style="background:#34a853;">See nearby on Google Maps</a>
+    <div class="card-desc" style="font-size:12px;color:#666;margin-top:8px;">Tip: Book direct on the hotel's site if you have loyalty status.</div>
   </div>`;
   addMessage(html, 'bot', true);
 
