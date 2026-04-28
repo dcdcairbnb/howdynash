@@ -1,42 +1,78 @@
 // Anthropic Claude chat endpoint. Uses Haiku for cost efficiency.
 // Required env: ANTHROPIC_API_KEY
 
-const SYSTEM_PROMPT = `You are a helpful Nashville tourism concierge embedded in the Howdy Nash chatbot. Help visitors plan their trip.
+const SYSTEM_PROMPT = `You are a Nashville tourism concierge inside the Howdy Nash chatbot. Help visitors plan their trip.
 
 YOUR ROLE
 - Answer questions about Nashville: restaurants, music venues, events, neighborhoods, transportation, attractions, weather, local customs.
-- Be friendly but concise. Use short paragraphs. Avoid excessive lists.
-- When recommending specific places, prefer well-known Nashville spots (Husk, Hattie B's, Pinewood Social, Ryman Auditorium, Bluebird Cafe, Grand Ole Opry, Country Music Hall of Fame, Patterson House, etc.).
-- If a user asks about live music, tell them about Broadway honky tonks, Bluebird Cafe songwriter rounds, the Ryman, Exit/In, and 3rd and Lindsley.
-- For neighborhoods: Downtown/Broadway is touristy nightlife, The Gulch is upscale modern, East Nashville is hip and indie, 12 South is trendy shopping, Germantown is historic and food-focused, Midtown is between downtown and Vanderbilt.
+- Be warm but tight. Short paragraphs. No filler.
+- Recommend well-known Nashville spots: Husk, Hattie B's, Pinewood Social, Ryman Auditorium, Bluebird Cafe, Grand Ole Opry, Country Music Hall of Fame, Patterson House, The Hutton Hotel, JW Marriott, Hermitage Hotel, Conrad Nashville, Tootsie's, Robert's Western World, Bluebird Cafe.
+- Live music: Broadway honky tonks, Bluebird songwriter rounds, the Ryman, Exit/In, 3rd and Lindsley.
+- Neighborhoods: Downtown/Broadway tourist nightlife, The Gulch upscale modern, East Nashville indie, 12 South trendy shopping, Germantown food-focused, Midtown between downtown and Vanderbilt.
+
+BOOKING RECOMMENDATIONS
+- For hotels: tell users to tap the Hotels nearby button to book through Expedia (the app earns a small commission to stay free).
+- For tours and activities: tell users to tap Book a tour for Viator and GetYourGuide options.
+- For rides: tell users to tap Get a ride for Uber, Lyft, and Waymo deep links.
+- For food delivery: tell users to tap Order delivery for DoorDash and Uber Eats.
+- For concerts and events: tell users to tap Live music tonight or Festivals to see the live ticket lineup.
+
+REDIRECT TO MENUS WHEN POSSIBLE
+The chatbot UI handles these natively, send users to the right button:
+- Eat & Drink: Show all restaurants, Best hot chicken, Order delivery, Honky tonks, Rooftop bars, Distilleries, Cocktail bars
+- Things to Do: Live music tonight, Festivals, Tourist attractions, Sports, Book a tour, Photo spots, Bachelorette, Shopping, Spas, Nail salons
+- Stay & Get Around: Hotels nearby, Vacation rentals, Luggage storage, Get a ride, Gas stations, BNA flight tracker
+- Essentials: Liquor stores, Groceries, Pharmacy, ATMs
+- Main menu also has: Weather, Sports, My saved, Local tips
 
 TONE
-- Conversational, warm, knowledgeable. Like a Nashville local friend.
+- Conversational, like a Nashville local friend.
 - No emojis unless the user uses them first.
-- No marketing fluff. No "exciting" or "vibrant" filler words.
-
-REDIRECTING TO MENUS
-If the user wants to do something the chatbot UI handles directly, tell them which menu button to tap. The available menu paths are:
-- Eat & Drink: Show all restaurants, Best hot chicken, Order delivery, Honky tonks, Rooftop bars, Distilleries
-- Things to Do: Live music tonight, Festivals, Things to do, Book a tour, Photo spots, Bachelorette
-- Stay & Get Around: Hotels nearby, Vacation rentals, Get a ride, Gas stations, BNA flight tracker
-- Essentials: Liquor stores, Groceries, Pharmacy, ATMs
-- Main menu also has: Weather, Local tips
-- Bottom of every screen: Uber, Lyft, Waymo, DoorDash, Uber Eats deep links.
+- No filler words.
 
 FORMAT RULES
-- Keep responses under 150 words unless the user asks for more detail.
-- Plain text only. No markdown formatting at all.
-- Do not use **bold** asterisks. Do not use *italic* asterisks. Do not use markdown headers like ## or #.
-- Do not start lines with - or * for bullet points. Write in flowing sentences instead.
-- If you must list items, use natural language: "Try Husk, Hattie B's, and Pinewood Social" not "- Husk\n- Hattie B's".
-- Phone numbers and addresses are fine to share when known.
-- Never invent prices, hours, or reservation availability. If you don't know, say "call to confirm" or "check their website."`;
+- Under 80 words unless the user asks for more detail.
+- Plain text only. No markdown. No bold asterisks. No italic asterisks. No # headers. No - or * bullets.
+- Lists go inline: "Try Husk, Hattie B's, and Pinewood Social" not bullet points.
+- Phone numbers and addresses are fine when known.
+- Never invent prices, hours, or reservation availability. Say "call to confirm" or "check their website."`;
 
 // Simple in-memory rate limiter. Resets when function instance recycles.
 const rateLimitStore = new Map();
-const RATE_LIMIT_PER_HOUR = 30;
-const RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000;
+const RATE_LIMIT_PER_DAY = 15;
+const RATE_LIMIT_WINDOW_MS = 24 * 60 * 60 * 1000;
+
+// Reply cache. Same question gets the same answer for 24h. Saves API calls.
+const replyCache = new Map();
+const CACHE_TTL_MS = 24 * 60 * 60 * 1000;
+const CACHE_MAX_ENTRIES = 500;
+
+function normalizeQuestion(message) {
+  return message.toLowerCase().trim().replace(/[^a-z0-9 ]/g, '').replace(/\s+/g, ' ').slice(0, 200);
+}
+
+function getCachedReply(message) {
+  const key = normalizeQuestion(message);
+  if (!key) return null;
+  const entry = replyCache.get(key);
+  if (!entry) return null;
+  if (Date.now() - entry.savedAt > CACHE_TTL_MS) {
+    replyCache.delete(key);
+    return null;
+  }
+  return entry.reply;
+}
+
+function setCachedReply(message, reply) {
+  const key = normalizeQuestion(message);
+  if (!key || !reply) return;
+  // Evict oldest entries if we hit the cap.
+  if (replyCache.size >= CACHE_MAX_ENTRIES) {
+    const firstKey = replyCache.keys().next().value;
+    if (firstKey) replyCache.delete(firstKey);
+  }
+  replyCache.set(key, { reply, savedAt: Date.now() });
+}
 
 function getClientIp(req) {
   const forwarded = req.headers['x-forwarded-for'];
@@ -49,13 +85,13 @@ function checkRateLimit(ip) {
   const record = rateLimitStore.get(ip);
   if (!record || now - record.windowStart > RATE_LIMIT_WINDOW_MS) {
     rateLimitStore.set(ip, { windowStart: now, count: 1 });
-    return { allowed: true, remaining: RATE_LIMIT_PER_HOUR - 1 };
+    return { allowed: true, remaining: RATE_LIMIT_PER_DAY - 1 };
   }
-  if (record.count >= RATE_LIMIT_PER_HOUR) {
+  if (record.count >= RATE_LIMIT_PER_DAY) {
     return { allowed: false, remaining: 0, retryMs: RATE_LIMIT_WINDOW_MS - (now - record.windowStart) };
   }
   record.count += 1;
-  return { allowed: true, remaining: RATE_LIMIT_PER_HOUR - record.count };
+  return { allowed: true, remaining: RATE_LIMIT_PER_DAY - record.count };
 }
 
 async function fetchWithTimeout(url, options, timeoutMs = 15000) {
@@ -77,13 +113,6 @@ export default async function handler(req, res) {
     return res.status(503).json({ error: 'chat service not configured' });
   }
 
-  const ip = getClientIp(req);
-  const rateCheck = checkRateLimit(ip);
-  if (!rateCheck.allowed) {
-    res.setHeader('Retry-After', Math.ceil(rateCheck.retryMs / 1000));
-    return res.status(429).json({ error: 'too many messages. try again in an hour.' });
-  }
-
   let body = req.body;
   if (typeof body === 'string') {
     try { body = JSON.parse(body); } catch (e) { body = {}; }
@@ -97,10 +126,28 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'message too long' });
   }
 
+  // Cache hit: serve without spending tokens or counting against rate limit.
+  // Only cache when there is no conversation history (fresh question).
+  if (!history || history.length === 0) {
+    const cached = getCachedReply(message);
+    if (cached) {
+      res.setHeader('Cache-Control', 'no-store');
+      res.setHeader('X-Cache', 'HIT');
+      return res.status(200).json({ reply: cached, stopReason: 'cached' });
+    }
+  }
+
+  const ip = getClientIp(req);
+  const rateCheck = checkRateLimit(ip);
+  if (!rateCheck.allowed) {
+    res.setHeader('Retry-After', Math.ceil(rateCheck.retryMs / 1000));
+    return res.status(429).json({ error: 'You have hit the daily chat limit. Try the menu buttons or come back tomorrow.' });
+  }
+
   const messages = [];
-  for (const turn of history.slice(-8)) {
+  for (const turn of history.slice(-6)) {
     if (turn.role && turn.content) {
-      messages.push({ role: turn.role, content: String(turn.content).slice(0, 1000) });
+      messages.push({ role: turn.role, content: String(turn.content).slice(0, 800) });
     }
   }
   messages.push({ role: 'user', content: message.slice(0, 2000) });
@@ -115,7 +162,7 @@ export default async function handler(req, res) {
       },
       body: JSON.stringify({
         model: 'claude-haiku-4-5-20251001',
-        max_tokens: 600,
+        max_tokens: 350,
         system: SYSTEM_PROMPT,
         messages
       })
@@ -129,7 +176,14 @@ export default async function handler(req, res) {
 
     const data = await r.json();
     const reply = data.content?.[0]?.text || '';
+
+    // Cache only fresh, no-history questions to keep replies relevant.
+    if (reply && (!history || history.length === 0)) {
+      setCachedReply(message, reply);
+    }
+
     res.setHeader('Cache-Control', 'no-store');
+    res.setHeader('X-Cache', 'MISS');
     res.setHeader('X-RateLimit-Remaining', String(rateCheck.remaining));
     res.status(200).json({
       reply,

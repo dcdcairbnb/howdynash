@@ -1790,6 +1790,37 @@ function routeIntent(text) {
     return;
   }
 
+  // Catch common questions that map to existing menus before spending an LLM call.
+  if (matches(lower, ['book a hotel', 'find a hotel', 'hotel near', 'best hotel', 'cheap hotel', 'luxury hotel', 'hotel in '])) {
+    showHotels();
+    return;
+  }
+
+  if (matches(lower, ['book a tour', 'tours near', 'best tour', 'whiskey tour', 'pub crawl', 'walking tour', 'helicopter tour', 'food tour', 'ghost tour', 'day trip'])) {
+    showTours();
+    return;
+  }
+
+  if (matches(lower, ['flight', 'arrival', 'departure', 'bna', 'airport'])) {
+    showFlights();
+    return;
+  }
+
+  if (matches(lower, ['vacation rental', 'airbnb', 'vrbo', 'short term rental'])) {
+    showVacationRentals();
+    return;
+  }
+
+  if (matches(lower, ['save', 'my saved', 'saved spots', 'starred'])) {
+    showSavedSpots();
+    return;
+  }
+
+  if (matches(lower, ['weather', 'forecast', 'temperature', 'rain', 'storm'])) {
+    showWeather();
+    return;
+  }
+
   askClaude(text);
 }
 
@@ -1814,6 +1845,107 @@ function formatMarkdown(text) {
   return s;
 }
 
+// Build a flat venue index for affiliate-link injection in chat replies.
+// Each entry: { name, type ('hotel' | 'restaurant' | 'venue' | 'attraction' | 'tour') }
+function buildVenueIndex() {
+  const index = [];
+  // Restaurants from NASHVILLE_DATA
+  if (typeof NASHVILLE_DATA !== 'undefined' && NASHVILLE_DATA.restaurants) {
+    NASHVILLE_DATA.restaurants.forEach(r => index.push({ name: r.name, type: 'restaurant' }));
+  }
+  // Attractions
+  if (typeof NASHVILLE_DATA !== 'undefined' && NASHVILLE_DATA.attractions) {
+    NASHVILLE_DATA.attractions.forEach(a => index.push({ name: a.name, type: 'attraction' }));
+  }
+  // Honky tonks, rooftops, distilleries, photo spots, cocktail bars, Broadway bars
+  const venueLists = [
+    typeof CURATED_HONKY_TONKS !== 'undefined' ? CURATED_HONKY_TONKS : [],
+    typeof CURATED_ROOFTOPS !== 'undefined' ? CURATED_ROOFTOPS : [],
+    typeof CURATED_DISTILLERIES !== 'undefined' ? CURATED_DISTILLERIES : [],
+    typeof CURATED_PHOTO_SPOTS !== 'undefined' ? CURATED_PHOTO_SPOTS : [],
+    typeof CURATED_COCKTAIL_BARS !== 'undefined' ? CURATED_COCKTAIL_BARS : [],
+    typeof CURATED_BROADWAY_BARS !== 'undefined' ? CURATED_BROADWAY_BARS : [],
+    typeof CURATED_SHOPPING !== 'undefined' ? CURATED_SHOPPING : [],
+    typeof CURATED_SPAS !== 'undefined' ? CURATED_SPAS : [],
+    typeof CURATED_NAIL_SALONS !== 'undefined' ? CURATED_NAIL_SALONS : []
+  ];
+  venueLists.forEach(list => list.forEach(v => index.push({ name: v.name, type: 'venue' })));
+  // Common Nashville hotels (mentioned in prompt and likely in chat replies)
+  const hotels = [
+    'The Hutton Hotel', 'Hutton Hotel', 'JW Marriott', 'JW Marriott Nashville',
+    'Conrad Nashville', 'Four Seasons Nashville', 'Hermitage Hotel', 'The Hermitage Hotel',
+    'Thompson Nashville', 'Thompson Hotel', 'Graduate Nashville', 'Graduate Hotel',
+    'Hotel Indigo', 'Bobby Hotel', 'The Bobby Hotel', 'Noelle Hotel', 'Union Station Hotel',
+    'Westin Nashville', 'Omni Nashville', 'Renaissance Nashville', 'W Nashville',
+    'Hilton Nashville Downtown', 'Sheraton Grand Nashville', '21c Museum Hotel'
+  ];
+  hotels.forEach(h => index.push({ name: h, type: 'hotel' }));
+  // Famous tour-worthy spots that should get a tour booking link
+  const tourTriggers = [
+    'Grand Ole Opry', 'Country Music Hall of Fame', 'Ryman Auditorium', 'Bluebird Cafe',
+    "Jack Daniel's Distillery", 'Belle Meade', 'Andrew Jackson', 'The Hermitage',
+    'RCA Studio B', 'Johnny Cash Museum', 'Patsy Cline Museum'
+  ];
+  tourTriggers.forEach(t => index.push({ name: t, type: 'tour' }));
+  // Sort longest-first so multi-word matches win over substrings.
+  index.sort((a, b) => b.name.length - a.name.length);
+  return index;
+}
+
+let _venueIndexCache = null;
+function getVenueIndex() {
+  if (!_venueIndexCache) _venueIndexCache = buildVenueIndex();
+  return _venueIndexCache;
+}
+
+// Find venue mentions in the chat reply and return a deduped list with action types.
+function detectVenuesInReply(replyText) {
+  const found = new Map();
+  const text = (replyText || '').toLowerCase();
+  if (!text) return [];
+  const index = getVenueIndex();
+  for (const v of index) {
+    const lower = v.name.toLowerCase();
+    if (text.includes(lower)) {
+      const key = lower;
+      if (!found.has(key)) found.set(key, v);
+    }
+    if (found.size >= 6) break;
+  }
+  return Array.from(found.values());
+}
+
+// Build the affiliate action panel HTML for matched venues.
+function buildAffiliatePanel(venues) {
+  if (!venues || venues.length === 0) return '';
+  const cards = venues.map(v => {
+    const safeName = v.name.replace(/'/g, "\\'");
+    const mapsUrl = `https://www.google.com/maps/search/${encodeURIComponent(v.name + ' Nashville TN')}`;
+    let buttons = `<a href="${mapsUrl}" target="_blank" rel="noopener" style="background:#34a853;color:#fff;font-size:12px;padding:6px 10px;">Maps</a>`;
+    buttons += `<a href="#" onclick="return rideClick('uber','${safeName}',event)" style="background:#000;color:#fff;font-size:12px;padding:6px 10px;">Uber</a>`;
+    buttons += `<a href="#" onclick="return rideClick('lyft','${safeName}',event)" style="background:#ff00bf;color:#fff;font-size:12px;padding:6px 10px;">Lyft</a>`;
+    if (v.type === 'hotel') {
+      const expediaParams = new URLSearchParams();
+      expediaParams.set('destination', v.name + ' Nashville TN');
+      if (typeof EXPEDIA_CAMREF !== 'undefined' && EXPEDIA_CAMREF) {
+        expediaParams.set('camref', EXPEDIA_CAMREF);
+        expediaParams.set('tpid', EXPEDIA_TPID);
+      }
+      const expediaUrl = `https://www.expedia.com/Hotel-Search?${expediaParams}`;
+      buttons += `<a href="${expediaUrl}" target="_blank" rel="noopener" style="background:#FFC72C;color:#000;font-size:12px;padding:6px 10px;">Book on Expedia</a>`;
+    }
+    if (v.type === 'tour' && typeof VIATOR_PID !== 'undefined') {
+      const viatorUrl = `https://www.viator.com/searchResults/all?text=${encodeURIComponent(v.name)}&pid=${VIATOR_PID}`;
+      buttons += `<a href="${viatorUrl}" target="_blank" rel="noopener" style="background:#328e3a;color:#fff;font-size:12px;padding:6px 10px;">Tour on Viator</a>`;
+    }
+    if (v.type === 'restaurant') {
+      buttons += `<a href="#" onclick="return rideClick('doordash','${safeName}',event)" style="background:#ff3008;color:#fff;font-size:12px;padding:6px 10px;">DoorDash</a>`;
+    }
+    return `<div style="margin-bottom:6px;"><div style="font-weight:600;font-size:13px;margin-bottom:4px;">${v.name}</div><div style="display:flex;flex-wrap:wrap;gap:4px;">${buttons}</div></div>`;
+  }).join('');
+  return `<div class="card" style="background:#f8f9fa;border-left:3px solid #d62828;margin-top:6px;"><div style="font-size:11px;color:#666;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">Quick actions</div>${cards}</div>`;
+}
+
 async function askClaude(userText) {
   const typingId = 'typing-' + Date.now();
   addMessage(`<div id="${typingId}" class="typing">Thinking...</div>`, 'bot', true);
@@ -1829,6 +1961,8 @@ async function askClaude(userText) {
       const err = await r.json().catch(() => ({}));
       if (err.error === 'ANTHROPIC_API_KEY not configured') {
         addMessage("I'm not connected to my smart-answer system yet. Try a menu option instead:", 'bot');
+      } else if (r.status === 429) {
+        addMessage(err.error || "You have hit the daily chat limit. Try the menu buttons.", 'bot');
       } else {
         addMessage("I had trouble reaching the answer service. Try a menu option:", 'bot');
       }
@@ -1846,6 +1980,12 @@ async function askClaude(userText) {
     llmHistory.push({ role: 'assistant', content: reply });
     while (llmHistory.length > 16) llmHistory.shift();
     addMessage(formatMarkdown(reply), 'bot', true);
+    // Inject affiliate-link panel for any venues mentioned.
+    const venues = detectVenuesInReply(reply);
+    if (venues.length > 0) {
+      const panel = buildAffiliatePanel(venues);
+      if (panel) addMessage(panel, 'bot', true);
+    }
   } catch (e) {
     const typingEl = document.getElementById(typingId);
     if (typingEl) typingEl.parentElement.remove();
@@ -2612,7 +2752,7 @@ function showVacationRentals() {
 }
 
 function showTours() {
-  addMessage("Tours and experiences. Both Viator and GetYourGuide pay commission so the price is the same as booking direct.", 'bot');
+  addMessage("Tours and experiences. Compare prices across Viator, GetYourGuide, and Expedia. Same price either way.", 'bot');
 
   function viatorSearch(query) {
     return `https://www.viator.com/searchResults/all?text=${encodeURIComponent(query)}&pid=${VIATOR_PID}`;
@@ -2620,103 +2760,129 @@ function showTours() {
   function gygSearch(query) {
     return `https://www.getyourguide.com/s/?q=${encodeURIComponent(query)}&partner_id=${GETYOURGUIDE_PID}`;
   }
+  function expediaActivitySearch(query) {
+    const params = new URLSearchParams();
+    params.set('location', 'Nashville, Tennessee, United States');
+    params.set('q', query);
+    if (EXPEDIA_CAMREF) {
+      params.set('camref', EXPEDIA_CAMREF);
+      params.set('tpid', EXPEDIA_TPID);
+    }
+    return `https://www.expedia.com/things-to-do/search?${params}`;
+  }
 
   const categories = [
     {
       title: '🌟 All Nashville tours',
       desc: 'Browse every available tour, day trip, and ticket.',
       viator: `https://www.viator.com/Nashville/d799?pid=${VIATOR_PID}`,
-      gyg: `https://www.getyourguide.com/nashville-l1279/?partner_id=${GETYOURGUIDE_PID}`
+      gyg: `https://www.getyourguide.com/nashville-l1279/?partner_id=${GETYOURGUIDE_PID}`,
+      expedia: expediaActivitySearch('')
     },
     {
       title: '🍻 Pub crawls and bar tours',
       desc: 'Guided crawls through Broadway honky tonks. 200+ options, often skip-the-line.',
       viator: viatorSearch('Nashville pub crawl'),
-      gyg: gygSearch('nashville pub crawl')
+      gyg: gygSearch('nashville pub crawl'),
+      expedia: expediaActivitySearch('Nashville pub crawl')
     },
     {
       title: '🚲 Pedal taverns and party buses',
       desc: 'The Nashville bachelorette signature ride. BYOB. Group photos guaranteed.',
       viator: viatorSearch('Nashville pedal tavern party bus'),
-      gyg: gygSearch('nashville pedal tavern')
+      gyg: gygSearch('nashville pedal tavern'),
+      expedia: expediaActivitySearch('Nashville pedal tavern party bus')
     },
     {
       title: '🎤 Grand Ole Opry tickets',
       desc: 'The institution. Tuesday, Friday, Saturday shows. Book ahead.',
       viator: viatorSearch('Grand Ole Opry tickets'),
-      gyg: gygSearch('grand ole opry tickets')
+      gyg: gygSearch('grand ole opry tickets'),
+      expedia: expediaActivitySearch('Grand Ole Opry')
     },
     {
       title: '🎵 Music history tours',
       desc: 'Country Music Hall of Fame, RCA Studio B, Ryman backstage, Johnny Cash Museum.',
       viator: viatorSearch('Nashville music history tour'),
-      gyg: gygSearch('nashville music history')
+      gyg: gygSearch('nashville music history'),
+      expedia: expediaActivitySearch('Nashville music history')
     },
     {
       title: '🥃 Whiskey and distillery tours',
       desc: 'Jack Daniel\'s, Nelson\'s Green Brier, Corsair, Belle Meade Bourbon.',
       viator: viatorSearch('Nashville whiskey distillery tour'),
-      gyg: gygSearch('nashville whiskey distillery')
+      gyg: gygSearch('nashville whiskey distillery'),
+      expedia: expediaActivitySearch('Nashville whiskey distillery tour')
     },
     {
       title: '🚐 Jack Daniel\'s Lynchburg day trip',
       desc: 'Round-trip transport plus distillery tour from Nashville. Half day.',
       viator: viatorSearch('Jack Daniels Lynchburg day trip from Nashville'),
-      gyg: gygSearch('jack daniels lynchburg from nashville')
+      gyg: gygSearch('jack daniels lynchburg from nashville'),
+      expedia: expediaActivitySearch('Jack Daniels Lynchburg from Nashville')
     },
     {
       title: '🍗 Hot chicken and food tours',
       desc: 'Local guide takes you to 4 to 6 spots. Hattie B\'s, Prince\'s, Bolton\'s.',
       viator: viatorSearch('Nashville food tour hot chicken'),
-      gyg: gygSearch('nashville food tour hot chicken')
+      gyg: gygSearch('nashville food tour hot chicken'),
+      expedia: expediaActivitySearch('Nashville food tour hot chicken')
     },
     {
       title: '🚌 Hop-on hop-off bus',
       desc: 'Trolley loop hits Music Row, Broadway, Country Music Hall of Fame, Centennial Park.',
       viator: viatorSearch('Nashville hop on hop off trolley'),
-      gyg: gygSearch('nashville hop on hop off')
+      gyg: gygSearch('nashville hop on hop off'),
+      expedia: expediaActivitySearch('Nashville hop on hop off')
     },
     {
       title: '🚶 Walking tours',
       desc: 'Downtown history, Honky Tonk Highway, Music Row, ghost tours.',
       viator: viatorSearch('Nashville walking tour'),
-      gyg: gygSearch('nashville walking tour')
+      gyg: gygSearch('nashville walking tour'),
+      expedia: expediaActivitySearch('Nashville walking tour')
     },
     {
       title: '⛴️ Riverboat cruises',
       desc: 'General Jackson Showboat, Cumberland River dinner cruises, sightseeing boats.',
       viator: viatorSearch('Nashville riverboat cruise'),
-      gyg: gygSearch('nashville riverboat')
+      gyg: gygSearch('nashville riverboat'),
+      expedia: expediaActivitySearch('Nashville riverboat cruise')
     },
     {
       title: '👻 Ghost and true crime tours',
       desc: 'Haunted Nashville, murder mystery walking tours, speakeasy true crime tastings.',
       viator: viatorSearch('Nashville ghost tour'),
-      gyg: gygSearch('nashville ghost tour')
+      gyg: gygSearch('nashville ghost tour'),
+      expedia: expediaActivitySearch('Nashville ghost tour')
     },
     {
       title: '🚁 Helicopter tours',
       desc: 'Aerial views of downtown, Broadway, Cumberland River. 15 to 30 min flights.',
       viator: viatorSearch('Nashville helicopter tour'),
-      gyg: gygSearch('nashville helicopter')
+      gyg: gygSearch('nashville helicopter'),
+      expedia: expediaActivitySearch('Nashville helicopter tour')
     },
     {
       title: '🏛️ Plantation and historic homes',
       desc: 'Belle Meade Plantation, Andrew Jackson\'s Hermitage, Carnton House, Travellers Rest.',
       viator: viatorSearch('Nashville Belle Meade Hermitage plantation'),
-      gyg: gygSearch('belle meade hermitage nashville')
+      gyg: gygSearch('belle meade hermitage nashville'),
+      expedia: expediaActivitySearch('Nashville Belle Meade Hermitage')
     },
     {
       title: '🚗 Memphis day trip',
       desc: 'Round-trip transport plus Graceland and Beale Street. Full day.',
       viator: viatorSearch('Memphis day trip from Nashville Graceland'),
-      gyg: gygSearch('memphis day trip from nashville')
+      gyg: gygSearch('memphis day trip from nashville'),
+      expedia: expediaActivitySearch('Memphis day trip from Nashville')
     },
     {
       title: '🏔️ Smoky Mountains day trip',
       desc: 'Gatlinburg, Pigeon Forge, Great Smoky Mountains National Park. Full day.',
       viator: viatorSearch('Smoky Mountains day trip from Nashville'),
-      gyg: gygSearch('smoky mountains from nashville')
+      gyg: gygSearch('smoky mountains from nashville'),
+      expedia: expediaActivitySearch('Smoky Mountains from Nashville')
     }
   ];
 
@@ -2726,6 +2892,7 @@ function showTours() {
       <div class="card-desc">${c.desc}</div>
       <a href="${c.viator}" target="_blank" rel="noopener" style="background:#328e3a;">Browse on Viator</a>
       <a href="${c.gyg}" target="_blank" rel="noopener" style="background:#ff5533;">Browse on GetYourGuide</a>
+      <a href="${c.expedia}" target="_blank" rel="noopener" style="background:#FFC72C;color:#000;">Browse on Expedia</a>
     </div>`;
     addMessage(html, 'bot', true);
   });
