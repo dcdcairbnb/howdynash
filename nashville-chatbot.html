@@ -1850,44 +1850,109 @@ function showVacationRentals() {
 function showTours() {
   addMessage("Tours and experiences. Both Viator and GetYourGuide pay commission so the price is the same as booking direct.", 'bot');
 
-  const viatorBase = `https://www.viator.com/Nashville/d799?pid=${VIATOR_PID}`;
-  const gygBase = `https://www.getyourguide.com/nashville-l1279/?partner_id=${GETYOURGUIDE_PID}`;
+  function viatorSearch(query) {
+    return `https://www.viator.com/searchResults/all?text=${encodeURIComponent(query)}&pid=${VIATOR_PID}`;
+  }
+  function gygSearch(query) {
+    return `https://www.getyourguide.com/s/?q=${encodeURIComponent(query)}&partner_id=${GETYOURGUIDE_PID}`;
+  }
+
   const categories = [
     {
-      title: 'All Nashville tours',
+      title: '🌟 All Nashville tours',
       desc: 'Browse every available tour, day trip, and ticket.',
-      viator: viatorBase,
-      gyg: gygBase
+      viator: `https://www.viator.com/Nashville/d799?pid=${VIATOR_PID}`,
+      gyg: `https://www.getyourguide.com/nashville-l1279/?partner_id=${GETYOURGUIDE_PID}`
     },
     {
-      title: 'Honky tonk and pub crawls',
-      desc: 'Guided tours through Broadway bars, with skip-the-line perks. Search "pub crawl" on the page.',
-      viator: viatorBase,
-      gyg: gygBase
+      title: '🍻 Pub crawls and bar tours',
+      desc: 'Guided crawls through Broadway honky tonks. 200+ options, often skip-the-line.',
+      viator: viatorSearch('Nashville pub crawl'),
+      gyg: gygSearch('nashville pub crawl')
     },
     {
-      title: 'Music history and Opry',
-      desc: 'Country Music Hall of Fame, Ryman, RCA Studio B, Grand Ole Opry tickets. Filter by "Music" category.',
-      viator: viatorBase,
-      gyg: gygBase
+      title: '🚲 Pedal taverns and party buses',
+      desc: 'The Nashville bachelorette signature ride. BYOB. Group photos guaranteed.',
+      viator: viatorSearch('Nashville pedal tavern party bus'),
+      gyg: gygSearch('nashville pedal tavern')
     },
     {
-      title: 'Whiskey and distillery tours',
-      desc: 'Jack Daniel\'s day trips, Nelson\'s Green Brier, Corsair tastings. Filter by "Distillery".',
-      viator: viatorBase,
-      gyg: gygBase
+      title: '🎤 Grand Ole Opry tickets',
+      desc: 'The institution. Tuesday, Friday, Saturday shows. Book ahead.',
+      viator: viatorSearch('Grand Ole Opry tickets'),
+      gyg: gygSearch('grand ole opry tickets')
     },
     {
-      title: 'Day trips from Nashville',
-      desc: 'Memphis, Smoky Mountains, Lynchburg, Mammoth Cave. Filter by "Day Trips".',
-      viator: viatorBase,
-      gyg: gygBase
+      title: '🎵 Music history tours',
+      desc: 'Country Music Hall of Fame, RCA Studio B, Ryman backstage, Johnny Cash Museum.',
+      viator: viatorSearch('Nashville music history tour'),
+      gyg: gygSearch('nashville music history')
     },
     {
-      title: 'Riverboat and food tours',
-      desc: 'General Jackson cruise, hot chicken food tours, walking tours. Filter by "Food & Drink".',
-      viator: viatorBase,
-      gyg: gygBase
+      title: '🥃 Whiskey and distillery tours',
+      desc: 'Jack Daniel\'s, Nelson\'s Green Brier, Corsair, Belle Meade Bourbon.',
+      viator: viatorSearch('Nashville whiskey distillery tour'),
+      gyg: gygSearch('nashville whiskey distillery')
+    },
+    {
+      title: '🚐 Jack Daniel\'s Lynchburg day trip',
+      desc: 'Round-trip transport plus distillery tour from Nashville. Half day.',
+      viator: viatorSearch('Jack Daniels Lynchburg day trip from Nashville'),
+      gyg: gygSearch('jack daniels lynchburg from nashville')
+    },
+    {
+      title: '🍗 Hot chicken and food tours',
+      desc: 'Local guide takes you to 4 to 6 spots. Hattie B\'s, Prince\'s, Bolton\'s.',
+      viator: viatorSearch('Nashville food tour hot chicken'),
+      gyg: gygSearch('nashville food tour hot chicken')
+    },
+    {
+      title: '🚌 Hop-on hop-off bus',
+      desc: 'Trolley loop hits Music Row, Broadway, Country Music Hall of Fame, Centennial Park.',
+      viator: viatorSearch('Nashville hop on hop off trolley'),
+      gyg: gygSearch('nashville hop on hop off')
+    },
+    {
+      title: '🚶 Walking tours',
+      desc: 'Downtown history, Honky Tonk Highway, Music Row, ghost tours.',
+      viator: viatorSearch('Nashville walking tour'),
+      gyg: gygSearch('nashville walking tour')
+    },
+    {
+      title: '⛴️ Riverboat cruises',
+      desc: 'General Jackson Showboat, Cumberland River dinner cruises, sightseeing boats.',
+      viator: viatorSearch('Nashville riverboat cruise'),
+      gyg: gygSearch('nashville riverboat')
+    },
+    {
+      title: '👻 Ghost and true crime tours',
+      desc: 'Haunted Nashville, murder mystery walking tours, speakeasy true crime tastings.',
+      viator: viatorSearch('Nashville ghost tour'),
+      gyg: gygSearch('nashville ghost tour')
+    },
+    {
+      title: '🚁 Helicopter tours',
+      desc: 'Aerial views of downtown, Broadway, Cumberland River. 15 to 30 min flights.',
+      viator: viatorSearch('Nashville helicopter tour'),
+      gyg: gygSearch('nashville helicopter')
+    },
+    {
+      title: '🏛️ Plantation and historic homes',
+      desc: 'Belle Meade Plantation, Andrew Jackson\'s Hermitage, Carnton House, Travellers Rest.',
+      viator: viatorSearch('Nashville Belle Meade Hermitage plantation'),
+      gyg: gygSearch('belle meade hermitage nashville')
+    },
+    {
+      title: '🚗 Memphis day trip',
+      desc: 'Round-trip transport plus Graceland and Beale Street. Full day.',
+      viator: viatorSearch('Memphis day trip from Nashville Graceland'),
+      gyg: gygSearch('memphis day trip from nashville')
+    },
+    {
+      title: '🏔️ Smoky Mountains day trip',
+      desc: 'Gatlinburg, Pigeon Forge, Great Smoky Mountains National Park. Full day.',
+      viator: viatorSearch('Smoky Mountains day trip from Nashville'),
+      gyg: gygSearch('smoky mountains from nashville')
     }
   ];
 
