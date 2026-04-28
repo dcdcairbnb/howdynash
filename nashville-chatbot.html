@@ -1015,6 +1015,18 @@ function showSavedSpots() {
   });
 }
 
+function handleStarClick(btn) {
+  try {
+    const payload = JSON.parse(decodeURIComponent(btn.getAttribute('data-spot')));
+    const wasSaved = isSpotSaved(payload.name);
+    toggleSavedSpot(payload);
+    btn.textContent = wasSaved ? '☆' : '★';
+    btn.style.color = wasSaved ? '#999' : '#f59e0b';
+  } catch (e) {
+    console.error('star click failed', e);
+  }
+}
+
 function removeSavedAndRefresh(name) {
   const saved = getSavedSpots().filter(s => s.name !== name);
   localStorage.setItem(SAVED_SPOTS_KEY, JSON.stringify(saved));
@@ -1639,7 +1651,90 @@ function showPhotoSpots() {
   showStoreType('instagram mural photo spot landmark', 'tourist_attraction', 'photo spots');
 }
 function showBachelorette() {
-  showStoreType('bachelorette party pedal tavern party bus', 'tourist_attraction', 'bachelorette spots');
+  addMessage("Bachelorette mode activated. Nashville is the bachelorette capital. Here is everything you need.", 'bot');
+
+  const cards = [
+    {
+      title: '🎉 Pedal Taverns and Party Buses',
+      desc: 'The signature Nashville bachelorette ride. Bring your own drinks (BYOB Tennessee).',
+      links: [
+        { label: 'Book on Viator', url: `https://www.viator.com/Nashville/d799?pid=${VIATOR_PID}`, color: '#328e3a' },
+        { label: 'Book on GetYourGuide', url: `https://www.getyourguide.com/nashville-l1279/?partner_id=${GETYOURGUIDE_PID}`, color: '#ff5533' }
+      ]
+    },
+    {
+      title: '🥃 Honky Tonk Crawls',
+      desc: 'Tootsie\'s, Robert\'s, Acme. Free music starting 10am. No cover. Tip the bands.',
+      links: [
+        { label: 'Honky tonks on map', url: 'https://www.google.com/maps/search/honky+tonks+broadway+nashville', color: '#34a853' }
+      ]
+    },
+    {
+      title: '🍳 Brunch Spots',
+      desc: 'Biscuit Love, Pancake Pantry, Milk and Honey. Get there early. Lines build fast.',
+      links: [
+        { label: 'Biscuit Love', url: 'https://biscuitlove.com', color: '#d62828' }
+      ]
+    },
+    {
+      title: '📸 Photo Spots',
+      desc: 'I Believe in Nashville mural (12 South), Wings mural (downtown), Patsy Cline mural (Berry Hill).',
+      links: [
+        { label: 'Mural map', url: 'https://www.google.com/maps/search/nashville+murals', color: '#34a853' }
+      ]
+    },
+    {
+      title: '🎤 Live Music for the Group',
+      desc: 'Bluebird Cafe (book early), Listening Room Cafe, Nudie\'s Honky Tonk.',
+      links: [
+        { label: 'Bluebird Cafe', url: 'https://bluebirdcafe.com', color: '#d62828' }
+      ]
+    },
+    {
+      title: '🍸 Cocktail and Rooftop Bars',
+      desc: 'Patterson House (speakeasy), L.A. Jackson (rooftop), White Limozeen (pink rooftop).',
+      links: [
+        { label: 'Patterson House', url: 'https://www.thepattersonnashville.com', color: '#444' }
+      ]
+    },
+    {
+      title: '👯 Costume and Props',
+      desc: 'Cowboy hats, sashes, banners. Most Broadway shops sell these. Or order ahead on Amazon.',
+      links: [
+        { label: 'Boot stores on Maps', url: 'https://www.google.com/maps/search/boot+barn+nashville', color: '#34a853' }
+      ]
+    },
+    {
+      title: '🚐 Group Transportation',
+      desc: 'For 6+ people, book a party bus or limo. For 2 to 5, Uber XL is cheaper.',
+      links: [
+        { label: 'Party buses on Viator', url: `https://www.viator.com/Nashville/d799?pid=${VIATOR_PID}`, color: '#328e3a' }
+      ]
+    }
+  ];
+
+  cards.forEach(c => {
+    let html = `<div class="card">
+      <div class="card-title">${c.title}</div>
+      <div class="card-desc">${c.desc}</div>`;
+    c.links.forEach(l => {
+      html += `<a href="${l.url}" target="_blank" rel="noopener" style="background:${l.color};color:#fff;">${l.label}</a>`;
+    });
+    html += `</div>`;
+    addMessage(html, 'bot', true);
+  });
+
+  addMessage("Pro tip: book Bluebird and party buses 4 to 6 weeks ahead for weekend bachelorettes. They sell out.", 'bot');
+}
+
+function getTimeContext() {
+  const h = new Date().getHours();
+  if (h >= 0 && h < 5) return { mode: 'late_night', greeting: 'Howdy night owl. Nashville at this hour is mostly closed but I have your back.' };
+  if (h >= 5 && h < 11) return { mode: 'morning', greeting: 'Howdy. Morning in Music City. Biscuits and coffee mode.' };
+  if (h >= 11 && h < 14) return { mode: 'lunch', greeting: 'Howdy. Lunch o\'clock. Hot chicken or meat-and-three?' };
+  if (h >= 14 && h < 17) return { mode: 'afternoon', greeting: 'Howdy. Afternoon vibes. Distillery tour or rooftop bar?' };
+  if (h >= 17 && h < 22) return { mode: 'evening', greeting: 'Howdy. Prime time in Nashville. Dinner and live music?' };
+  return { mode: 'night', greeting: 'Howdy. Nashville comes alive after dark. Honky tonks or rooftop bar?' };
 }
 
 const VIATOR_PID = 'U00808374';
@@ -2045,8 +2140,11 @@ function renderRestaurantCard(r) {
   const b = r.booking || {};
   const isWalkin = !!b.walkin;
   const ratingBadge = r.rating ? `<span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:10px;font-size:12px;font-weight:600;margin-left:6px;">⭐ ${r.rating}${r.reviewCount ? ' · ' + r.reviewCount : ''}</span>` : '';
+  const isSaved = isSpotSaved(r.name);
+  const safePayload = encodeURIComponent(JSON.stringify({ name: r.name, note: r.vibe || r.cuisine, address: r.neighborhood || '', phone: r.phone || '' }));
+  const starBtn = `<button class="save-btn" data-spot="${safePayload}" onclick="handleStarClick(this); return false;" style="background:none;border:none;cursor:pointer;font-size:18px;float:right;padding:0;color:${isSaved ? '#f59e0b' : '#999'};">${isSaved ? '★' : '☆'}</button>`;
   let html = `<div class="card">
-    <div class="card-title">${r.name}${ratingBadge}</div>
+    <div class="card-title">${starBtn}${r.name}${ratingBadge}</div>
     <div class="card-meta">${r.cuisine}${r.neighborhood ? ' · ' + r.neighborhood : ''}${r.price ? ' · ' + r.price : ''}</div>`;
   if (isWalkin) html += `<div class="walkin-tag">Walk-in / call ahead</div>`;
   html += `<div class="card-desc">${r.vibe}${r.note ? '. ' + r.note : ''}</div>`;
@@ -2173,6 +2271,10 @@ async function showEvents() {
           <div class="card-meta">${dateStr} · ${e.venue || ''}${distStr}</div>
           <div class="card-desc">${e.genre || e.classification || ''}${e.priceMin ? ' · From $' + e.priceMin : ''}</div>`;
         if (e.url) html += `<a href="${e.url}" target="_blank">Get tickets</a>`;
+        if (e.date) {
+          const icsUrl = buildIcsEvent(e.name, e.date, e.time, e.venue, '', e.url);
+          html += `<a href="${icsUrl}" download="howdy-nashville-event.ics" style="background:#2563eb;color:#fff;">📅 Add to calendar</a>`;
+        }
         html += `</div>`;
         addMessage(html, 'bot', true);
       });
@@ -2294,7 +2396,8 @@ function maybeShowIosInstallHint() {
 
 checkApiHealth();
 setTimeout(() => {
-  addMessage("Howdy. I'm your Nashville guide. Restaurants, live music, events, and tourist info. What sounds good?", 'bot');
+  const ctx = getTimeContext();
+  addMessage(ctx.greeting, 'bot');
   setTimeout(() => showMainMenu(), 400);
   setTimeout(() => snapshot('initial'), 500);
   setTimeout(() => maybeShowIosInstallHint(), 1000);
