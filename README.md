@@ -1,73 +1,73 @@
-# Music City Retreat
+# Howdy Nashville
 
-Nashville tourism chatbot. Frontend HTML chat widget + Vercel serverless API backend pulling Foursquare, Google Places, Ticketmaster, and Nashville open data.
+A free conversational tourism chatbot for Nashville visitors. Get restaurant picks, live music, festivals, ride-share deep links, food delivery, vacation rentals, weather, and AI-powered Q&A about Music City. Mobile-first, no signup.
 
-## Project structure
+Live: https://howdy-nashville.vercel.app
+
+## What's inside
 
 ```
-.
-├── nashville-chatbot.html       Frontend chat widget
+howdy-nashville/
+├── nashville-chatbot.html       Main app (frontend, single file)
+├── deploy.sh                    Push to GitHub and trigger Vercel deploy
+├── vercel.json                  Vercel routing and CORS
+├── package.json
+├── .env.example                 Required env vars
 ├── api/                         Vercel serverless functions
 │   ├── health.js                GET /api/health
-│   ├── restaurants/
-│   │   ├── search.js            GET /api/restaurants/search
-│   │   └── [id].js              GET /api/restaurants/:id
-│   ├── places/
-│   │   └── search.js            GET /api/places/search
+│   ├── chat.js                  POST /api/chat (Claude LLM)
+│   ├── restaurants/search.js    GET /api/restaurants/search
+│   ├── restaurants/[id].js      GET /api/restaurants/:id
+│   ├── places/search.js         GET /api/places/search
 │   ├── events.js                GET /api/events
-│   └── nashville/
-│       └── data.js              GET /api/nashville/data
-├── package.json
-├── vercel.json
-├── .env.example
-└── .gitignore
+│   ├── festivals.js             GET /api/festivals
+│   ├── flights.js               GET /api/flights
+│   ├── weather.js               GET /api/weather
+│   └── nashville/data.js        GET /api/nashville/data
+└── docs/                        Strategy and reference docs
+    ├── SETUP_GUIDE.md           Complete setup walkthrough
+    ├── BEST_PRACTICES.md        Patterns and pitfalls
+    ├── EVALUATION.md            Honest project review
+    ├── NEXT_CITY_PLAYBOOK.md    Replication guide
+    ├── FINANCIAL_PROJECTIONS.md Costs and revenue
+    ├── CITY_RECOMMENDATIONS.md  Where to expand next
+    └── MARKETING_PLAN.md        Traffic and revenue strategy
 ```
 
-## Get your API keys (free or free tier)
+## Get the API keys (all free or free-tier)
 
-1. Foursquare Places: https://foursquare.com/developers (1,000 calls/day free)
-2. Google Places API: https://console.cloud.google.com/apis/library/places.googleapis.com ($200/month free credit)
-3. Ticketmaster Discovery: https://developer.ticketmaster.com (5,000 calls/day free)
-4. Nashville Open Data: https://data.nashville.gov/profile/edit/developer_settings (free, app token optional)
+1. Foursquare: https://foursquare.com/developers (1,000 calls/day)
+2. Google Places: https://console.cloud.google.com/apis/library/places.googleapis.com ($200/month free credit)
+3. Ticketmaster: https://developer.ticketmaster.com (5,000 calls/day)
+4. SeatGeek: https://seatgeek.com/account/develop
+5. Eventbrite: https://www.eventbrite.com (Account, Developer Links, API Keys)
+6. AviationStack: https://aviationstack.com (100 calls/month free)
+7. Anthropic Claude: https://console.anthropic.com (~$1.20 per 1,000 chats)
 
-Copy the keys somewhere safe. You'll paste them into Vercel.
+## Deploy
 
-## Deploy to Vercel (5 minutes)
-
-### Option A: Deploy from GitHub (recommended)
-
-1. Create a new GitHub repo and push these files.
-2. Go to https://vercel.com/new and import the repo.
-3. Vercel auto-detects the project. Click Deploy.
-4. After first deploy, go to Project > Settings > Environment Variables and add:
-   - FOURSQUARE_API_KEY
-   - GOOGLE_PLACES_KEY
-   - TICKETMASTER_KEY
-   - NASHVILLE_APP_TOKEN (optional)
-5. Redeploy to pick up the keys.
-
-### Option B: Deploy from your computer
+### One-time setup
 
 ```bash
-npm install
-npx vercel login
-npx vercel
-# Follow prompts. First deploy creates the project.
-npx vercel env add FOURSQUARE_API_KEY
-npx vercel env add GOOGLE_PLACES_KEY
-npx vercel env add TICKETMASTER_KEY
-npx vercel env add NASHVILLE_APP_TOKEN
-npx vercel --prod
+brew install gh
+gh auth login
+chmod +x deploy.sh
 ```
 
-Your live URL will be something like `https://music-city-retreat.vercel.app`.
+### Daily workflow
+
+```bash
+cd /path/to/howdy-nashville
+./deploy.sh "your commit message"
+```
+
+Vercel auto-deploys within 60 seconds.
 
 ## Local development
 
 ```bash
-npm install
 cp .env.example .env.local
-# Paste your keys into .env.local
+# paste your keys
 npx vercel dev
 ```
 
@@ -75,24 +75,25 @@ Open http://localhost:3000
 
 ## Custom domain
 
-In Vercel: Project > Settings > Domains. Add your domain. Update DNS records as instructed. Free.
+Vercel project, Settings, Domains. Add domain, update DNS, free.
 
 ## API endpoints
 
-- `GET /api/health` - check which services are configured
-- `GET /api/restaurants/search?term=hot+chicken&limit=10` - Foursquare restaurant search
-- `GET /api/restaurants/:id` - Foursquare place details
-- `GET /api/places/search?q=museum&type=museum` - Google Places search
-- `GET /api/events?keyword=country&classificationName=Music` - Ticketmaster events
-- `GET /api/nashville/data?dataset=ABC123&limit=20` - Nashville open data
+- `GET /api/health` - service availability
+- `POST /api/chat` - Claude LLM chat
+- `GET /api/restaurants/search?term=hot+chicken&lat=&lng=` - restaurants
+- `GET /api/places/search?q=museum&type=museum` - generic places
+- `GET /api/events?keyword=country&classificationName=Music` - events
+- `GET /api/festivals` - Nashville festivals and special events
+- `GET /api/flights?airport=BNA&direction=arrivals` - BNA flight tracker
+- `GET /api/weather?lat=&lng=` - Weather.gov forecast
 
-## Costs at typical scale
+## Cost
 
-- Vercel Hobby: free (personal/non-commercial only)
-- Vercel Pro: $20/month (required for commercial use)
-- Foursquare Places: free up to 1,000 calls/day
-- Google Places: free up to ~$200 in usage per month
-- Ticketmaster: free up to 5,000 calls/day
-- Nashville open data: free
+Hosting: free on Vercel Hobby. Pro is $20/month for commercial use.
 
-Total to launch: $0-20/month.
+API costs: roughly $5 to $30 per month at low traffic.
+
+## Documentation
+
+See the docs in this repo for setup, best practices, financials, and expansion strategy.

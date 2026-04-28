@@ -1,7 +1,7 @@
 {
-  "name": "music-city-retreat",
+  "name": "howdy-nashville",
   "version": "1.0.0",
-  "description": "Nashville tourism chatbot with multi-API integration",
+  "description": "Howdy Nashville: a free conversational tourist guide for Nashville visitors with live data, AI chat, and ride/delivery deep links.",
   "scripts": {
     "dev": "vercel dev",
     "deploy": "vercel --prod"

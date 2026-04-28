@@ -30,13 +30,55 @@ FORMAT RULES
 - Phone numbers and addresses are fine to share when known.
 - Never invent prices, hours, or reservation availability. If you don't know, say "call to confirm" or "check their website."`;
 
+// Simple in-memory rate limiter. Resets when function instance recycles.
+const rateLimitStore = new Map();
+const RATE_LIMIT_PER_HOUR = 30;
+const RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000;
+
+function getClientIp(req) {
+  const forwarded = req.headers['x-forwarded-for'];
+  if (forwarded) return String(forwarded).split(',')[0].trim();
+  return req.headers['x-real-ip'] || req.socket?.remoteAddress || 'unknown';
+}
+
+function checkRateLimit(ip) {
+  const now = Date.now();
+  const record = rateLimitStore.get(ip);
+  if (!record || now - record.windowStart > RATE_LIMIT_WINDOW_MS) {
+    rateLimitStore.set(ip, { windowStart: now, count: 1 });
+    return { allowed: true, remaining: RATE_LIMIT_PER_HOUR - 1 };
+  }
+  if (record.count >= RATE_LIMIT_PER_HOUR) {
+    return { allowed: false, remaining: 0, retryMs: RATE_LIMIT_WINDOW_MS - (now - record.windowStart) };
+  }
+  record.count += 1;
+  return { allowed: true, remaining: RATE_LIMIT_PER_HOUR - record.count };
+}
+
+async function fetchWithTimeout(url, options, timeoutMs = 15000) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(url, { ...options, signal: controller.signal });
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'POST only' });
   }
 
   if (!process.env.ANTHROPIC_API_KEY) {
-    return res.status(503).json({ error: 'ANTHROPIC_API_KEY not configured' });
+    return res.status(503).json({ error: 'chat service not configured' });
+  }
+
+  const ip = getClientIp(req);
+  const rateCheck = checkRateLimit(ip);
+  if (!rateCheck.allowed) {
+    res.setHeader('Retry-After', Math.ceil(rateCheck.retryMs / 1000));
+    return res.status(429).json({ error: 'too many messages. try again in an hour.' });
   }
 
   let body = req.body;
@@ -48,6 +90,9 @@ export default async function handler(req, res) {
   if (!message || typeof message !== 'string') {
     return res.status(400).json({ error: 'message is required' });
   }
+  if (message.length > 2000) {
+    return res.status(400).json({ error: 'message too long' });
+  }
 
   const messages = [];
   for (const turn of history.slice(-8)) {
@@ -58,7 +103,7 @@ export default async function handler(req, res) {
   messages.push({ role: 'user', content: message.slice(0, 2000) });
 
   try {
-    const r = await fetch('https://api.anthropic.com/v1/messages', {
+    const r = await fetchWithTimeout('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -71,23 +116,28 @@ export default async function handler(req, res) {
         system: SYSTEM_PROMPT,
         messages
       })
-    });
+    }, 15000);
 
     if (!r.ok) {
       const errText = await r.text();
-      return res.status(r.status).json({ error: 'claude api error', detail: errText });
+      console.error('claude api error', r.status, errText);
+      return res.status(r.status).json({ error: 'chat service error' });
     }
 
     const data = await r.json();
     const reply = data.content?.[0]?.text || '';
     res.setHeader('Cache-Control', 'no-store');
+    res.setHeader('X-RateLimit-Remaining', String(rateCheck.remaining));
     res.status(200).json({
       reply,
-      model: data.model,
-      stopReason: data.stop_reason,
-      usage: data.usage
+      stopReason: data.stop_reason
     });
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    if (e.name === 'AbortError') {
+      console.error('claude api timeout');
+      return res.status(504).json({ error: 'chat service timed out' });
+    }
+    console.error('chat handler error', e.message);
+    res.status(500).json({ error: 'chat service error' });
   }
 }
