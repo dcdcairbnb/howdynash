@@ -554,6 +554,22 @@
     © Howdy Nashville · <a onclick="openDisclaimer()">Disclaimer & Privacy</a>
   </div>
 </div>
+<div class="modal-overlay" id="locationPromptModal" onclick="if(event.target===this)dismissLocationPrompt()" style="display:none;">
+  <div class="modal-box" style="max-width:400px;text-align:center;">
+    <div style="font-size:48px;margin-bottom:8px;">📍</div>
+    <h2 style="margin-bottom:8px;">Share your location?</h2>
+    <p style="margin-bottom:16px;color:#555;">For best results in Nashville, share your spot. I will use it to:</p>
+    <ul style="text-align:left;list-style:none;padding:0;margin-bottom:20px;">
+      <li style="padding:6px 0;">🍽️ Show restaurants and bars nearest you</li>
+      <li style="padding:6px 0;">🚗 Set accurate pickup for Uber, Lyft, Waymo</li>
+      <li style="padding:6px 0;">🎵 Sort events and concerts by distance</li>
+      <li style="padding:6px 0;">🏨 Center hotel searches on your spot</li>
+    </ul>
+    <p style="font-size:12px;color:#888;margin-bottom:16px;">Your location is not stored on our servers. Used in real time only.</p>
+    <button onclick="acceptLocationPrompt()" style="background:#d62828;color:#fff;border:none;padding:12px 28px;border-radius:24px;font-size:16px;font-weight:600;cursor:pointer;width:100%;margin-bottom:8px;">Share my location</button>
+    <button onclick="dismissLocationPrompt()" style="background:none;color:#666;border:none;padding:8px;cursor:pointer;font-size:14px;">Not right now</button>
+  </div>
+</div>
 <div class="modal-overlay" id="disclaimerModal" onclick="if(event.target===this)closeDisclaimer()">
   <div class="modal-box">
     <h2>Disclaimer & Privacy</h2>
@@ -1041,6 +1057,49 @@ function maybeShowWelcomeTour() {
     addMessage("First time here? Quick tour. Use the menu below to find restaurants, live music, hotels, and tourist info. Or just type any question. I save your favorites locally on your phone.", 'bot');
     localStorage.setItem('howdy-nashville-tour-seen', '1');
   }, 1500);
+}
+
+// Location permission prompt modal
+function maybeShowLocationPrompt() {
+  if (userLocation) return;
+  if (localStorage.getItem('howdy-nashville-location-asked')) return;
+  if (!navigator.geolocation) return;
+
+  if (navigator.permissions) {
+    navigator.permissions.query({ name: 'geolocation' }).then(p => {
+      if (p.state === 'granted') {
+        requestLocation();
+        return;
+      }
+      if (p.state === 'denied') {
+        localStorage.setItem('howdy-nashville-location-asked', '1');
+        return;
+      }
+      setTimeout(() => {
+        document.getElementById('locationPromptModal').style.display = 'flex';
+      }, 2500);
+    }).catch(() => {
+      setTimeout(() => {
+        document.getElementById('locationPromptModal').style.display = 'flex';
+      }, 2500);
+    });
+  } else {
+    setTimeout(() => {
+      document.getElementById('locationPromptModal').style.display = 'flex';
+    }, 2500);
+  }
+}
+
+function acceptLocationPrompt() {
+  document.getElementById('locationPromptModal').style.display = 'none';
+  localStorage.setItem('howdy-nashville-location-asked', '1');
+  requestLocation();
+}
+
+function dismissLocationPrompt() {
+  document.getElementById('locationPromptModal').style.display = 'none';
+  localStorage.setItem('howdy-nashville-location-asked', '1');
+  addMessage("No worries. You can share your location anytime by tapping 'Share location' at the bottom of the chat.", 'bot');
 }
 
 // Voice input via Web Speech API
@@ -2402,11 +2461,7 @@ setTimeout(() => {
   setTimeout(() => snapshot('initial'), 500);
   setTimeout(() => maybeShowIosInstallHint(), 1000);
   maybeShowWelcomeTour();
-  if (navigator.permissions) {
-    navigator.permissions.query({ name: 'geolocation' }).then(p => {
-      if (p.state === 'granted') requestLocation();
-    }).catch(() => {});
-  }
+  maybeShowLocationPrompt();
 }, 300);
 </script>
 </body>
