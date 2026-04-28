@@ -1955,6 +1955,31 @@ function findLiveMatch(curatedItem, liveList) {
   return match || null;
 }
 
+// Match curated items against a Google Places search to attach distance, rating, and address.
+async function enrichCuratedWithLive(items, query, type) {
+  if (!apiServices.google || !userLocation) return items;
+  try {
+    const live = await apiSearchPlaces(query, type);
+    if (!live || !live.length) return items;
+    return items.map(item => {
+      const match = findLiveMatch(item, live);
+      if (match) {
+        return {
+          ...item,
+          distanceMiles: match.distanceMiles,
+          rating: item.rating || match.rating,
+          reviewCount: item.reviewCount || match.reviewCount,
+          address: item.address || match.address,
+          mapsUrl: item.mapsUrl || match.mapsUrl
+        };
+      }
+      return item;
+    });
+  } catch (e) {
+    return items;
+  }
+}
+
 function renderCuratedCard(s, label, liveMatch) {
   const distStr = liveMatch && liveMatch.distanceMiles != null ? ` · 📍 ${liveMatch.distanceMiles} mi` : '';
   const ratingStr = liveMatch && liveMatch.rating ? `★ ${liveMatch.rating}` : '';
@@ -3118,11 +3143,12 @@ function renderRestaurantCard(r) {
   const b = r.booking || {};
   const isWalkin = !!b.walkin;
   const ratingBadge = r.rating ? `<span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:10px;font-size:12px;font-weight:600;margin-left:6px;">⭐ ${r.rating}${r.reviewCount ? ' · ' + r.reviewCount : ''}</span>` : '';
+  const distStr = r.distanceMiles != null ? ` · 📍 ${r.distanceMiles} mi` : '';
   const star = renderSaveStar({ name: r.name, note: r.vibe || r.cuisine, address: r.neighborhood || '', phone: r.phone || '' });
   const share = renderShareButton({ name: r.name, desc: `${r.cuisine || ''}${r.neighborhood ? ' in ' + r.neighborhood : ''}`, url: b.opentable || b.resy || b.tock || b.yelp || '' });
   let html = `<div class="card">
     <div class="card-title">${star}${share}${r.name}${ratingBadge}</div>
-    <div class="card-meta">${r.cuisine}${r.neighborhood ? ' · ' + r.neighborhood : ''}${r.price ? ' · ' + r.price : ''}</div>`;
+    <div class="card-meta">${r.cuisine}${r.neighborhood ? ' · ' + r.neighborhood : ''}${r.price ? ' · ' + r.price : ''}${distStr}</div>`;
   if (isWalkin) html += `<div class="walkin-tag">Walk-in / call ahead</div>`;
   html += `<div class="card-desc">${r.vibe}${r.note ? '. ' + r.note : ''}</div>`;
   if (b.opentable) html += `<a class="opentable-btn" href="${b.opentable}" target="_blank">OpenTable</a>`;
@@ -3199,14 +3225,19 @@ function showRestaurantsPaged(list, startIdx) {
   }
 }
 
-function showRestaurants(list, header) {
+async function showRestaurants(list, header) {
   if (list.length === 0) {
     addMessage("Nothing matched that. Try another category?", 'bot');
     showRestaurantOptions();
     return;
   }
   addMessage(`${header} (${list.length} found)`, 'bot');
-  list.forEach(r => {
+  // Enrich with live distance when location is available.
+  const enriched = await enrichCuratedWithLive(list, 'restaurant', 'restaurant');
+  if (userLocation && enriched.some(r => r.distanceMiles != null)) {
+    enriched.sort((a, b) => (a.distanceMiles ?? 9999) - (b.distanceMiles ?? 9999));
+  }
+  enriched.forEach(r => {
     addMessage(renderRestaurantCard(r), 'bot', true);
   });
   setTimeout(() => {
@@ -3267,11 +3298,28 @@ async function showLiveMusic() {
     { name: "Marathon Music Works", desc: "Mid-size venue in Marathon Village. National touring acts.", url: "https://www.marathonmusicworks.com" },
     { name: "Cannery Hall", desc: "Reopened 2024. Multi-room music venue in old cannery building.", url: "https://canneryhall.com" }
   ];
-  venues.forEach(v => {
-    const star = renderSaveStar({ name: v.name, note: v.desc, address: 'Nashville' });
+  let enrichedVenues = venues.map(v => ({ item: v, match: null }));
+  if (apiServices.google && userLocation) {
+    try {
+      const liveVenues = await apiSearchPlaces('live music venue concert hall', '');
+      enrichedVenues = venues.map(v => ({ item: v, match: findLiveMatch(v, liveVenues) }));
+      enrichedVenues.sort((a, b) => {
+        const da = a.match?.distanceMiles ?? 9999;
+        const db = b.match?.distanceMiles ?? 9999;
+        return da - db;
+      });
+    } catch (e) {
+      console.warn('venue distance enrichment failed', e);
+    }
+  }
+  enrichedVenues.forEach(({ item: v, match }) => {
+    const distStr = match && match.distanceMiles != null ? ` · 📍 ${match.distanceMiles} mi` : '';
+    const ratingStr = match && match.rating ? `★ ${match.rating}` : '';
+    const star = renderSaveStar({ name: v.name, note: v.desc, address: match?.address || 'Nashville' });
     const share = renderShareButton({ name: v.name, desc: v.desc, url: v.url || '' });
     let html = `<div class="card">
       <div class="card-title">${star}${share}${v.name}</div>
+      ${ratingStr || distStr ? `<div class="card-meta">${ratingStr}${distStr}</div>` : ''}
       <div class="card-desc">${v.desc}</div>`;
     if (v.url) html += `<a href="${v.url}" target="_blank">Get tickets</a>`;
     html += `</div>`;
@@ -3317,29 +3365,47 @@ async function showEvents() {
 }
 
 async function showAttractions() {
-  // Always show curated list first since these are guaranteed Nashville must-sees.
+  // Pull live data first so we can attach distance and ratings to curated cards.
+  let live = null;
+  if (apiServices.google) {
+    try {
+      live = await apiSearchPlaces('Nashville tourist attractions museums landmarks', '');
+    } catch (e) {
+      console.warn('attractions API failed', e);
+    }
+  }
+
+  let attractions = NASHVILLE_DATA.attractions.map(a => ({ item: a, match: findLiveMatch(a, live) }));
+  if (userLocation && attractions.some(x => x.match && x.match.distanceMiles != null)) {
+    attractions.sort((a, b) => {
+      const da = a.match?.distanceMiles ?? 9999;
+      const db = b.match?.distanceMiles ?? 9999;
+      return da - db;
+    });
+  }
+
   addMessage("Top Nashville attractions:", 'bot');
-  NASHVILLE_DATA.attractions.forEach(a => {
-    const star = renderSaveStar({ name: a.name, note: a.type, address: 'Nashville' });
+  attractions.forEach(({ item: a, match }) => {
+    const distStr = match && match.distanceMiles != null ? ` · 📍 ${match.distanceMiles} mi` : '';
+    const ratingStr = match && match.rating ? ` · ★ ${match.rating}` : '';
+    const star = renderSaveStar({ name: a.name, note: a.type, address: match?.address || 'Nashville' });
     const share = renderShareButton({ name: a.name, desc: a.desc || a.type, url: a.url || '' });
     let html = `<div class="card">
       <div class="card-title">${star}${share}${a.name}</div>
-      <div class="card-meta">${a.type}</div>
+      <div class="card-meta">${a.type}${ratingStr}${distStr}</div>
       <div class="card-desc">${a.desc}</div>`;
     if (a.url) html += `<a href="${a.url}" target="_blank">Learn more</a>`;
-    const mapsUrl = `https://www.google.com/maps/search/${encodeURIComponent(a.name + ' Nashville TN')}`;
+    const mapsUrl = match?.mapsUrl || `https://www.google.com/maps/search/${encodeURIComponent(a.name + ' Nashville TN')}`;
     html += `<a href="${mapsUrl}" target="_blank" rel="noopener" style="background:#34a853;color:#fff;">Open in Maps</a>`;
     html += `</div>`;
     addMessage(html, 'bot', true);
   });
 
   // Then add live API attractions if available.
-  if (!apiServices.google) return;
+  if (!live || !live.length) return;
   try {
-    const live = await apiSearchPlaces('Nashville tourist attractions museums landmarks', '');
-    if (!live || !live.length) return;
-    const curatedNames = new Set(NASHVILLE_DATA.attractions.map(a => a.name.toLowerCase()));
-    const extras = live.filter(a => a.name && !curatedNames.has(a.name.toLowerCase())).slice(0, 8);
+    const curatedNames = new Set(NASHVILLE_DATA.attractions.map(a => nameKey(a.name)));
+    const extras = live.filter(a => a.name && !curatedNames.has(nameKey(a.name))).slice(0, 8);
     if (extras.length === 0) return;
     addMessage(`${extras.length} more nearby attractions:`, 'bot');
     extras.forEach(a => {
