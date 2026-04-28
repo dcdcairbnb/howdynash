@@ -1,7 +1,7 @@
 {
-  "name": "howdy-nashville",
+  "name": "howdy-nash",
   "version": "1.0.0",
-  "description": "Howdy Nashville: a free conversational tourist guide for Nashville visitors with live data, AI chat, and ride/delivery deep links.",
+  "description": "Howdy Nash: a free Nashville tourist guide with AI concierge. Live data, ride and delivery deep links, no signup.",
   "scripts": {
     "dev": "vercel dev",
     "deploy": "vercel --prod"
