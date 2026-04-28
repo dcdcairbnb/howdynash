@@ -1031,6 +1031,17 @@ function showSavedSpots() {
   });
 }
 
+function renderSaveStar(spot) {
+  const isSaved = isSpotSaved(spot.name);
+  const safePayload = encodeURIComponent(JSON.stringify({
+    name: spot.name || '',
+    note: spot.note || spot.desc || spot.vibe || '',
+    address: spot.address || spot.neighborhood || spot.venue || '',
+    phone: spot.phone || ''
+  }));
+  return `<button class="save-btn" data-spot="${safePayload}" onclick="handleStarClick(this); return false;" style="background:none;border:none;cursor:pointer;font-size:18px;float:right;padding:0;color:${isSaved ? '#f59e0b' : '#999'};" aria-label="Save ${(spot.name || '').replace(/"/g, '&quot;')}">${isSaved ? '★' : '☆'}</button>`;
+}
+
 function handleStarClick(btn) {
   try {
     const payload = JSON.parse(decodeURIComponent(btn.getAttribute('data-spot')));
@@ -2027,8 +2038,9 @@ async function showSports() {
       }
     } catch (e) {}
 
+    const star = renderSaveStar({ name: team.name, note: `${team.league} · ${team.venue}`, address: team.venue });
     let html = `<div class="card">
-      <div class="card-title">${team.emoji} ${team.name}</div>
+      <div class="card-title">${star}${team.emoji} ${team.name}</div>
       <div class="card-desc"><strong>${team.league}</strong> · ${team.venue}</div>`;
     if (nextGame) {
       const dateStr = nextGame.date ? new Date(nextGame.date + 'T' + (nextGame.time || '19:00')).toLocaleString([], { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : 'TBD';
@@ -2174,8 +2186,9 @@ async function showStoreType(query, type, label) {
     const ratingStr = s.rating ? `★ ${s.rating}` : '';
     const reviewStr = s.reviewCount ? ` (${s.reviewCount})` : '';
     const safeName = (s.name || '').replace(/'/g, "\\'");
+    const star = renderSaveStar({ name: s.name, note: label, address: s.address });
     let html = `<div class="card">
-      <div class="card-title">${s.name}</div>
+      <div class="card-title">${star}${s.name}</div>
       <div class="card-meta">${ratingStr}${reviewStr}${distStr}</div>
       <div class="card-desc">${s.address || ''}</div>`;
     if (s.mapsUrl) html += `<a href="${s.mapsUrl}" target="_blank">Open in Maps</a>`;
@@ -2212,8 +2225,9 @@ async function showFestivals() {
       list.slice(0, 15).forEach(f => {
         const dateStr = f.date + (f.time ? ' at ' + f.time : '');
         const distStr = f.distanceMiles != null ? ` · 📍 ${f.distanceMiles} mi` : '';
+        const star = renderSaveStar({ name: f.name, note: `${dateStr} · ${f.venue || ''}`, address: f.address || f.venue || '' });
         let html = `<div class="card">
-          <div class="card-title">${f.name}</div>
+          <div class="card-title">${star}${f.name}</div>
           <div class="card-meta">${dateStr || 'TBA'} · ${f.venue || ''}${distStr}</div>
           <div class="card-desc">${f.genre || ''}${f.priceMin ? ' · From $' + f.priceMin : ''}</div>`;
         if (f.url) html += `<a href="${f.url}" target="_blank">Tickets & info</a>`;
@@ -2387,8 +2401,9 @@ function showLiveMusic() {
     { name: "Station Inn", desc: "Bluegrass every night in The Gulch.", url: "https://stationinn.com" }
   ];
   venues.forEach(v => {
+    const star = renderSaveStar({ name: v.name, note: v.desc, address: 'Nashville' });
     let html = `<div class="card">
-      <div class="card-title">${v.name}</div>
+      <div class="card-title">${star}${v.name}</div>
       <div class="card-desc">${v.desc}</div>`;
     if (v.url) html += `<a href="${v.url}" target="_blank">Get tickets</a>`;
     html += `</div>`;
@@ -2405,8 +2420,9 @@ async function showEvents() {
       live.slice(0, 10).forEach(e => {
         const dateStr = e.date + (e.time ? ' at ' + e.time : '');
         const distStr = e.distanceMiles != null ? ` · 📍 ${e.distanceMiles} mi` : '';
+        const star = renderSaveStar({ name: e.name, note: `${dateStr} · ${e.venue || ''}`, address: e.venue || '' });
         let html = `<div class="card">
-          <div class="card-title">${e.name}</div>
+          <div class="card-title">${star}${e.name}</div>
           <div class="card-meta">${dateStr} · ${e.venue || ''}${distStr}</div>
           <div class="card-desc">${e.genre || e.classification || ''}${e.priceMin ? ' · From $' + e.priceMin : ''}</div>`;
         if (e.url) html += `<a href="${e.url}" target="_blank">Get tickets</a>`;
@@ -2439,8 +2455,9 @@ async function showAttractions() {
       addMessage(`${live.length} top attractions in Nashville:`, 'bot');
       live.slice(0, 8).forEach(a => {
         const distStr = a.distanceMiles != null ? ` · 📍 ${a.distanceMiles} mi` : '';
+        const star = renderSaveStar({ name: a.name, note: 'Nashville attraction', address: a.address || '' });
         let html = `<div class="card">
-          <div class="card-title">${a.name}</div>
+          <div class="card-title">${star}${a.name}</div>
           <div class="card-meta">${a.rating ? '★' + a.rating : ''} ${a.reviewCount ? '(' + a.reviewCount + ' reviews)' : ''}${distStr}</div>
           <div class="card-desc">${a.address || ''}</div>`;
         if (a.mapsUrl) html += `<a href="${a.mapsUrl}" target="_blank">Open in Maps</a>`;
@@ -2453,8 +2470,9 @@ async function showAttractions() {
   }
   addMessage("Top things to see and do:", 'bot');
   NASHVILLE_DATA.attractions.slice(0, 6).forEach(a => {
+    const star = renderSaveStar({ name: a.name, note: a.type, address: 'Nashville' });
     let html = `<div class="card">
-      <div class="card-title">${a.name}</div>
+      <div class="card-title">${star}${a.name}</div>
       <div class="card-meta">${a.type}</div>
       <div class="card-desc">${a.desc}</div>`;
     if (a.url) html += `<a href="${a.url}" target="_blank">Learn more</a>`;
