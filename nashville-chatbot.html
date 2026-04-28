@@ -2015,62 +2015,160 @@ function showPhotoSpots() {
 function showBachelorette() {
   addMessage("Bachelorette mode activated. Nashville is the bachelorette capital. Here is everything you need.", 'bot');
 
+  const viatorSearch = (q) => `https://www.viator.com/searchResults/all?text=${encodeURIComponent(q)}&pid=${VIATOR_PID}`;
+  const gygSearch = (q) => `https://www.getyourguide.com/s/?q=${encodeURIComponent(q)}&partner_id=${GETYOURGUIDE_PID}`;
+
   const cards = [
     {
       title: '🎉 Pedal Taverns and Party Buses',
       desc: 'The signature Nashville bachelorette ride. Bring your own drinks (BYOB Tennessee).',
       links: [
-        { label: 'Book on Viator', url: `https://www.viator.com/Nashville/d799?pid=${VIATOR_PID}`, color: '#328e3a' },
-        { label: 'Book on GetYourGuide', url: `https://www.getyourguide.com/nashville-l1279/?partner_id=${GETYOURGUIDE_PID}`, color: '#ff5533' }
+        { label: 'Book on Viator', url: viatorSearch('Nashville pedal tavern party bus'), color: '#328e3a' },
+        { label: 'Book on GetYourGuide', url: gygSearch('nashville pedal tavern'), color: '#ff5533' }
       ]
     },
     {
-      title: '🥃 Honky Tonk Crawls',
-      desc: 'Tootsie\'s, Robert\'s, Acme. Free music starting 10am. No cover. Tip the bands.',
+      title: '🍻 Pub Crawl Tours',
+      desc: 'Guided crawls through Broadway honky tonks. Skip-the-line perks at top spots.',
+      links: [
+        { label: 'Pub crawls on Viator', url: viatorSearch('Nashville pub crawl bachelorette'), color: '#328e3a' },
+        { label: 'Pub crawls on GetYourGuide', url: gygSearch('nashville pub crawl'), color: '#ff5533' }
+      ]
+    },
+    {
+      title: '🥃 Honky Tonks on Broadway',
+      desc: 'Tootsie\'s, Robert\'s, Acme, Honky Tonk Central. Free music from 10am. Tip the bands.',
       links: [
         { label: 'Honky tonks on map', url: 'https://www.google.com/maps/search/honky+tonks+broadway+nashville', color: '#34a853' }
       ]
     },
     {
-      title: '🍳 Brunch Spots',
-      desc: 'Biscuit Love, Pancake Pantry, Milk and Honey. Get there early. Lines build fast.',
+      title: '🍳 Bachelorette Brunch Spots',
+      desc: 'Biscuit Love, Pancake Pantry, Milk and Honey, The Diner, Frothy Monkey. Bottomless mimosas common.',
       links: [
-        { label: 'Biscuit Love', url: 'https://biscuitlove.com', color: '#d62828' }
+        { label: 'Biscuit Love', url: 'https://biscuitlove.com', color: '#d62828' },
+        { label: 'Brunch spots on Maps', url: 'https://www.google.com/maps/search/best+bachelorette+brunch+nashville', color: '#34a853' }
       ]
     },
     {
-      title: '📸 Photo Spots',
-      desc: 'I Believe in Nashville mural (12 South), Wings mural (downtown), Patsy Cline mural (Berry Hill).',
+      title: '🌈 Drag Brunches',
+      desc: 'Lipstick Lounge Sunday brunch, Play Dance Bar drag brunch, Trash Bachelorette at TC Restaurant.',
       links: [
-        { label: 'Mural map', url: 'https://www.google.com/maps/search/nashville+murals', color: '#34a853' }
+        { label: 'Lipstick Lounge', url: 'https://www.thelipsticklounge.com', color: '#e91e63' },
+        { label: 'Play Dance Bar', url: 'https://www.playdancebar.com', color: '#9c27b0' }
+      ]
+    },
+    {
+      title: '📸 Mural Photo Spots',
+      desc: 'I Believe in Nashville (12 South), Wings (Gulch), What Lifts You wings (Gulch), Make Music Not War (12 South), Patsy Cline (Berry Hill).',
+      links: [
+        { label: 'Mural map', url: 'https://www.google.com/maps/search/nashville+murals+12+south', color: '#34a853' }
       ]
     },
     {
       title: '🎤 Live Music for the Group',
-      desc: 'Bluebird Cafe (book early), Listening Room Cafe, Nudie\'s Honky Tonk.',
+      desc: 'Bluebird Cafe (book early), Listening Room Cafe, Nudie\'s Honky Tonk three floors.',
       links: [
-        { label: 'Bluebird Cafe', url: 'https://bluebirdcafe.com', color: '#d62828' }
+        { label: 'Bluebird Cafe', url: 'https://bluebirdcafe.com', color: '#d62828' },
+        { label: 'Listening Room', url: 'https://www.listeningroomcafe.com', color: '#444' }
       ]
     },
     {
-      title: '🍸 Cocktail and Rooftop Bars',
-      desc: 'Patterson House (speakeasy), L.A. Jackson (rooftop), White Limozeen (pink rooftop).',
+      title: '🍷 Painting and Sip Classes',
+      desc: 'Paint Nail Bar (paint and manicure combo), Pinot\'s Palette, Painting with a Twist, Wine and Design.',
       links: [
-        { label: 'Patterson House', url: 'https://www.thepattersonnashville.com', color: '#444' }
+        { label: 'Paint classes on Maps', url: 'https://www.google.com/maps/search/paint+and+sip+nashville', color: '#34a853' }
       ]
     },
     {
-      title: '👯 Costume and Props',
-      desc: 'Cowboy hats, sashes, banners. Most Broadway shops sell these. Or order ahead on Amazon.',
+      title: '💃 Group Dance Classes',
+      desc: 'Line dancing at Wildhorse Saloon, twerk classes by Bachelorette Party Nashville, AcroYoga group sessions.',
       links: [
-        { label: 'Boot stores on Maps', url: 'https://www.google.com/maps/search/boot+barn+nashville', color: '#34a853' }
+        { label: 'Wildhorse Saloon', url: 'https://www.wildhorsesaloon.com', color: '#d62828' },
+        { label: 'Dance classes on Viator', url: viatorSearch('Nashville bachelorette dance class'), color: '#328e3a' }
+      ]
+    },
+    {
+      title: '🥃 Whiskey Tastings and Distillery Tours',
+      desc: 'Nelson\'s Green Brier (Marathon Village), Corsair tastings, Big Machine Distillery, Jack Daniel\'s day trip.',
+      links: [
+        { label: 'Distillery tours on Viator', url: viatorSearch('Nashville bachelorette distillery'), color: '#328e3a' },
+        { label: 'Nelson\'s Green Brier', url: 'https://www.greenbrierdistillery.com', color: '#444' }
+      ]
+    },
+    {
+      title: '🚁 Helicopter Tours',
+      desc: 'Aerial views over downtown, Cumberland River, Broadway. 15 to 30 minute flights. Group rates.',
+      links: [
+        { label: 'Helicopter tours on Viator', url: viatorSearch('Nashville helicopter bachelorette'), color: '#328e3a' }
+      ]
+    },
+    {
+      title: '⛵ Cumberland River Boat Parties',
+      desc: 'General Jackson Showboat dinner cruise, party yacht charters, BYOB pontoon rentals.',
+      links: [
+        { label: 'General Jackson', url: 'https://generaljackson.com', color: '#d62828' },
+        { label: 'Boat parties on Viator', url: viatorSearch('Nashville boat tour bachelorette'), color: '#328e3a' }
+      ]
+    },
+    {
+      title: '🧖 Spa Days and Massages',
+      desc: 'Spa at Hutton Hotel, JW Marriott spa, Belmont Spa, mobile spa parties to your Airbnb.',
+      links: [
+        { label: 'Spas on Maps', url: 'https://www.google.com/maps/search/best+spa+bachelorette+nashville', color: '#34a853' }
+      ]
+    },
+    {
+      title: '💄 Glam Services to Your Hotel',
+      desc: 'Mobile makeup, hair, lash, and nail services come to your Airbnb. Book through GlamSquad or local providers.',
+      links: [
+        { label: 'GlamSquad Nashville', url: 'https://www.glamsquad.com/locations/nashville', color: '#e91e63' },
+        { label: 'Mobile glam on Maps', url: 'https://www.google.com/maps/search/mobile+makeup+bachelorette+nashville', color: '#34a853' }
+      ]
+    },
+    {
+      title: '🍪 Cookie and Cake Decorating',
+      desc: 'Goo Goo Cluster making class downtown, Sweet Cravings cookie decorating, custom cookies from local bakers.',
+      links: [
+        { label: 'Goo Goo Cluster Shop', url: 'https://googoo.com', color: '#d62828' }
+      ]
+    },
+    {
+      title: '🤠 Costume and Props',
+      desc: 'Cowboy hats, sashes, banners, custom shirts. Boot stores on Broadway, Hatch Show Print custom posters, Etsy bachelorette kits.',
+      links: [
+        { label: 'Boot stores on Maps', url: 'https://www.google.com/maps/search/boot+barn+nashville', color: '#34a853' },
+        { label: 'Hatch Show Print', url: 'https://hatchshowprint.com', color: '#444' }
+      ]
+    },
+    {
+      title: '🎁 Welcome Bag Suppliers',
+      desc: 'Local Etsy sellers ship custom Nashville bachelorette welcome bags with snacks, hangover kits, and themed goodies.',
+      links: [
+        { label: 'Nashville welcome bags', url: 'https://www.etsy.com/search?q=nashville+bachelorette+welcome+bag', color: '#444' }
+      ]
+    },
+    {
+      title: '📷 Professional Photo Packages',
+      desc: 'Hire a local photographer for a 1 to 2 hour shoot at murals and Broadway. Most do bachelorette packages $300 to $700.',
+      links: [
+        { label: 'Photo tours on Viator', url: viatorSearch('Nashville bachelorette photo'), color: '#328e3a' },
+        { label: 'Photographers on Google', url: 'https://www.google.com/search?q=nashville+bachelorette+photographer', color: '#34a853' }
+      ]
+    },
+    {
+      title: '🐎 Mechanical Bull and Group Activities',
+      desc: 'Whiskey Row mechanical bull, Coyote Joe\'s, Tin Roof. Most Broadway bars host bull-riding nights.',
+      links: [
+        { label: 'Whiskey Row', url: 'https://www.dierkswhiskeyrow.com', color: '#d62828' }
       ]
     },
     {
       title: '🚐 Group Transportation',
-      desc: 'For 6+ people, book a party bus or limo. For 2 to 5, Uber XL is cheaper.',
+      desc: 'For 6+ book a party bus or limo. For 2 to 5, Uber XL is cheaper. Pre-book airport transfers for big groups.',
       links: [
-        { label: 'Party buses on Viator', url: `https://www.viator.com/Nashville/d799?pid=${VIATOR_PID}`, color: '#328e3a' }
+        { label: 'Party buses on Viator', url: viatorSearch('Nashville party bus bachelorette'), color: '#328e3a' },
+        { label: 'Limos on Maps', url: 'https://www.google.com/maps/search/limo+service+nashville', color: '#34a853' }
       ]
     }
   ];
