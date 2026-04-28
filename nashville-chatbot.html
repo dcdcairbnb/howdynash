@@ -3794,7 +3794,71 @@ setTimeout(() => {
   setTimeout(() => maybeShowIosInstallHint(), 1000);
   maybeShowWelcomeTour();
   maybeShowLocationPrompt();
+  // Auto-fetch active weather alerts for Nashville and show a sticky banner.
+  setTimeout(() => maybeShowWeatherAlertBanner(), 1200);
+  // Refresh alerts every 15 minutes while the page is open.
+  setInterval(() => maybeShowWeatherAlertBanner(), 15 * 60 * 1000);
 }, 300);
+
+// Active weather alert banner. Pulls from Weather.gov via /api/weather.
+// Shows at the top of the screen with severity color. User can dismiss.
+async function maybeShowWeatherAlertBanner() {
+  try {
+    const params = new URLSearchParams();
+    if (typeof userLocation !== 'undefined' && userLocation) {
+      params.set('lat', userLocation.lat);
+      params.set('lng', userLocation.lng);
+    }
+    const r = await fetch(`${API_BASE}/api/weather?${params}`, { signal: AbortSignal.timeout(8000) });
+    if (!r.ok) return;
+    const data = await r.json();
+    const alerts = data.alerts || [];
+    if (!alerts.length) {
+      const existing = document.getElementById('weatherAlertBanner');
+      if (existing) existing.remove();
+      return;
+    }
+    // Sort by severity, show the most severe.
+    const sevRank = { 'extreme': 4, 'severe': 3, 'moderate': 2, 'minor': 1 };
+    alerts.sort((a, b) => (sevRank[(b.severity || '').toLowerCase()] || 0) - (sevRank[(a.severity || '').toLowerCase()] || 0));
+    const top = alerts[0];
+    const dismissedKey = 'weather-alert-dismissed-' + (top.id || top.event || '');
+    if (sessionStorage.getItem(dismissedKey)) return;
+
+    const sev = (top.severity || '').toLowerCase();
+    const colorMap = {
+      'extreme': '#7c0a02',
+      'severe': '#cc0000',
+      'moderate': '#e67700',
+      'minor': '#b59410'
+    };
+    const bg = colorMap[sev] || '#cc0000';
+
+    let banner = document.getElementById('weatherAlertBanner');
+    if (!banner) {
+      banner = document.createElement('div');
+      banner.id = 'weatherAlertBanner';
+      banner.style.cssText = 'position:sticky;top:0;left:0;right:0;z-index:9000;display:flex;align-items:center;gap:10px;padding:10px 14px;color:#fff;font-size:14px;font-weight:600;line-height:1.4;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,0.15);';
+      const messagesContainer = document.querySelector('.messages') || document.body;
+      messagesContainer.parentElement.insertBefore(banner, messagesContainer);
+    }
+    banner.style.background = bg;
+    const safeEvent = (top.event || 'Weather Alert').replace(/</g, '&lt;');
+    const safeHeadline = (top.headline || '').slice(0, 120).replace(/</g, '&lt;');
+    banner.innerHTML = `
+      <span style="font-size:18px;line-height:1;">⚠️</span>
+      <div style="flex:1;min-width:0;">
+        <div style="font-weight:700;">${safeEvent}</div>
+        <div style="font-size:12px;font-weight:500;opacity:0.95;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${safeHeadline}</div>
+      </div>
+      <button onclick="event.stopPropagation(); showWeather(); document.getElementById('weatherAlertBanner').remove();" style="background:rgba(255,255,255,0.2);border:none;color:#fff;font-size:12px;font-weight:600;padding:6px 10px;border-radius:6px;cursor:pointer;">Details</button>
+      <button onclick="event.stopPropagation(); sessionStorage.setItem('${dismissedKey}', '1'); document.getElementById('weatherAlertBanner').remove();" aria-label="Dismiss" style="background:none;border:none;color:#fff;font-size:18px;font-weight:600;padding:0 4px;cursor:pointer;line-height:1;">&times;</button>
+    `;
+    banner.onclick = () => { showWeather(); };
+  } catch (e) {
+    // Silent fail. No alert shown.
+  }
+}
 </script>
 </body>
 </html>
