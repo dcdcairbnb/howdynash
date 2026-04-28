@@ -2593,10 +2593,34 @@ async function showSports() {
   addMessage("Tip: Predators tickets often appear last-minute on StubHub or SeatGeek for less than face value.", 'bot');
 }
 
+let _flightsCache = [];
+
+function renderFlightCard(f) {
+  const status = (f.status || 'scheduled').toUpperCase();
+  const statusColor = status === 'LANDED' ? '#0a7d28' : status === 'CANCELLED' ? '#cc0000' : status === 'ACTIVE' ? '#0066cc' : '#666';
+  const sched = f.arrival?.scheduled ? new Date(f.arrival.scheduled).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) : '';
+  const fromAirport = f.departure?.airport || f.departure?.iata || 'unknown';
+  return `<div class="card flight-card" data-search="${(f.airline + ' ' + f.flightNumber + ' ' + fromAirport + ' ' + (f.departure?.iata || '')).toLowerCase()}">
+    <div class="card-title">${f.airline || ''} ${f.flightNumber || ''}</div>
+    <div class="card-desc">From <strong>${fromAirport}</strong>${f.departure?.iata ? ' (' + f.departure.iata + ')' : ''}</div>
+    <div class="card-desc" style="font-size:12px;">Scheduled: ${sched}</div>
+    <div class="card-desc" style="font-size:12px;color:${statusColor};font-weight:600;">${status}${f.arrival?.delay ? ' · delayed ' + f.arrival.delay + ' min' : ''}</div>
+    ${f.arrival?.gate ? `<div class="card-desc" style="font-size:12px;">Gate ${f.arrival.gate}${f.arrival.baggage ? ' · Baggage ' + f.arrival.baggage : ''}</div>` : ''}
+  </div>`;
+}
+
+function filterFlightCards(query) {
+  const q = (query || '').toLowerCase().trim();
+  document.querySelectorAll('.flight-card').forEach(card => {
+    const haystack = card.getAttribute('data-search') || '';
+    card.style.display = !q || haystack.includes(q) ? '' : 'none';
+  });
+}
+
 async function showFlights() {
   addMessage("Pulling live BNA arrivals...", 'bot');
   try {
-    const r = await fetch(`${API_BASE}/api/flights?airport=BNA&direction=arrivals&limit=15`);
+    const r = await fetch(`${API_BASE}/api/flights?airport=BNA&direction=arrivals&limit=50`);
     if (!r.ok) {
       const errData = await r.json().catch(() => ({}));
       if (errData.error === 'AVIATIONSTACK_KEY not configured') {
@@ -2612,22 +2636,18 @@ async function showFlights() {
       addMessage("No active flight data right now. Try flynashville.com for the official board.", 'bot');
       return;
     }
+    _flightsCache = flights;
 
-    addMessage(`Showing ${Math.min(flights.length, 10)} recent BNA arrivals:`, 'bot');
-    flights.slice(0, 10).forEach(f => {
-      const status = (f.status || 'scheduled').toUpperCase();
-      const statusColor = status === 'LANDED' ? '#0a7d28' : status === 'CANCELLED' ? '#cc0000' : status === 'ACTIVE' ? '#0066cc' : '#666';
-      const sched = f.arrival?.scheduled ? new Date(f.arrival.scheduled).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) : '';
-      const fromAirport = f.departure?.airport || f.departure?.iata || 'unknown';
-      const html = `<div class="card">
-        <div class="card-title">${f.airline} ${f.flightNumber}</div>
-        <div class="card-desc">From <strong>${fromAirport}</strong></div>
-        <div class="card-desc" style="font-size:12px;">Scheduled: ${sched}</div>
-        <div class="card-desc" style="font-size:12px;color:${statusColor};font-weight:600;">${status}${f.arrival?.delay ? ' · delayed ' + f.arrival.delay + ' min' : ''}</div>
-        ${f.arrival?.gate ? `<div class="card-desc" style="font-size:12px;">Gate ${f.arrival.gate}${f.arrival.baggage ? ' · Baggage ' + f.arrival.baggage : ''}</div>` : ''}
-      </div>`;
-      addMessage(html, 'bot', true);
-    });
+    // Search input card
+    const searchHtml = `<div class="card">
+      <div class="card-title">Search BNA arrivals</div>
+      <div class="card-desc" style="font-size:12px;color:#666;">Type a flight number, airline name, or origin city.</div>
+      <input type="text" id="flightSearchInput" placeholder="e.g. AA 1234, Delta, Atlanta" oninput="filterFlightCards(this.value)" style="width:100%;padding:10px 14px;border:1px solid #ddd;border-radius:8px;font-size:14px;margin-top:8px;outline:none;">
+    </div>`;
+    addMessage(searchHtml, 'bot', true);
+
+    addMessage(`Showing ${Math.min(flights.length, 30)} recent BNA arrivals:`, 'bot');
+    flights.slice(0, 30).forEach(f => addMessage(renderFlightCard(f), 'bot', true));
     addMessage("For the official board, visit flynashville.com.", 'bot');
   } catch (e) {
     addMessage("Flight service error. Try flynashville.com.", 'bot');
