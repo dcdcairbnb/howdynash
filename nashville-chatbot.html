@@ -1746,6 +1746,25 @@ function routeIntent(text) {
 
 const llmHistory = [];
 
+function formatMarkdown(text) {
+  if (!text) return '';
+  let s = text;
+  // Escape HTML chars first to prevent injection.
+  s = s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  // Convert **bold** to <strong>
+  s = s.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+  // Convert *italic* to <em> but avoid double asterisks already handled
+  s = s.replace(/(^|[^*])\*(?!\*)([^*\n]+?)\*(?!\*)/g, '$1<em>$2</em>');
+  // Convert markdown headers ## and # to bold lines
+  s = s.replace(/^#{1,6}\s+(.+)$/gm, '<strong>$1</strong>');
+  // Convert dash bullets to readable bullets
+  s = s.replace(/^-\s+(.+)$/gm, '• $1');
+  // Convert numbered lists already formatted (1. item) - keep as is
+  // Convert newlines to <br>
+  s = s.replace(/\n/g, '<br>');
+  return s;
+}
+
 async function askClaude(userText) {
   const typingId = 'typing-' + Date.now();
   addMessage(`<div id="${typingId}" class="typing">Thinking...</div>`, 'bot', true);
@@ -1777,7 +1796,7 @@ async function askClaude(userText) {
     llmHistory.push({ role: 'user', content: userText });
     llmHistory.push({ role: 'assistant', content: reply });
     while (llmHistory.length > 16) llmHistory.shift();
-    addMessage(reply.replace(/\n/g, '<br>'), 'bot', true);
+    addMessage(formatMarkdown(reply), 'bot', true);
   } catch (e) {
     const typingEl = document.getElementById(typingId);
     if (typingEl) typingEl.parentElement.remove();
@@ -2480,6 +2499,33 @@ async function showWeather() {
     }
     const data = await r.json();
     const periods = data.forecast || [];
+    const alerts = data.alerts || [];
+
+    if (alerts.length > 0) {
+      alerts.forEach(a => {
+        const sev = (a.severity || '').toLowerCase();
+        const colorMap = {
+          'extreme': '#7c0a02',
+          'severe': '#cc0000',
+          'moderate': '#e67700',
+          'minor': '#b59410'
+        };
+        const bg = colorMap[sev] || '#cc0000';
+        const expires = a.expires ? new Date(a.expires).toLocaleString([], { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : '';
+        const desc = (a.description || '').slice(0, 400);
+        const instruction = a.instruction ? `<div style="margin-top:8px;font-weight:600;">What to do: ${a.instruction.slice(0, 300)}</div>` : '';
+        const html = `<div class="card" style="border-left:6px solid ${bg};background:#fff5f5;">
+          <div class="card-title" style="color:${bg};">⚠️ ${a.event}</div>
+          <div class="card-desc" style="font-weight:600;">${a.headline || ''}</div>
+          ${a.areaDesc ? `<div class="card-desc" style="font-size:12px;color:#666;">Area: ${a.areaDesc}</div>` : ''}
+          ${expires ? `<div class="card-desc" style="font-size:12px;color:#666;">Expires: ${expires}</div>` : ''}
+          <div class="card-desc" style="font-size:13px;margin-top:6px;">${desc.replace(/\n/g, '<br>')}${a.description && a.description.length > 400 ? '...' : ''}</div>
+          ${instruction}
+        </div>`;
+        addMessage(html, 'bot', true);
+      });
+    }
+
     if (periods.length === 0) {
       addMessage("No forecast available right now.", 'bot');
       return;

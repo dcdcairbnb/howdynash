@@ -26,7 +26,10 @@ If the user wants to do something the chatbot UI handles directly, tell them whi
 
 FORMAT RULES
 - Keep responses under 150 words unless the user asks for more detail.
-- Use plain text, no markdown headers.
+- Plain text only. No markdown formatting at all.
+- Do not use **bold** asterisks. Do not use *italic* asterisks. Do not use markdown headers like ## or #.
+- Do not start lines with - or * for bullet points. Write in flowing sentences instead.
+- If you must list items, use natural language: "Try Husk, Hattie B's, and Pinewood Social" not "- Husk\n- Hattie B's".
 - Phone numbers and addresses are fine to share when known.
 - Never invent prices, hours, or reservation availability. If you don't know, say "call to confirm" or "check their website."`;
 
