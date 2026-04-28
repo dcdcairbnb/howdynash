@@ -2071,11 +2071,66 @@ function showNeighborhoods(text) {
   });
 }
 
+// PWA: register service worker for offline support and home screen install.
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').catch(err => {
+      console.warn('Service worker registration failed:', err);
+    });
+  });
+}
+
+// PWA: capture install prompt and show our own button when supported.
+let deferredInstallPrompt = null;
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredInstallPrompt = e;
+  showInstallButton();
+});
+
+function showInstallButton() {
+  if (document.getElementById('installBtn')) return;
+  const btn = document.createElement('button');
+  btn.id = 'installBtn';
+  btn.setAttribute('aria-label', 'Install Howdy Nashville to your home screen');
+  btn.innerHTML = '📲 Install';
+  btn.style.cssText = 'position:fixed;bottom:14px;right:14px;background:#d62828;color:#fff;border:none;padding:10px 16px;border-radius:24px;font-size:14px;font-weight:600;box-shadow:0 4px 12px rgba(0,0,0,0.2);cursor:pointer;z-index:1000;';
+  btn.onclick = async () => {
+    if (!deferredInstallPrompt) return;
+    deferredInstallPrompt.prompt();
+    const choice = await deferredInstallPrompt.userChoice;
+    if (choice.outcome === 'accepted') {
+      btn.remove();
+    }
+    deferredInstallPrompt = null;
+  };
+  document.body.appendChild(btn);
+}
+
+window.addEventListener('appinstalled', () => {
+  const btn = document.getElementById('installBtn');
+  if (btn) btn.remove();
+  deferredInstallPrompt = null;
+});
+
+// Show iOS users a hint about Add to Home Screen since iOS does not fire beforeinstallprompt.
+function maybeShowIosInstallHint() {
+  const isIos = /iPhone|iPad|iPod/i.test(navigator.userAgent) && !/CriOS|FxiOS|EdgiOS/i.test(navigator.userAgent);
+  const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+  if (!isIos || isStandalone) return;
+  if (sessionStorage.getItem('iosHintShown')) return;
+  setTimeout(() => {
+    addMessage('💡 Tip: tap the Share icon in Safari, then "Add to Home Screen" to install Howdy Nashville like an app.', 'bot');
+    sessionStorage.setItem('iosHintShown', '1');
+  }, 8000);
+}
+
 checkApiHealth();
 setTimeout(() => {
   addMessage("Howdy. I'm your Nashville guide. Restaurants, live music, events, and tourist info. What sounds good?", 'bot');
   setTimeout(() => showMainMenu(), 400);
   setTimeout(() => snapshot('initial'), 500);
+  setTimeout(() => maybeShowIosInstallHint(), 1000);
   if (navigator.permissions) {
     navigator.permissions.query({ name: 'geolocation' }).then(p => {
       if (p.state === 'granted') requestLocation();
