@@ -2,6 +2,7 @@
   "name": "howdy-nash",
   "version": "1.0.0",
   "description": "Howdy Nash: a free Nashville tourist guide with AI concierge. Live data, ride and delivery deep links, no signup.",
+  "type": "module",
   "scripts": {
     "dev": "vercel dev",
     "deploy": "vercel --prod"
