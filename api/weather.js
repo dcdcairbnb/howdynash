@@ -6,7 +6,7 @@ export default async function handler(req, res) {
 
   try {
     const pointsRes = await fetch(`https://api.weather.gov/points/${lat},${lng}`, {
-      headers: { 'User-Agent': 'MusicCityRetreat/1.0 (contact@musiccityretreat.app)' }
+      headers: { 'User-Agent': 'HowdyNashville/1.0 (contact@howdynashville.app)' }
     });
     if (!pointsRes.ok) {
       return res.status(pointsRes.status).json({ error: 'weather points lookup failed' });
@@ -21,7 +21,7 @@ export default async function handler(req, res) {
     }
 
     const forecastRes = await fetch(forecastUrl, {
-      headers: { 'User-Agent': 'MusicCityRetreat/1.0 (contact@musiccityretreat.app)' }
+      headers: { 'User-Agent': 'HowdyNashville/1.0 (contact@howdynashville.app)' }
     });
     if (!forecastRes.ok) {
       return res.status(forecastRes.status).json({ error: 'forecast fetch failed' });

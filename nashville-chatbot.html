@@ -6,7 +6,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#d62828">
-<title>Music City Retreat - Nashville Chatbot</title>
+<title>Howdy Nashville - Your Nashville Tourist Guide</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html, body { height: 100%; }
@@ -480,7 +480,7 @@
     <button class="nav-btn" id="backBtn" onclick="goBack()" title="Back" disabled>←</button>
     <div class="avatar">🎸</div>
     <div class="header-text">
-      <h1>Music City Retreat</h1>
+      <h1>Howdy Nashville</h1>
       <p><span class="status-dot" id="statusDot"></span> <span id="statusText">Your Nashville guide</span></p>
     </div>
     <button class="nav-btn" id="homeBtn" onclick="goHome()" title="Home">⌂</button>
@@ -499,13 +499,13 @@
     <button class="bottom-btn" id="bottomHomeBtn" onclick="goHome()">⌂ Home</button>
   </div>
   <div class="disclaimer-bar">
-    © Music City Retreat · <a onclick="openDisclaimer()">Disclaimer & Privacy</a>
+    © Howdy Nashville · <a onclick="openDisclaimer()">Disclaimer & Privacy</a>
   </div>
 </div>
 <div class="modal-overlay" id="disclaimerModal" onclick="if(event.target===this)closeDisclaimer()">
   <div class="modal-box">
     <h2>Disclaimer & Privacy</h2>
-    <p>Music City Retreat is an independent Nashville tourism guide. We aggregate data from third-party services to help you discover the city.</p>
+    <p>Howdy Nashville is an independent Nashville tourism guide. We aggregate data from third-party services to help you discover the city.</p>
 
     <h3>Data Accuracy</h3>
     <p>Restaurant info, hours, prices, ratings, and event details come from third parties including Foursquare, Google Places, Ticketmaster, SeatGeek, and the City of Nashville Open Data Portal. Information may be inaccurate or outdated. Verify with the venue before going.</p>
@@ -514,7 +514,7 @@
     <p>If you share your location, we use it only to find nearby restaurants, events, and stores. Your location is not stored on our servers, sold, or shared with third parties beyond the API providers needed to fulfill your request.</p>
 
     <h3>Booking & Transactions</h3>
-    <p>We do not process reservations, payments, or rides. All bookings happen on third-party platforms (OpenTable, Resy, Tock, Yelp, Uber, Lyft, Waymo, DoorDash, Uber Eats). Music City Retreat is not responsible for service quality, cancellations, refunds, or disputes with these providers.</p>
+    <p>We do not process reservations, payments, or rides. All bookings happen on third-party platforms (OpenTable, Resy, Tock, Yelp, Uber, Lyft, Waymo, DoorDash, Uber Eats). Howdy Nashville is not responsible for service quality, cancellations, refunds, or disputes with these providers.</p>
 
     <h3>Affiliate Disclosure</h3>
     <p>Some links on this site may be affiliate links. We may earn a commission at no extra cost to you when you book or sign up through these links.</p>
@@ -523,10 +523,10 @@
     <p>You must be 21 or older to purchase alcohol in Tennessee. Drink responsibly. Do not drive under the influence.</p>
 
     <h3>Trademarks</h3>
-    <p>Uber, Lyft, Waymo, DoorDash, Uber Eats, OpenTable, Resy, Tock, Yelp, Foursquare, Google, Ticketmaster, and SeatGeek are trademarks of their respective owners. Music City Retreat is not affiliated with, endorsed by, or sponsored by any of these companies.</p>
+    <p>Uber, Lyft, Waymo, DoorDash, Uber Eats, OpenTable, Resy, Tock, Yelp, Foursquare, Google, Ticketmaster, and SeatGeek are trademarks of their respective owners. Howdy Nashville is not affiliated with, endorsed by, or sponsored by any of these companies.</p>
 
     <h3>Limitation of Liability</h3>
-    <p>This service is provided "as is" without warranties of any kind. Music City Retreat is not liable for any damages arising from your use of this site or the third-party services it links to.</p>
+    <p>This service is provided "as is" without warranties of any kind. Howdy Nashville is not liable for any damages arising from your use of this site or the third-party services it links to.</p>
 
     <button class="modal-close" onclick="closeDisclaimer()">Close</button>
   </div>
@@ -1380,7 +1380,7 @@ function matches(text, keywords) {
 }
 
 function showWelcome() {
-  addMessage("Howdy. Welcome to Music City Retreat. I can help you find restaurants, book reservations, discover live music, and plan your visit to Nashville. What sounds good?", 'bot');
+  addMessage("Howdy. Welcome to Nashville. I can help you find restaurants, discover live music, and plan your visit. What sounds good?", 'bot');
   showMainMenu();
 }
 
@@ -1973,7 +1973,7 @@ function showNeighborhoods(text) {
 
 checkApiHealth();
 setTimeout(() => {
-  addMessage("Howdy. Welcome to Music City Retreat. I can help with restaurants, live music, events, and tourist info.", 'bot');
+  addMessage("Howdy. I'm your Nashville guide. Restaurants, live music, events, and tourist info. What sounds good?", 'bot');
   setTimeout(() => showMainMenu(), 400);
   setTimeout(() => snapshot('initial'), 500);
   if (navigator.permissions) {
