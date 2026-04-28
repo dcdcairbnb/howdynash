@@ -1031,6 +1031,40 @@ function showSavedSpots() {
   });
 }
 
+function renderShareButton(item) {
+  const safePayload = encodeURIComponent(JSON.stringify({
+    name: item.name || '',
+    desc: item.desc || item.note || '',
+    url: item.url || ''
+  }));
+  return `<button class="share-btn" data-share="${safePayload}" onclick="handleShareClick(this); return false;" style="background:none;border:none;cursor:pointer;font-size:18px;float:right;padding:0;margin-right:8px;color:#666;" aria-label="Share ${(item.name || '').replace(/"/g, '&quot;')}">↗</button>`;
+}
+
+async function handleShareClick(btn) {
+  try {
+    const data = JSON.parse(decodeURIComponent(btn.getAttribute('data-share')));
+    const shareText = `${data.name}${data.desc ? ' - ' + data.desc : ''} (via Howdy Nashville)`;
+    const shareUrl = data.url || window.location.origin;
+    if (navigator.share) {
+      await navigator.share({
+        title: data.name + ' - Howdy Nashville',
+        text: shareText,
+        url: shareUrl
+      });
+    } else {
+      const fallback = `${shareText}\n${shareUrl}`;
+      try {
+        await navigator.clipboard.writeText(fallback);
+        addMessage("Copied to clipboard. Paste it anywhere.", 'bot');
+      } catch (e) {
+        addMessage("Copy this and paste anywhere: " + fallback, 'bot');
+      }
+    }
+  } catch (e) {
+    if (e.name !== 'AbortError') console.warn('share failed', e);
+  }
+}
+
 function renderSaveStar(spot) {
   const isSaved = isSpotSaved(spot.name);
   const safePayload = encodeURIComponent(JSON.stringify({
@@ -1713,8 +1747,9 @@ async function showCuratedThenLive(curatedList, query, type, label) {
   addMessage(`Top Nashville ${label}:`, 'bot');
   curatedList.forEach(s => {
     const star = renderSaveStar({ name: s.name, note: s.note || s.neighborhood || label, address: s.neighborhood || '' });
+    const share = renderShareButton({ name: s.name, desc: `${s.neighborhood || ''} - ${s.desc || label}`, url: s.url || '' });
     let html = `<div class="card">
-      <div class="card-title">${star}${s.name}</div>
+      <div class="card-title">${star}${share}${s.name}</div>
       <div class="card-meta">${s.neighborhood || ''}${s.note ? ' · ' + s.note : ''}</div>
       <div class="card-desc">${s.desc || ''}</div>`;
     if (s.url) html += `<a href="${s.url}" target="_blank">Website</a>`;
@@ -1741,8 +1776,9 @@ async function showCuratedThenLive(curatedList, query, type, label) {
       const reviewStr = s.reviewCount ? ` (${s.reviewCount})` : '';
       const safeName = (s.name || '').replace(/'/g, "\\'");
       const star = renderSaveStar({ name: s.name, note: label, address: s.address });
+      const share = renderShareButton({ name: s.name, desc: label, url: s.website || s.mapsUrl || '' });
       let html = `<div class="card">
-        <div class="card-title">${star}${s.name}</div>
+        <div class="card-title">${star}${share}${s.name}</div>
         <div class="card-meta">${ratingStr}${reviewStr}${distStr}</div>
         <div class="card-desc">${s.address || ''}</div>`;
       if (s.mapsUrl) html += `<a href="${s.mapsUrl}" target="_blank">Open in Maps</a>`;
@@ -2178,8 +2214,9 @@ async function showSports() {
     } catch (e) {}
 
     const star = renderSaveStar({ name: team.name, note: `${team.league} · ${team.venue}`, address: team.venue });
+    const share = renderShareButton({ name: team.name, desc: `${team.league} at ${team.venue}`, url: team.tickets });
     let html = `<div class="card">
-      <div class="card-title">${star}${team.emoji} ${team.name}</div>
+      <div class="card-title">${star}${share}${team.emoji} ${team.name}</div>
       <div class="card-desc"><strong>${team.league}</strong> · ${team.venue}</div>`;
     if (nextGame) {
       const dateStr = nextGame.date ? new Date(nextGame.date + 'T' + (nextGame.time || '19:00')).toLocaleString([], { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : 'TBD';
@@ -2326,8 +2363,9 @@ async function showStoreType(query, type, label) {
     const reviewStr = s.reviewCount ? ` (${s.reviewCount})` : '';
     const safeName = (s.name || '').replace(/'/g, "\\'");
     const star = renderSaveStar({ name: s.name, note: label, address: s.address });
+    const share = renderShareButton({ name: s.name, desc: label, url: s.website || s.mapsUrl || '' });
     let html = `<div class="card">
-      <div class="card-title">${star}${s.name}</div>
+      <div class="card-title">${star}${share}${s.name}</div>
       <div class="card-meta">${ratingStr}${reviewStr}${distStr}</div>
       <div class="card-desc">${s.address || ''}</div>`;
     if (s.mapsUrl) html += `<a href="${s.mapsUrl}" target="_blank">Open in Maps</a>`;
@@ -2365,8 +2403,9 @@ async function showFestivals() {
         const dateStr = f.date + (f.time ? ' at ' + f.time : '');
         const distStr = f.distanceMiles != null ? ` · 📍 ${f.distanceMiles} mi` : '';
         const star = renderSaveStar({ name: f.name, note: `${dateStr} · ${f.venue || ''}`, address: f.address || f.venue || '' });
+        const share = renderShareButton({ name: f.name, desc: `${dateStr} at ${f.venue || 'Nashville'}`, url: f.url || '' });
         let html = `<div class="card">
-          <div class="card-title">${star}${f.name}</div>
+          <div class="card-title">${star}${share}${f.name}</div>
           <div class="card-meta">${dateStr || 'TBA'} · ${f.venue || ''}${distStr}</div>
           <div class="card-desc">${f.genre || ''}${f.priceMin ? ' · From $' + f.priceMin : ''}</div>`;
         if (f.url) html += `<a href="${f.url}" target="_blank">Tickets & info</a>`;
@@ -2432,11 +2471,10 @@ function renderRestaurantCard(r) {
   const b = r.booking || {};
   const isWalkin = !!b.walkin;
   const ratingBadge = r.rating ? `<span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:10px;font-size:12px;font-weight:600;margin-left:6px;">⭐ ${r.rating}${r.reviewCount ? ' · ' + r.reviewCount : ''}</span>` : '';
-  const isSaved = isSpotSaved(r.name);
-  const safePayload = encodeURIComponent(JSON.stringify({ name: r.name, note: r.vibe || r.cuisine, address: r.neighborhood || '', phone: r.phone || '' }));
-  const starBtn = `<button class="save-btn" data-spot="${safePayload}" onclick="handleStarClick(this); return false;" style="background:none;border:none;cursor:pointer;font-size:18px;float:right;padding:0;color:${isSaved ? '#f59e0b' : '#999'};">${isSaved ? '★' : '☆'}</button>`;
+  const star = renderSaveStar({ name: r.name, note: r.vibe || r.cuisine, address: r.neighborhood || '', phone: r.phone || '' });
+  const share = renderShareButton({ name: r.name, desc: `${r.cuisine || ''}${r.neighborhood ? ' in ' + r.neighborhood : ''}`, url: b.opentable || b.resy || b.tock || b.yelp || '' });
   let html = `<div class="card">
-    <div class="card-title">${starBtn}${r.name}${ratingBadge}</div>
+    <div class="card-title">${star}${share}${r.name}${ratingBadge}</div>
     <div class="card-meta">${r.cuisine}${r.neighborhood ? ' · ' + r.neighborhood : ''}${r.price ? ' · ' + r.price : ''}</div>`;
   if (isWalkin) html += `<div class="walkin-tag">Walk-in / call ahead</div>`;
   html += `<div class="card-desc">${r.vibe}${r.note ? '. ' + r.note : ''}</div>`;
@@ -2541,8 +2579,9 @@ function showLiveMusic() {
   ];
   venues.forEach(v => {
     const star = renderSaveStar({ name: v.name, note: v.desc, address: 'Nashville' });
+    const share = renderShareButton({ name: v.name, desc: v.desc, url: v.url || '' });
     let html = `<div class="card">
-      <div class="card-title">${star}${v.name}</div>
+      <div class="card-title">${star}${share}${v.name}</div>
       <div class="card-desc">${v.desc}</div>`;
     if (v.url) html += `<a href="${v.url}" target="_blank">Get tickets</a>`;
     html += `</div>`;
@@ -2560,8 +2599,9 @@ async function showEvents() {
         const dateStr = e.date + (e.time ? ' at ' + e.time : '');
         const distStr = e.distanceMiles != null ? ` · 📍 ${e.distanceMiles} mi` : '';
         const star = renderSaveStar({ name: e.name, note: `${dateStr} · ${e.venue || ''}`, address: e.venue || '' });
+        const share = renderShareButton({ name: e.name, desc: `${dateStr} at ${e.venue || 'Nashville'}`, url: e.url || '' });
         let html = `<div class="card">
-          <div class="card-title">${star}${e.name}</div>
+          <div class="card-title">${star}${share}${e.name}</div>
           <div class="card-meta">${dateStr} · ${e.venue || ''}${distStr}</div>
           <div class="card-desc">${e.genre || e.classification || ''}${e.priceMin ? ' · From $' + e.priceMin : ''}</div>`;
         if (e.url) html += `<a href="${e.url}" target="_blank">Get tickets</a>`;
@@ -2591,8 +2631,9 @@ async function showAttractions() {
   addMessage("Top Nashville attractions:", 'bot');
   NASHVILLE_DATA.attractions.forEach(a => {
     const star = renderSaveStar({ name: a.name, note: a.type, address: 'Nashville' });
+    const share = renderShareButton({ name: a.name, desc: a.desc || a.type, url: a.url || '' });
     let html = `<div class="card">
-      <div class="card-title">${star}${a.name}</div>
+      <div class="card-title">${star}${share}${a.name}</div>
       <div class="card-meta">${a.type}</div>
       <div class="card-desc">${a.desc}</div>`;
     if (a.url) html += `<a href="${a.url}" target="_blank">Learn more</a>`;
@@ -2614,8 +2655,9 @@ async function showAttractions() {
     extras.forEach(a => {
       const distStr = a.distanceMiles != null ? ` · 📍 ${a.distanceMiles} mi` : '';
       const star = renderSaveStar({ name: a.name, note: 'Nashville attraction', address: a.address || '' });
+      const share = renderShareButton({ name: a.name, desc: a.address || 'Nashville attraction', url: a.website || a.mapsUrl || '' });
       let html = `<div class="card">
-        <div class="card-title">${star}${a.name}</div>
+        <div class="card-title">${star}${share}${a.name}</div>
         <div class="card-meta">${a.rating ? '★' + a.rating : ''} ${a.reviewCount ? '(' + a.reviewCount + ' reviews)' : ''}${distStr}</div>
         <div class="card-desc">${a.address || ''}</div>`;
       if (a.mapsUrl) html += `<a href="${a.mapsUrl}" target="_blank">Open in Maps</a>`;
