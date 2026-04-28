@@ -539,6 +539,7 @@
   <div class="input-area">
     <label for="userInput" class="sr-only">Ask Howdy Nashville a question</label>
     <input type="text" id="userInput" placeholder="Ask about Nashville..." autocomplete="off" aria-label="Ask Howdy Nashville a question">
+    <button id="voiceBtn" onclick="startVoiceInput()" aria-label="Voice input" title="Speak your question" style="background:#999;">🎤</button>
     <button onclick="handleSend()" aria-label="Send message">➤</button>
   </div>
   <div class="location-bar" id="locationBar">
@@ -965,6 +966,119 @@ function closeDisclaimer() {
   document.getElementById('disclaimerModal').classList.remove('open');
 }
 
+// Saved spots feature. Persisted in browser localStorage.
+const SAVED_SPOTS_KEY = 'howdy-nashville-saved';
+
+function getSavedSpots() {
+  try {
+    return JSON.parse(localStorage.getItem(SAVED_SPOTS_KEY) || '[]');
+  } catch (e) {
+    return [];
+  }
+}
+
+function isSpotSaved(name) {
+  return getSavedSpots().some(s => s.name === name);
+}
+
+function toggleSavedSpot(spot, btnEl) {
+  const saved = getSavedSpots();
+  const idx = saved.findIndex(s => s.name === spot.name);
+  if (idx >= 0) {
+    saved.splice(idx, 1);
+    if (btnEl) btnEl.textContent = '☆ Save';
+  } else {
+    saved.push({ ...spot, savedAt: Date.now() });
+    if (btnEl) btnEl.textContent = '★ Saved';
+  }
+  localStorage.setItem(SAVED_SPOTS_KEY, JSON.stringify(saved));
+}
+
+function showSavedSpots() {
+  pushMenu('saved');
+  const saved = getSavedSpots();
+  if (saved.length === 0) {
+    addMessage('You have no saved spots yet. Tap the star on any restaurant or attraction to save it.', 'bot');
+    return;
+  }
+  addMessage(`Your ${saved.length} saved spot${saved.length === 1 ? '' : 's'}:`, 'bot');
+  saved.forEach(spot => {
+    const safeName = (spot.name || '').replace(/'/g, "\\'");
+    let html = `<div class="card">
+      <div class="card-title">${spot.name || 'Saved spot'}</div>
+      ${spot.note ? `<div class="card-desc">${spot.note}</div>` : ''}
+      ${spot.address ? `<div class="card-desc" style="font-size:12px;color:#666;">${spot.address}</div>` : ''}
+      <button onclick="removeSavedAndRefresh('${safeName}'); return false;" style="background:#999;color:#fff;border:none;padding:8px 12px;border-radius:6px;cursor:pointer;margin-top:6px;font-size:12px;">Remove</button>`;
+    if (spot.phone) html += `<a class="call-btn" href="tel:${spot.phone}">Call ${spot.phone}</a>`;
+    html += `</div>`;
+    addMessage(html, 'bot', true);
+  });
+}
+
+function removeSavedAndRefresh(name) {
+  const saved = getSavedSpots().filter(s => s.name !== name);
+  localStorage.setItem(SAVED_SPOTS_KEY, JSON.stringify(saved));
+  messagesEl.innerHTML = '';
+  showSavedSpots();
+}
+
+// Welcome tour for first-time users
+function maybeShowWelcomeTour() {
+  if (localStorage.getItem('howdy-nashville-tour-seen')) return;
+  setTimeout(() => {
+    addMessage("First time here? Quick tour. Use the menu below to find restaurants, live music, hotels, and tourist info. Or just type any question. I save your favorites locally on your phone.", 'bot');
+    localStorage.setItem('howdy-nashville-tour-seen', '1');
+  }, 1500);
+}
+
+// Voice input via Web Speech API
+function startVoiceInput() {
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SpeechRecognition) {
+    addMessage("Voice input is not supported on this browser. Try Chrome or Safari.", 'bot');
+    return;
+  }
+  const recognition = new SpeechRecognition();
+  recognition.lang = 'en-US';
+  recognition.continuous = false;
+  recognition.interimResults = false;
+  const input = document.getElementById('userInput');
+  const voiceBtn = document.getElementById('voiceBtn');
+  if (voiceBtn) voiceBtn.textContent = '🔴';
+  recognition.onresult = (e) => {
+    const text = e.results[0][0].transcript;
+    if (input) input.value = text;
+    handleSend();
+  };
+  recognition.onerror = () => {
+    addMessage("Could not hear you. Try tapping the mic again.", 'bot');
+  };
+  recognition.onend = () => {
+    if (voiceBtn) voiceBtn.textContent = '🎤';
+  };
+  recognition.start();
+}
+
+// Calendar export for events
+function buildIcsEvent(name, date, time, venue, address, url) {
+  const start = date && time ? `${date.replace(/-/g, '')}T${time.replace(':', '')}00` : `${(date || '').replace(/-/g, '')}T200000`;
+  const lines = [
+    'BEGIN:VCALENDAR',
+    'VERSION:2.0',
+    'PRODID:-//Howdy Nashville//EN',
+    'BEGIN:VEVENT',
+    `UID:${Date.now()}@howdy-nashville.app`,
+    `DTSTAMP:${new Date().toISOString().replace(/[-:]|\.\d{3}/g, '')}`,
+    `DTSTART:${start}`,
+    `SUMMARY:${(name || 'Event').replace(/,/g, '\\,')}`,
+    venue ? `LOCATION:${venue}${address ? ', ' + address : ''}` : '',
+    url ? `URL:${url}` : '',
+    'END:VEVENT',
+    'END:VCALENDAR'
+  ].filter(Boolean).join('\r\n');
+  return 'data:text/calendar;charset=utf-8,' + encodeURIComponent(lines);
+}
+
 // Menu-based back navigation
 let menuStack = ['main'];
 function snapshot(label) {
@@ -1150,6 +1264,16 @@ function routeIntent(text) {
 
   if (isNaturalLanguageQuery(text)) {
     askClaude(text);
+    return;
+  }
+
+  if (lower === 'sports' || matches(lower, ['sports', 'predators', 'titans', 'sounds', 'nashville sc', 'hockey', 'football game', 'baseball game', 'nfl', 'nhl', 'mls'])) {
+    showSports();
+    return;
+  }
+
+  if (lower === '★ my saved' || lower === 'my saved' || matches(lower, ['my saved', 'saved spots', 'favorites', 'my favorites', 'starred'])) {
+    showSavedSpots();
     return;
   }
 
@@ -1442,6 +1566,8 @@ function showMainMenu() {
     '🏨 Stay & Get Around',
     '🛒 Essentials',
     'Weather',
+    'Sports',
+    '★ My saved',
     'Local tips'
   ]);
 }
@@ -1467,6 +1593,7 @@ function showThingsToDoMenu(skipPush) {
     'Live music tonight',
     'Festivals',
     'Things to do',
+    'Sports',
     'Book a tour',
     'Photo spots',
     'Bachelorette',
@@ -1658,6 +1785,46 @@ async function showWeather() {
   } catch (e) {
     addMessage("Weather service error. Try again later.", 'bot');
   }
+}
+
+async function showSports() {
+  addMessage("Nashville pro sports. Pulling upcoming games...", 'bot');
+
+  const teams = [
+    { name: 'Nashville Predators', league: 'NHL', venue: 'Bridgestone Arena', keyword: 'Nashville Predators', emoji: '🏒', color: '#FFB81C', tickets: 'https://www.nhl.com/predators/tickets' },
+    { name: 'Tennessee Titans', league: 'NFL', venue: 'Nissan Stadium', keyword: 'Tennessee Titans', emoji: '🏈', color: '#0C2340', tickets: 'https://www.tennesseetitans.com/tickets/' },
+    { name: 'Nashville SC', league: 'MLS', venue: 'GEODIS Park', keyword: 'Nashville SC', emoji: '⚽', color: '#FFCC00', tickets: 'https://www.nashvillesc.com/tickets/' },
+    { name: 'Nashville Sounds', league: 'AAA Baseball', venue: 'First Horizon Park', keyword: 'Nashville Sounds', emoji: '⚾', color: '#000000', tickets: 'https://www.milb.com/nashville/tickets' }
+  ];
+
+  for (const team of teams) {
+    let nextGame = null;
+    try {
+      const r = await fetch(`${API_BASE}/api/events?keyword=${encodeURIComponent(team.keyword)}&classificationName=Sports`);
+      if (r.ok) {
+        const data = await r.json();
+        nextGame = (data.events || []).find(e => (e.name || '').toLowerCase().includes(team.keyword.toLowerCase().split(' ')[1]));
+      }
+    } catch (e) {}
+
+    let html = `<div class="card">
+      <div class="card-title">${team.emoji} ${team.name}</div>
+      <div class="card-desc"><strong>${team.league}</strong> · ${team.venue}</div>`;
+    if (nextGame) {
+      const dateStr = nextGame.date ? new Date(nextGame.date + 'T' + (nextGame.time || '19:00')).toLocaleString([], { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : 'TBD';
+      html += `<div class="card-desc" style="font-size:12px;color:#666;margin-top:4px;">Next game: ${nextGame.name}</div>
+        <div class="card-desc" style="font-size:12px;">${dateStr}</div>`;
+      if (nextGame.url) html += `<a href="${nextGame.url}" target="_blank" rel="noopener" style="background:${team.color};color:#fff;">Get tickets</a>`;
+    } else {
+      html += `<div class="card-desc" style="font-size:12px;color:#666;margin-top:4px;">No upcoming home games found in feed. Check team site directly.</div>`;
+    }
+    html += `<a href="${team.tickets}" target="_blank" rel="noopener" style="background:#444;color:#fff;">Official team tickets</a>
+      <a href="https://www.google.com/maps/search/${encodeURIComponent(team.venue)}+Nashville" target="_blank" rel="noopener" style="background:#34a853;color:#fff;">Venue on Maps</a>
+    </div>`;
+    addMessage(html, 'bot', true);
+  }
+
+  addMessage("Tip: Predators tickets often appear last-minute on StubHub or SeatGeek for less than face value.", 'bot');
 }
 
 async function showFlights() {
@@ -2131,6 +2298,7 @@ setTimeout(() => {
   setTimeout(() => showMainMenu(), 400);
   setTimeout(() => snapshot('initial'), 500);
   setTimeout(() => maybeShowIosInstallHint(), 1000);
+  maybeShowWelcomeTour();
   if (navigator.permissions) {
     navigator.permissions.query({ name: 'geolocation' }).then(p => {
       if (p.state === 'granted') requestLocation();
