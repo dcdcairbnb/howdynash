@@ -2683,26 +2683,67 @@ function buildExpediaUrl() {
   return `https://www.expedia.com/Hotel-Search?${params}`;
 }
 
-function showHotels() {
-  addMessage("Hotels in Nashville.", 'bot');
+async function showHotels() {
+  if (!userLocation) {
+    addMessage("Pulling Nashville hotels from Google Places...", 'bot');
+  } else {
+    addMessage("Finding hotels near your spot...", 'bot');
+  }
 
   const expediaUrl = buildExpediaUrl();
   const mapsUrl = userLocation
     ? `https://www.google.com/maps/search/hotels/@${userLocation.lat},${userLocation.lng},14z`
     : `https://www.google.com/maps/search/hotels+in+Nashville+TN`;
-  const locationNote = userLocation ? "Search centered on your current location." : "Search starts in Nashville. Share your location for nearby filters.";
 
-  const html = `<div class="card">
-    <div class="card-title">Where to stay tonight</div>
-    <div class="card-desc">${locationNote}</div>
-    <a href="${expediaUrl}" target="_blank" rel="noopener" style="background:#FFC72C;color:#000;">Browse on Expedia</a>
-    <a href="${mapsUrl}" target="_blank" rel="noopener" style="background:#34a853;">See nearby on Google Maps</a>
-    <div class="card-desc" style="font-size:12px;color:#666;margin-top:8px;">Tip: Book direct on the hotel's site if you have loyalty status.</div>
+  // Pull live hotels from Google Places
+  if (apiServices.google) {
+    try {
+      const live = await apiSearchPlaces('hotel', 'lodging');
+      if (live && live.length) {
+        addMessage(`${Math.min(live.length, 12)} hotels ${userLocation ? 'sorted by distance' : 'in Nashville'}:`, 'bot');
+        live.slice(0, 12).forEach(h => {
+          const distStr = h.distanceMiles != null ? ` · 📍 ${h.distanceMiles} mi` : '';
+          const ratingStr = h.rating ? `★ ${h.rating}` : '';
+          const reviewStr = h.reviewCount ? ` (${h.reviewCount})` : '';
+          const safeName = (h.name || '').replace(/'/g, "\\'");
+          const star = renderSaveStar({ name: h.name, note: 'Hotel', address: h.address || '' });
+          const share = renderShareButton({ name: h.name, desc: h.address || 'Nashville hotel', url: h.website || h.mapsUrl || '' });
+          let html = `<div class="card">
+            <div class="card-title">${star}${share}${h.name}</div>
+            <div class="card-meta">${ratingStr}${reviewStr}${distStr}</div>
+            <div class="card-desc">${h.address || ''}</div>`;
+          if (h.mapsUrl) html += `<a href="${h.mapsUrl}" target="_blank" rel="noopener" style="background:#34a853;color:#fff;">Open in Maps</a>`;
+          if (h.website) html += `<a href="${h.website}" target="_blank" rel="noopener">Hotel website</a>`;
+          // Booking search for the specific hotel name
+          const expediaSearch = `https://www.expedia.com/Hotel-Search?destination=${encodeURIComponent(h.name + ' Nashville TN')}`;
+          html += `<a href="${expediaSearch}" target="_blank" rel="noopener" style="background:#FFC72C;color:#000;">Check Expedia rates</a>`;
+          html += `<a href="#" onclick="return rideClick('uber','${safeName}',event)" style="background:#000;">Uber here</a>`;
+          html += `<a href="#" onclick="return rideClick('lyft','${safeName}',event)" style="background:#ff00bf;">Lyft here</a>`;
+          html += `</div>`;
+          addMessage(html, 'bot', true);
+        });
+      } else {
+        addMessage("Couldn't pull live hotel data right now. Try the booking sites below.", 'bot');
+      }
+    } catch (e) {
+      console.warn('hotels API failed', e);
+    }
+  } else {
+    addMessage("Live hotel search needs Google Places to be configured. Showing booking options below.", 'bot');
+  }
+
+  // Always show the booking options card at the end as a fallback / overview
+  const optionsHtml = `<div class="card">
+    <div class="card-title">More booking options</div>
+    <div class="card-desc">Compare prices across booking sites:</div>
+    <a href="${expediaUrl}" target="_blank" rel="noopener" style="background:#FFC72C;color:#000;">Browse all Expedia</a>
+    <a href="${mapsUrl}" target="_blank" rel="noopener" style="background:#34a853;color:#fff;">All hotels on Maps</a>
+    <div class="card-desc" style="font-size:12px;color:#666;margin-top:8px;">Tip: Book direct on the hotel's site if you have loyalty status. Otherwise Expedia and Booking.com often have lower rates.</div>
   </div>`;
-  addMessage(html, 'bot', true);
+  addMessage(optionsHtml, 'bot', true);
 
   if (!userLocation) {
-    addMessage("Want results centered on your spot? Tap 'Share my location' from the main menu.", 'bot');
+    addMessage("Want hotels near your spot? Tap 'Share location' at the bottom of the chat.", 'bot');
   }
 }
 function showPharmacy() {
