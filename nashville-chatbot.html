@@ -2921,8 +2921,7 @@ function showRestaurants(list, header) {
     addMessage(renderRestaurantCard(r), 'bot', true);
   });
   setTimeout(() => {
-    addMessage("Want me to start a reservation request?", 'bot');
-    addQuickReplies(['Yes, book a table', 'Show me more options', 'Something else']);
+    addQuickReplies(['Show me more options', '← Eat & Drink', '← Main menu']);
   }, 400);
 }
 
