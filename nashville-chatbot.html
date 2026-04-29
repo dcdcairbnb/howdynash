@@ -3385,51 +3385,132 @@ function showGroceries() {
   showStoreType('grocery store', 'supermarket', 'grocery stores');
 }
 
+// Curated annual Nashville festivals. Updated yearly. Shown first, always.
+const CURATED_NASHVILLE_FESTIVALS = [
+  { name: "CMA Fest", month: "June", venue: "Downtown Nashville", desc: "Country music's biggest party. 4 days, 50+ artists, free daytime stages, paid nightly Nissan Stadium shows.", url: "https://www.cmafest.com" },
+  { name: "Pilgrimage Music & Cultural Festival", month: "September", venue: "The Park at Harlinsdale Farm, Franklin", desc: "Two-day festival in Franklin. Indie, rock, folk, country. Justin Timberlake co-founded.", url: "https://pilgrimagefestival.com" },
+  { name: "Tomato Art Fest", month: "August", venue: "East Nashville", desc: "Quirky East Nashville street fest. Tomato-themed art, music, parade, costume contests. Free.", url: "https://www.tomatoartfest.com" },
+  { name: "Music City Hot Chicken Festival", month: "July 4", venue: "East Park", desc: "Free July 4th festival celebrating Nashville hot chicken. Vendors, music, contests.", url: "https://hotchickenfestival.com" },
+  { name: "Live on the Green", month: "August - September", venue: "Public Square Park", desc: "Free outdoor music series. National headliners every Thursday for 6 weeks.", url: "https://liveonthegreen.com" },
+  { name: "Musicians Corner", month: "Spring & Fall, every Saturday", venue: "Centennial Park", desc: "Free outdoor concerts every Saturday. Local artists. Bring a blanket.", url: "https://musicianscorner.com" },
+  { name: "Nashville Pride Festival", month: "June", venue: "Public Square Park", desc: "Two-day LGBTQ+ pride festival with parade, performances, vendors. Free.", url: "https://nashvillepride.org" },
+  { name: "AmericanaFest", month: "September", venue: "Various venues citywide", desc: "Six-day Americana music festival. Concerts, conferences, awards show.", url: "https://americanamusic.org" },
+  { name: "Iroquois Steeplechase", month: "May (second Saturday)", venue: "Percy Warner Park", desc: "Nashville's oldest sporting event. Horse racing, hats, tailgating.", url: "https://iroquoissteeplechase.org" },
+  { name: "East Nashville Beer Festival", month: "October", venue: "East Park", desc: "Local brewery showcase. Tastings, food trucks, live music.", url: "https://eastnashvillebeerfestival.com" },
+  { name: "Nashville Film Festival", month: "September", venue: "Regal Green Hills + Belcourt Theatre", desc: "10-day independent film festival. Premieres, panels, parties.", url: "https://nashvillefilmfestival.org" },
+  { name: "Nashville Whiskey Festival", month: "September", venue: "Music City Center", desc: "Whiskey, bourbon, and rye tasting from 100+ distilleries.", url: "https://nashvillewhiskeyfestival.com" },
+  { name: "Cheekwood Cherry Blossom Festival", month: "March - April", venue: "Cheekwood Estate & Gardens", desc: "Hundreds of cherry trees in bloom. Tea ceremonies, taiko drumming, art.", url: "https://cheekwood.org" },
+  { name: "Cheekwood Holiday Lights", month: "November - January", venue: "Cheekwood Estate & Gardens", desc: "1+ million holiday lights, Santa visits, hot cocoa.", url: "https://cheekwood.org" },
+  { name: "Tennessee Craft Fair", month: "May & September", venue: "Centennial Park", desc: "Juried craft show. Pottery, jewelry, woodwork, textiles. Free entry.", url: "https://tennesseecraft.org" },
+  { name: "Nashville Earth Day Festival", month: "April", venue: "Centennial Park", desc: "Free outdoor festival celebrating Earth Day. Music, vendors, kids' zone.", url: "https://nashvilleearthday.org" },
+  { name: "African Street Festival", month: "September", venue: "Hadley Park", desc: "Three-day cultural celebration. African music, dance, food, vendors.", url: "https://www.africanamericanculturalalliance.com" },
+  { name: "Nashville Greek Festival", month: "September", venue: "Holy Trinity Greek Orthodox Church", desc: "Greek food, music, dance, pastries. Free admission.", url: "https://nashvillegreekfestival.com" },
+  { name: "Oktoberfest Nashville", month: "October", venue: "Germantown", desc: "Authentic Bavarian beer hall vibes. Music, food, biergartens, costume contests.", url: "https://nashvilleoktoberfest.com" },
+  { name: "Italian Lights Festival", month: "October", venue: "Bicentennial Capitol Mall", desc: "Italian food, wine, live music, lights. Free admission.", url: "https://italianlightsfestival.com" },
+  { name: "Nashville Fashion Week", month: "April", venue: "Various", desc: "Five days of runway shows, parties, designer pop-ups.", url: "https://nashvillefashionweek.com" },
+  { name: "St. Patrick's Day Parade", month: "March 17", venue: "Downtown Broadway", desc: "Annual parade and celebration on Lower Broadway.", url: "https://nashvilleirish.org" },
+  { name: "New Year's Eve Bash on Broadway", month: "December 31", venue: "Lower Broadway", desc: "Free outdoor concert with the Music Note Drop at midnight.", url: "https://www.visitmusiccity.com" },
+  { name: "CMA Country Christmas", month: "November", venue: "Bridgestone Arena", desc: "Annual TV special concert. Top country artists, holiday classics.", url: "https://www.cmaworld.com" },
+  { name: "Music City BBQ Festival", month: "September", venue: "Riverfront Park", desc: "BBQ competition and tasting. Live music. Free entry, pay per plate.", url: "https://musiccitybbqfestival.com" },
+  { name: "Wilson County Fair", month: "August", venue: "Lebanon, TN (~30 mi east)", desc: "Largest fair in Tennessee. Rides, livestock, fair food, country concerts.", url: "https://www.wilsoncountyfair.net" },
+  { name: "Bonnaroo Music & Arts Festival", month: "June", venue: "Manchester, TN (~75 mi southeast)", desc: "Four-day mega festival. Massive lineup. Camping required.", url: "https://www.bonnaroo.com" },
+  { name: "Country Music Hall of Fame Inductions", month: "October - November", venue: "Country Music Hall of Fame", desc: "Annual induction ceremony. Open to public, sometimes free.", url: "https://countrymusichalloffame.org" },
+  { name: "Nashville Scene Best of Nashville Party", month: "October", venue: "Various", desc: "Annual party celebrating local award winners. Food, drinks, music.", url: "https://www.nashvillescene.com" }
+];
+
+function getMonthOrder(monthStr) {
+  const months = ['january','february','march','april','may','june','july','august','september','october','november','december'];
+  const m = (monthStr || '').toLowerCase();
+  for (let i = 0; i < months.length; i++) {
+    if (m.includes(months[i])) return i + 1;
+  }
+  return 13;
+}
+
 async function showFestivals() {
-  addMessage("Pulling Nashville festivals and special events...", 'bot');
+  addMessage("Nashville festivals worth the trip:", 'bot');
+
+  // Sort curated by month for the calendar feel.
+  const sorted = [...CURATED_NASHVILLE_FESTIVALS].sort((a, b) => getMonthOrder(a.month) - getMonthOrder(b.month));
+  sorted.forEach(f => {
+    const star = renderSaveStar({ name: f.name, note: f.month, address: f.venue });
+    const share = renderShareButton({ name: f.name, desc: `${f.month} - ${f.venue}`, url: f.url || '' });
+    let html = `<div class="card">
+      <div class="card-title">${star}${share}${f.name}</div>
+      <div class="card-meta">${f.month} · ${f.venue}</div>
+      <div class="card-desc">${f.desc}</div>`;
+    if (f.url) html += `<a href="${f.url}" target="_blank" rel="noopener">Festival website</a>`;
+    const mapsUrl = `https://www.google.com/maps/search/${encodeURIComponent(f.venue + ' Nashville TN')}`;
+    html += `<a href="${mapsUrl}" target="_blank" rel="noopener" style="background:#34a853;color:#fff;">Open in Maps</a>`;
+    html += `</div>`;
+    addMessage(html, 'bot', true);
+  });
+
+  // Live data: pull from Visit Music City scraper plus our combined feeds.
   try {
-    const url = new URL(`${API_BASE}/api/festivals`, window.location.origin);
-    if (userLocation) {
-      url.searchParams.set('lat', userLocation.lat);
-      url.searchParams.set('lng', userLocation.lng);
+    const [scraperRes, apiRes] = await Promise.all([
+      fetch(`${API_BASE}/api/visitmusiccity`, { signal: AbortSignal.timeout(10000) }).catch(() => null),
+      fetch(`${API_BASE}/api/festivals${userLocation ? '?lat=' + userLocation.lat + '&lng=' + userLocation.lng : ''}`, { signal: AbortSignal.timeout(10000) }).catch(() => null)
+    ]);
+
+    let liveEvents = [];
+    if (scraperRes && scraperRes.ok) {
+      const data = await scraperRes.json();
+      (data.events || []).forEach(e => liveEvents.push({
+        name: e.name,
+        date: e.date,
+        venue: e.venue,
+        url: e.url,
+        source: 'Visit Music City'
+      }));
     }
-    const r = await fetch(url, { signal: AbortSignal.timeout(10000) });
-    if (!r.ok) throw new Error('API error');
-    const data = await r.json();
-    const list = data.festivals || [];
-    if (list.length) {
-      addMessage(`Found ${list.length} upcoming Nashville festivals and special events:`, 'bot');
-      list.slice(0, 15).forEach(f => {
-        const dateStr = f.date + (f.time ? ' at ' + f.time : '');
-        const distStr = f.distanceMiles != null ? ` · 📍 ${f.distanceMiles} mi` : '';
-        const star = renderSaveStar({ name: f.name, note: `${dateStr} · ${f.venue || ''}`, address: f.address || f.venue || '' });
-        const share = renderShareButton({ name: f.name, desc: `${dateStr} at ${f.venue || 'Nashville'}`, url: f.url || '' });
+    if (apiRes && apiRes.ok) {
+      const data = await apiRes.json();
+      (data.festivals || []).slice(0, 10).forEach(e => liveEvents.push({
+        name: e.name,
+        date: e.date,
+        venue: e.venue,
+        url: e.url,
+        source: 'Ticketmaster'
+      }));
+    }
+
+    // Dedupe against curated list and self.
+    const curatedNames = new Set(CURATED_NASHVILLE_FESTIVALS.map(f => f.name.toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 20)));
+    const seen = new Set(curatedNames);
+    const fresh = [];
+    for (const e of liveEvents) {
+      const key = (e.name || '').toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 20);
+      if (!key || seen.has(key)) continue;
+      seen.add(key);
+      fresh.push(e);
+      if (fresh.length >= 15) break;
+    }
+
+    if (fresh.length > 0) {
+      addMessage(`Plus ${fresh.length} live events from Visit Music City and Ticketmaster:`, 'bot');
+      fresh.forEach(f => {
+        const star = renderSaveStar({ name: f.name, note: f.date, address: f.venue });
+        const share = renderShareButton({ name: f.name, desc: `${f.date || ''} at ${f.venue || 'Nashville'}`, url: f.url || '' });
         let html = `<div class="card">
           <div class="card-title">${star}${share}${f.name}</div>
-          <div class="card-meta">${dateStr || 'TBA'} · ${f.venue || ''}${distStr}</div>
-          <div class="card-desc">${f.genre || ''}${f.priceMin ? ' · From $' + f.priceMin : ''}</div>`;
-        if (f.url) html += `<a href="${f.url}" target="_blank">Tickets & info</a>`;
-        if (f.date) {
-          const icsUrl = buildIcsEvent(f.name, f.date, f.time, f.venue, f.address || '', f.url);
-          html += `<a href="${icsUrl}" download="howdy-nashville-event.ics" style="background:#2563eb;color:#fff;">📅 Add to calendar</a>`;
-        }
+          <div class="card-meta">${f.date || 'TBA'}${f.venue ? ' · ' + f.venue : ''} · via ${f.source}</div>`;
+        if (f.url) html += `<a href="${f.url}" target="_blank" rel="noopener">Event details</a>`;
         html += `</div>`;
         addMessage(html, 'bot', true);
       });
-    } else {
-      addMessage("No festivals found in our feeds right now. Try the local sources below for the most complete list.", 'bot');
     }
   } catch (e) {
-    addMessage("Couldn't pull live festival data right now. The classics: CMA Fest (June), Tomato Art Fest (August), Pilgrimage (September), Beale Street (May).", 'bot');
+    console.warn('live festivals fetch failed', e);
   }
 
   // Always show local source links so users can dig deeper
   const localSources = `<div class="card">
     <div class="card-title">More Nashville events</div>
-    <div class="card-desc">For the most complete local calendar, check these Nashville guides directly:</div>
-    <a href="https://www.visitmusiccity.com/nashville-events/upcoming-events" target="_blank" rel="noopener" style="background:#d62828;color:#fff;">Visit Music City Events</a>
+    <div class="card-desc">For the complete local calendar:</div>
+    <a href="https://www.visitmusiccity.com/nashville-events/upcoming-events" target="_blank" rel="noopener" style="background:#d62828;color:#fff;">Visit Music City</a>
     <a href="https://nashvilleguru.com/nashville-events" target="_blank" rel="noopener" style="background:#444;color:#fff;">Nashville Guru</a>
-    <a href="https://www.nashvillescene.com/calendar" target="_blank" rel="noopener" style="background:#777;color:#fff;">Nashville Scene Calendar</a>
+    <a href="https://www.nashvillescene.com/calendar" target="_blank" rel="noopener" style="background:#777;color:#fff;">Nashville Scene</a>
   </div>`;
   addMessage(localSources, 'bot', true);
 }
