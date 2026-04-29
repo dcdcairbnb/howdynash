@@ -1,6 +1,18 @@
 // Events: Ticketmaster Discovery + SeatGeek combined.
 // When lat/lng provided, sorts by distance from user.
 
+// Extract the real destination URL from Impact Radius / similar affiliate wrappers.
+function unwrapAffiliateUrl(rawUrl) {
+  if (!rawUrl || typeof rawUrl !== 'string') return rawUrl;
+  if (!/(\.evyy\.net|\.go2cloud\.org|prf\.hn)\//i.test(rawUrl)) return rawUrl;
+  try {
+    const parsed = new URL(rawUrl);
+    const u = parsed.searchParams.get('u') || parsed.searchParams.get('url') || parsed.searchParams.get('p');
+    if (u) return decodeURIComponent(u);
+  } catch (e) { /* fall through */ }
+  return rawUrl;
+}
+
 function haversineMiles(a, b) {
   if (!a || !b) return null;
   const R = 3958.8;
@@ -52,7 +64,7 @@ async function fetchTicketmaster(keyword, classificationName, startDateTime, end
         address: venue?.address?.line1,
         coords: venueCoords,
         distanceMiles: userPos && venueCoords ? haversineMiles(userPos, venueCoords) : null,
-        url: e.url,
+        url: unwrapAffiliateUrl(e.url),
         image: e.images?.[0]?.url,
         classification: e.classifications?.[0]?.segment?.name,
         genre: e.classifications?.[0]?.genre?.name,
@@ -101,7 +113,7 @@ async function fetchSeatGeek(keyword, lat, lng) {
         address: e.venue?.address,
         coords: venueCoords,
         distanceMiles: userPos && venueCoords ? haversineMiles(userPos, venueCoords) : null,
-        url: e.url,
+        url: unwrapAffiliateUrl(e.url),
         image: e.performers?.[0]?.image,
         classification: e.type,
         genre: e.taxonomies?.[0]?.name,
@@ -156,7 +168,7 @@ async function fetchEventbrite(keyword, lat, lng) {
         address: venue?.address?.localized_address_display || '',
         coords: venueCoords,
         distanceMiles: userPos && venueCoords ? haversineMiles(userPos, venueCoords) : null,
-        url: e.url,
+        url: unwrapAffiliateUrl(e.url),
         image: e.logo?.url,
         classification: e.category?.name || 'Event',
         genre: e.subcategory?.name || '',

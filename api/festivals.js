@@ -1,6 +1,20 @@
 // Festivals: Ticketmaster (multiple categories) + Nashville Open Data special events.
 // Pulls events from now through 90 days out, sorted by date or distance.
 
+// Extract the real destination URL from an Impact Radius affiliate wrapper
+// like https://ticketmaster.evyy.net/c/.../?u=https%3A%2F%2Fwww.ticketmaster.com%2Fevent%2F...
+// Returns the unwrapped URL when present, otherwise the original URL.
+function unwrapAffiliateUrl(rawUrl) {
+  if (!rawUrl || typeof rawUrl !== 'string') return rawUrl;
+  if (!/(\.evyy\.net|\.go2cloud\.org|prf\.hn)\//i.test(rawUrl)) return rawUrl;
+  try {
+    const parsed = new URL(rawUrl);
+    const u = parsed.searchParams.get('u') || parsed.searchParams.get('url') || parsed.searchParams.get('p');
+    if (u) return decodeURIComponent(u);
+  } catch (e) { /* malformed URL, fall through */ }
+  return rawUrl;
+}
+
 function haversineMiles(a, b) {
   if (!a || !b) return null;
   const R = 3958.8;
@@ -60,7 +74,7 @@ async function fetchTicketmasterFestivals(lat, lng, classificationName) {
         address: venue?.address?.line1,
         coords: venueCoords,
         distanceMiles: userPos && venueCoords ? haversineMiles(userPos, venueCoords) : null,
-        url: e.url,
+        url: unwrapAffiliateUrl(e.url),
         image: e.images?.[0]?.url,
         genre: e.classifications?.[0]?.genre?.name || classificationName || 'Event',
         priceMin: e.priceRanges?.[0]?.min,
