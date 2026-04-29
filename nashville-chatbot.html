@@ -1231,6 +1231,21 @@ async function handleSignupSubmit(event, source) {
     status.textContent = 'Check your inbox in a minute. Thanks!';
     status.style.color = '#1b8a3e';
     btn.textContent = 'Sent';
+    // Persist that the user signed up so we never show the cheat sheet card again.
+    try {
+      localStorage.setItem('howdy-nash-email-signed-up', '1');
+      localStorage.setItem('howdy-nash-email-signed-up-source', source);
+    } catch (e) { /* ignore quota errors */ }
+    // Remove any cheat sheet capture cards currently visible in the chat.
+    document.querySelectorAll('.card').forEach(card => {
+      const title = card.querySelector('.card-title');
+      if (title && /cheat sheet|email me|saved spots|bachelorette planner/i.test(title.innerText)) {
+        const wrapper = card.closest('.message') || card;
+        wrapper.style.transition = 'opacity 0.4s ease';
+        wrapper.style.opacity = '0';
+        setTimeout(() => wrapper.remove(), 450);
+      }
+    });
     setTimeout(() => closeSignupModal(), 2000);
   } catch (e) {
     status.textContent = 'Connection issue. Try again.';
@@ -2119,8 +2134,9 @@ function matches(text, keywords) {
 function showWelcome() {
   addMessage("Howdy. Welcome to Nashville. I can help you find restaurants, discover live music, and plan your visit. What sounds good?", 'bot');
   showMainMenu();
-  // Cheat sheet capture, shown once per session.
-  if (!sessionStorage.getItem('cheatsheet-shown')) {
+  // Cheat sheet capture. Skip if user already signed up (persistent) or already shown this session.
+  const alreadySignedUp = (() => { try { return !!localStorage.getItem('howdy-nash-email-signed-up'); } catch (e) { return false; } })();
+  if (!alreadySignedUp && !sessionStorage.getItem('cheatsheet-shown')) {
     sessionStorage.setItem('cheatsheet-shown', '1');
     setTimeout(() => {
       const card = `<div class="card" style="background:#fff5f5;border-left:3px solid #d62828;">
@@ -3830,8 +3846,9 @@ setTimeout(() => {
   } else {
     addMessage(ctx.greeting, 'bot');
     setTimeout(() => showMainMenu(), 400);
-    // Show the cheat sheet email capture card once per session on first visit.
-    if (!sessionStorage.getItem('cheatsheet-shown')) {
+    // Show the cheat sheet card once per session, but never if the user already signed up.
+    const alreadySignedUp = (() => { try { return !!localStorage.getItem('howdy-nash-email-signed-up'); } catch (e) { return false; } })();
+    if (!alreadySignedUp && !sessionStorage.getItem('cheatsheet-shown')) {
       sessionStorage.setItem('cheatsheet-shown', '1');
       setTimeout(() => {
         const card = `<div class="card" style="background:#fff5f5;border-left:3px solid #d62828;">
