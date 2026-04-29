@@ -3205,7 +3205,7 @@ async function showFlights() {
   }
 }
 const AWIN_PUBLISHER_ID = '2873227';
-const AWIN_BOOKING_MERCHANT_ID = '';
+const AWIN_BOOKING_MERCHANT_ID = '6776';
 const EXPEDIA_CAMREF = '1101l5JmBk';
 const EXPEDIA_TPID = '8000';
 
@@ -3274,6 +3274,12 @@ async function showHotels() {
           }
           const expediaSearch = `https://www.expedia.com/Hotel-Search?${expediaParams}`;
           html += `<a href="${expediaSearch}" target="_blank" rel="noopener" style="background:#FFC72C;color:#000;">Check Expedia rates</a>`;
+          // Booking.com via Awin affiliate link.
+          const bookingDirect = `https://www.booking.com/searchresults.html?ss=${encodeURIComponent(h.name + ' Nashville TN')}`;
+          const bookingAwin = AWIN_BOOKING_MERCHANT_ID
+            ? `https://www.awin1.com/cread.php?awinmid=${AWIN_BOOKING_MERCHANT_ID}&awinaffid=${AWIN_PUBLISHER_ID}&clickref=&ued=${encodeURIComponent(bookingDirect)}`
+            : bookingDirect;
+          html += `<a href="${bookingAwin}" target="_blank" rel="noopener" style="background:#003580;color:#fff;">Check Booking.com rates</a>`;
           html += `<a href="#" onclick="return rideClick('uber','${safeName}',event)" style="background:#000;">Uber here</a>`;
           html += `<a href="#" onclick="return rideClick('lyft','${safeName}',event)" style="background:#ff00bf;">Lyft here</a>`;
           html += `</div>`;
@@ -3290,10 +3296,12 @@ async function showHotels() {
   }
 
   // Always show the booking options card at the end as a fallback / overview
+  const bookingAllUrl = buildBookingUrl();
   const optionsHtml = `<div class="card">
     <div class="card-title">More booking options</div>
     <div class="card-desc">Compare prices across booking sites:</div>
     <a href="${expediaUrl}" target="_blank" rel="noopener" style="background:#FFC72C;color:#000;">Browse all Expedia</a>
+    <a href="${bookingAllUrl}" target="_blank" rel="noopener" style="background:#003580;color:#fff;">Browse all Booking.com</a>
     <a href="${mapsUrl}" target="_blank" rel="noopener" style="background:#34a853;color:#fff;">All hotels on Maps</a>
     <div class="card-desc" style="font-size:12px;color:#666;margin-top:8px;">Tip: Book direct on the hotel's site if you have loyalty status. Otherwise Expedia and Booking.com often have lower rates.</div>
   </div>`;
