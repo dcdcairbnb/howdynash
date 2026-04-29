@@ -28,7 +28,7 @@ Step 3. Set up Google Search Console at https://search.google.com/search-console
 
 Step 4. Claim social handles. Free.
 
-Instagram: @howdynashville
+Instagram: @howdynash
 
 TikTok: @howdynash
 
