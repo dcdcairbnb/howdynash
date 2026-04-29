@@ -3822,6 +3822,18 @@ setTimeout(() => {
   } else {
     addMessage(ctx.greeting, 'bot');
     setTimeout(() => showMainMenu(), 400);
+    // Show the cheat sheet email capture card once per session on first visit.
+    if (!sessionStorage.getItem('cheatsheet-shown')) {
+      sessionStorage.setItem('cheatsheet-shown', '1');
+      setTimeout(() => {
+        const card = `<div class="card" style="background:#fff5f5;border-left:3px solid #d62828;">
+          <div class="card-title">📧 Free 3-Day Nashville Cheat Sheet</div>
+          <div class="card-desc">Restaurants, music, neighborhoods, all in one PDF. Emailed to you, free.</div>
+          <button onclick="openSignupModal('cheatsheet'); return false;" style="background:#d62828;color:#fff;border:none;padding:10px 16px;border-radius:8px;cursor:pointer;font-weight:600;margin-top:8px;">Email me the cheat sheet</button>
+        </div>`;
+        addMessage(card, 'bot', true);
+      }, 1800);
+    }
   }
   setTimeout(() => snapshot('initial'), 500);
   setTimeout(() => maybeShowIosInstallHint(), 1000);
