@@ -1,5 +1,57 @@
-// Festivals: Ticketmaster (multiple categories) + Nashville Open Data special events.
+// Festivals: Ticketmaster + Eventbrite + Nashville Open Data + Visit Music City scrape.
 // Pulls events from now through 90 days out, sorted by date or distance.
+
+// --- Visit Music City scraper (was a separate function, merged here to stay under
+// Vercel Hobby's 12-function limit) ---
+
+const VMC_URL = 'https://www.visitmusiccity.com/nashville-events/upcoming-events';
+const VMC_BASE = 'https://www.visitmusiccity.com';
+
+function vmcDecodeEntities(s) {
+  return String(s || '')
+    .replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"').replace(/&#039;/g, "'").replace(/&apos;/g, "'")
+    .replace(/&nbsp;/g, ' ');
+}
+function vmcStripTags(html) {
+  return vmcDecodeEntities(String(html || '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim());
+}
+function vmcParseCard(cardHtml) {
+  const titleMatch = cardHtml.match(/<(?:h2|h3)[^>]*class="[^"]*(?:title|card__title)[^"]*"[^>]*>([\s\S]*?)<\/(?:h2|h3)>/i);
+  const title = vmcStripTags(titleMatch ? titleMatch[1] : '');
+  const dateMatch = cardHtml.match(/<[^>]*class="[^"]*event-dates?[^"]*"[^>]*>([\s\S]*?)<\/[^>]*>/i);
+  const date = vmcStripTags(dateMatch ? dateMatch[1] : '');
+  const venueMatch = cardHtml.match(/<[^>]*class="[^"]*(?:venue|location|address)[^"]*"[^>]*>([\s\S]*?)<\/[^>]*>/i);
+  const venue = vmcStripTags(venueMatch ? venueMatch[1] : '');
+  const linkMatch = cardHtml.match(/<a[^>]*href="([^"]+)"/i);
+  let link = linkMatch ? linkMatch[1] : '';
+  if (link && link.startsWith('/')) link = VMC_BASE + link;
+  if (!title || !link) return null;
+  return { name: title, date, venue, url: link, source: 'visitmusiccity' };
+}
+async function fetchVisitMusicCity() {
+  try {
+    const r = await fetch(VMC_URL, {
+      headers: { 'User-Agent': 'HowdyNash/1.0 (+https://howdynash.com)', 'Accept': 'text/html' }
+    });
+    if (!r.ok) return [];
+    const html = await r.text();
+    const cardRegex = /<article[^>]*class="[^"]*node-event[^"]*"[\s\S]*?<\/article>/gi;
+    const matches = html.match(cardRegex) || [];
+    const events = [];
+    const seen = new Set();
+    for (const card of matches) {
+      const ev = vmcParseCard(card);
+      if (!ev) continue;
+      const key = ev.name.toLowerCase().slice(0, 40) + '|' + ev.date.slice(0, 20);
+      if (seen.has(key)) continue;
+      seen.add(key);
+      events.push(ev);
+      if (events.length >= 30) break;
+    }
+    return events;
+  } catch (e) { return []; }
+}
 
 // Extract the real destination URL from an Impact Radius affiliate wrapper
 // like https://ticketmaster.evyy.net/c/.../?u=https%3A%2F%2Fwww.ticketmaster.com%2Fevent%2F...
@@ -208,16 +260,33 @@ function isActualFestival(item) {
 }
 
 export default async function handler(req, res) {
-  const { lat, lng } = req.query;
+  const { lat, lng, source } = req.query;
+
+  // Pure Visit Music City mode: ?source=visitmusiccity returns only the scraped feed.
+  if (source === 'visitmusiccity') {
+    try {
+      const events = await fetchVisitMusicCity();
+      res.setHeader('Cache-Control', 's-maxage=3600, stale-while-revalidate=7200');
+      return res.status(200).json({
+        source: 'visitmusiccity',
+        url: VMC_URL,
+        total: events.length,
+        events
+      });
+    } catch (e) {
+      return res.status(500).json({ error: e.message, events: [] });
+    }
+  }
 
   try {
-    const [festivals, eventbrite, nash] = await Promise.all([
+    const [festivals, eventbrite, nash, vmc] = await Promise.all([
       fetchTicketmasterFestivals(lat, lng, 'Festival'),
       fetchEventbriteFestivals(lat, lng),
-      fetchNashvilleSpecialEvents()
+      fetchNashvilleSpecialEvents(),
+      fetchVisitMusicCity()
     ]);
 
-    let combined = dedupe([...festivals, ...eventbrite, ...nash]).filter(isActualFestival);
+    let combined = dedupe([...festivals, ...eventbrite, ...nash, ...vmc]).filter(isActualFestival);
 
     if (lat && lng) {
       combined.sort((a, b) => {

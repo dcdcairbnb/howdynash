@@ -3448,8 +3448,10 @@ async function showFestivals() {
 
   // Live data: pull from Visit Music City scraper plus our combined feeds.
   try {
+    // Both feeds now come from /api/festivals (the visitmusiccity scraper was merged
+    // into festivals.js to stay under Vercel Hobby's 12-function limit).
     const [scraperRes, apiRes] = await Promise.all([
-      fetch(`${API_BASE}/api/visitmusiccity`, { signal: AbortSignal.timeout(10000) }).catch(() => null),
+      fetch(`${API_BASE}/api/festivals?source=visitmusiccity`, { signal: AbortSignal.timeout(10000) }).catch(() => null),
       fetch(`${API_BASE}/api/festivals${userLocation ? '?lat=' + userLocation.lat + '&lng=' + userLocation.lng : ''}`, { signal: AbortSignal.timeout(10000) }).catch(() => null)
     ]);
 
