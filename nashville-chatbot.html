@@ -2262,6 +2262,15 @@ function renderCuratedCard(s, label, liveMatch) {
     <div class="card-meta">${meta}</div>
     <div class="card-desc">${s.desc || ''}</div>`;
   if (s.url) html += `<a href="${s.url}" target="_blank">Website</a>`;
+  // Menu link for any spot that serves food. Skip when hasFood is explicitly false.
+  // For honky tonks, rooftops, cocktail bars: default to showing menu since most have food.
+  // For shopping, spas, nail salons, photo spots: skip unless menu is explicitly set.
+  const noFoodLabels = ['shopping', 'spas', 'nail salons', 'photo spots'];
+  const isFoodLabel = !noFoodLabels.includes(label);
+  if (s.menu || (isFoodLabel && s.hasFood !== false)) {
+    const menuUrl = s.menu || `https://www.google.com/search?q=${encodeURIComponent(s.name + ' Nashville menu')}`;
+    html += `<a href="${menuUrl}" target="_blank" rel="noopener" style="background:#ff8c00;color:#fff;">📋 View menu</a>`;
+  }
   const mapsUrl = liveMatch?.mapsUrl || `https://www.google.com/maps/search/${encodeURIComponent(s.name + ' Nashville TN')}`;
   html += `<a href="${mapsUrl}" target="_blank" rel="noopener" style="background:#34a853;color:#fff;">Open in Maps</a>`;
   const safeName = s.name.replace(/'/g, "\\'");
@@ -2414,35 +2423,35 @@ const CURATED_PHOTO_SPOTS = [
 ];
 
 const CURATED_BROADWAY_BARS = [
-  { name: "Tootsie's Orchid Lounge", neighborhood: "Lower Broadway", desc: "The original honky tonk. Live music from 10am. Hank Williams used to drink here.", url: "https://tootsies.net" },
-  { name: "Robert's Western World", neighborhood: "Lower Broadway", desc: "Boots and burgers. Recession Special: fried bologna sandwich, chips, MoonPie, PBR for $6.", url: "https://robertswesternworld.com" },
-  { name: "The Stage on Broadway", neighborhood: "Lower Broadway", desc: "Three floors, three stages. Live country all day every day.", url: "https://www.thestageonbroadway.com" },
-  { name: "Acme Feed & Seed", neighborhood: "Lower Broadway", desc: "Four floors, rooftop with skyline views. Music, food, drinks.", url: "https://www.theacmenashville.com" },
-  { name: "Legends Corner", neighborhood: "Lower Broadway", desc: "Walls covered in country music history. Free music, busy bar.", url: "https://www.legendscorner.com" },
-  { name: "AJ's Good Time Bar", neighborhood: "Lower Broadway", desc: "Alan Jackson's bar. Three floors of country music.", url: "https://www.ajsgoodtimebar.com" },
-  { name: "Honky Tonk Central", neighborhood: "Lower Broadway", desc: "Three floors, three bands at all times. Big tourist favorite.", url: "https://www.honkytonkcentral.com" },
-  { name: "Layla's Honky Tonk", neighborhood: "Lower Broadway", desc: "Smaller, more local feel. Bluegrass and old country.", url: "https://laylasnashville.com" },
-  { name: "The Second Fiddle", neighborhood: "Lower Broadway", desc: "Traditional honky tonk vibe. Local bands.", url: null },
-  { name: "Nudie's Honky Tonk", neighborhood: "Lower Broadway", desc: "Themed after Nudie Cohn rhinestone suits. Three floors.", url: "https://nudieshonkytonk.com" },
-  { name: "Luke's 32 Bridge", neighborhood: "Lower Broadway", desc: "Luke Bryan's six-floor bar with rooftop. Massive party venue.", url: "https://lukes32bridge.com" },
-  { name: "Whiskey Row", neighborhood: "Lower Broadway", desc: "Dierks Bentley's bar. Three floors, mechanical bull.", url: "https://www.dierkswhiskeyrow.com" },
-  { name: "FGL House", neighborhood: "Lower Broadway", desc: "Florida Georgia Line's spot. Four floors, rooftop, food and music.", url: "https://www.fglhouse.com" },
-  { name: "Jason Aldean's Kitchen + Rooftop", neighborhood: "Lower Broadway", desc: "Six floors, rooftop, restaurant, live music.", url: "https://jasonaldeansnashville.com" },
-  { name: "Kid Rock's Big Honky Tonk Steakhouse", neighborhood: "Lower Broadway", desc: "Six-floor monster. Live music, rooftop, big crowds.", url: "https://kidrocknashville.com" },
-  { name: "Ole Red", neighborhood: "Lower Broadway", desc: "Blake Shelton's spot. Four floors plus rooftop. Restaurant and music.", url: "https://olered.com/nashville" },
-  { name: "Miranda Lambert's Casa Rosa", neighborhood: "Lower Broadway", desc: "Pink-themed Tex-Mex with rooftop. Cocktails and live music.", url: "https://www.casarosanashville.com" },
-  { name: "Eric Church's Chief's", neighborhood: "Lower Broadway", desc: "Six-floor venue. Restaurant, music halls, rooftop.", url: "https://chiefsnashville.com" },
-  { name: "Tim McGraw's Tin Roof", neighborhood: "Lower Broadway", desc: "Multiple locations. Rock and country bar with food.", url: "https://www.tinroofbars.com" },
-  { name: "John Rich's Redneck Riviera", neighborhood: "Lower Broadway", desc: "Rooftop, multiple stages, dive-bar feel.", url: "https://redneckrivieranashville.com" },
-  { name: "Twelve Thirty Club", neighborhood: "Lower Broadway", desc: "Justin Timberlake's spot. Three floors topped by private rooftop. Reservations needed.", url: "https://www.twelvethirtyclub.com" },
-  { name: "The George Jones", neighborhood: "Lower Broadway", desc: "George Jones tribute. Rooftop with views. Museum included.", url: "https://www.georgejones.com" },
-  { name: "Skydeck on Broadway", neighborhood: "Lower Broadway", desc: "Massive rooftop above Assembly Food Hall. Multi-band setup.", url: "https://www.skydeckonbroadway.com" },
-  { name: "Coyote Joe's", neighborhood: "Lower Broadway", desc: "Country dance bar with mechanical bull. Casual.", url: null },
-  { name: "Tequila Cowboy", neighborhood: "Lower Broadway", desc: "Live music plus karaoke. Two floors.", url: "https://www.tequilacowboynashville.com" },
-  { name: "Bridgestone Bar (Pre-game)", neighborhood: "Lower Broadway", desc: "Outside Bridgestone Arena. Predators game day staple.", url: null },
+  { name: "Tootsie's Orchid Lounge", neighborhood: "Lower Broadway", desc: "The original honky tonk. Live music from 10am. Hank Williams used to drink here.", url: "https://tootsies.net", menu: "https://tootsies.net/menu" },
+  { name: "Robert's Western World", neighborhood: "Lower Broadway", desc: "Boots and burgers. Recession Special: fried bologna sandwich, chips, MoonPie, PBR for $6.", url: "https://robertswesternworld.com", menu: "https://robertswesternworld.com/menu" },
+  { name: "The Stage on Broadway", neighborhood: "Lower Broadway", desc: "Three floors, three stages. Live country all day every day.", url: "https://www.thestageonbroadway.com", menu: "https://www.thestageonbroadway.com/menu" },
+  { name: "Acme Feed & Seed", neighborhood: "Lower Broadway", desc: "Four floors, rooftop with skyline views. Music, food, drinks.", url: "https://www.theacmenashville.com", menu: "https://www.theacmenashville.com/menu" },
+  { name: "Legends Corner", neighborhood: "Lower Broadway", desc: "Walls covered in country music history. Free music, busy bar.", url: "https://www.legendscorner.com", hasFood: false },
+  { name: "AJ's Good Time Bar", neighborhood: "Lower Broadway", desc: "Alan Jackson's bar. Three floors of country music.", url: "https://www.ajsgoodtimebar.com", menu: "https://www.ajsgoodtimebar.com/menu" },
+  { name: "Honky Tonk Central", neighborhood: "Lower Broadway", desc: "Three floors, three bands at all times. Big tourist favorite.", url: "https://www.honkytonkcentral.com", menu: "https://www.honkytonkcentral.com/menu" },
+  { name: "Layla's Honky Tonk", neighborhood: "Lower Broadway", desc: "Smaller, more local feel. Bluegrass and old country.", url: "https://laylasnashville.com", hasFood: false },
+  { name: "The Second Fiddle", neighborhood: "Lower Broadway", desc: "Traditional honky tonk vibe. Local bands.", url: null, hasFood: false },
+  { name: "Nudie's Honky Tonk", neighborhood: "Lower Broadway", desc: "Themed after Nudie Cohn rhinestone suits. Three floors.", url: "https://nudieshonkytonk.com", menu: "https://nudieshonkytonk.com/menu" },
+  { name: "Luke's 32 Bridge", neighborhood: "Lower Broadway", desc: "Luke Bryan's six-floor bar with rooftop. Massive party venue.", url: "https://lukes32bridge.com", menu: "https://lukes32bridge.com/menus" },
+  { name: "Whiskey Row", neighborhood: "Lower Broadway", desc: "Dierks Bentley's bar. Three floors, mechanical bull.", url: "https://www.dierkswhiskeyrow.com", menu: "https://www.dierkswhiskeyrow.com/menu" },
+  { name: "FGL House", neighborhood: "Lower Broadway", desc: "Florida Georgia Line's spot. Four floors, rooftop, food and music.", url: "https://www.fglhouse.com", menu: "https://www.fglhouse.com/menu" },
+  { name: "Jason Aldean's Kitchen + Rooftop", neighborhood: "Lower Broadway", desc: "Six floors, rooftop, restaurant, live music.", url: "https://jasonaldeansnashville.com", menu: "https://jasonaldeansnashville.com/menus" },
+  { name: "Kid Rock's Big Honky Tonk Steakhouse", neighborhood: "Lower Broadway", desc: "Six-floor monster. Live music, rooftop, big crowds.", url: "https://kidrocknashville.com", menu: "https://kidrocknashville.com/menu" },
+  { name: "Ole Red", neighborhood: "Lower Broadway", desc: "Blake Shelton's spot. Four floors plus rooftop. Restaurant and music.", url: "https://olered.com/nashville", menu: "https://olered.com/nashville/menu" },
+  { name: "Miranda Lambert's Casa Rosa", neighborhood: "Lower Broadway", desc: "Pink-themed Tex-Mex with rooftop. Cocktails and live music.", url: "https://www.casarosanashville.com", menu: "https://www.casarosanashville.com/menu" },
+  { name: "Eric Church's Chief's", neighborhood: "Lower Broadway", desc: "Six-floor venue. Restaurant, music halls, rooftop.", url: "https://chiefsnashville.com", menu: "https://chiefsnashville.com/menus" },
+  { name: "Tim McGraw's Tin Roof", neighborhood: "Lower Broadway", desc: "Multiple locations. Rock and country bar with food.", url: "https://www.tinroofbars.com", menu: "https://www.tinroofbars.com/menu" },
+  { name: "John Rich's Redneck Riviera", neighborhood: "Lower Broadway", desc: "Rooftop, multiple stages, dive-bar feel.", url: "https://redneckrivieranashville.com", menu: "https://redneckrivieranashville.com/menu" },
+  { name: "Twelve Thirty Club", neighborhood: "Lower Broadway", desc: "Justin Timberlake's spot. Three floors topped by private rooftop. Reservations needed.", url: "https://www.twelvethirtyclub.com", menu: "https://www.twelvethirtyclub.com/menus" },
+  { name: "The George Jones", neighborhood: "Lower Broadway", desc: "George Jones tribute. Rooftop with views. Museum included.", url: "https://www.georgejones.com", menu: "https://www.georgejones.com/menu" },
+  { name: "Skydeck on Broadway", neighborhood: "Lower Broadway", desc: "Massive rooftop above Assembly Food Hall. Multi-band setup.", url: "https://www.skydeckonbroadway.com", menu: "https://www.skydeckonbroadway.com/menu" },
+  { name: "Coyote Joe's", neighborhood: "Lower Broadway", desc: "Country dance bar with mechanical bull. Casual.", url: null, hasFood: false },
+  { name: "Tequila Cowboy", neighborhood: "Lower Broadway", desc: "Live music plus karaoke. Two floors.", url: "https://www.tequilacowboynashville.com", menu: "https://www.tequilacowboynashville.com/menu" },
+  { name: "Bridgestone Bar (Pre-game)", neighborhood: "Lower Broadway", desc: "Outside Bridgestone Arena. Predators game day staple.", url: null, hasFood: false },
   { name: "Doc Holliday's Saloon", neighborhood: "Lower Broadway", desc: "Wild West themed honky tonk. Three floors with rooftop.", url: null },
   { name: "Whiskey Bent Saloon", neighborhood: "Lower Broadway", desc: "Cowgirl shooters and live country. Casual local-feeling spot.", url: null },
-  { name: "The Stillery", neighborhood: "Lower Broadway", desc: "Mason jar cocktails and pizza. Two locations on the strip.", url: "https://www.thestillery.com" }
+  { name: "The Stillery", neighborhood: "Lower Broadway", desc: "Mason jar cocktails and pizza. Two locations on the strip.", url: "https://www.thestillery.com", menu: "https://www.thestillery.com/menu" }
 ];
 
 function showBroadwayBars() {
@@ -2456,6 +2465,11 @@ function showBroadwayBars() {
       <div class="card-meta">${s.neighborhood}</div>
       <div class="card-desc">${s.desc}</div>`;
     if (s.url) html += `<a href="${s.url}" target="_blank" rel="noopener">Website</a>`;
+    // Menu link: direct URL if known, otherwise Google search fallback. Skip for bars without food.
+    if (s.hasFood !== false) {
+      const menuUrl = s.menu || `https://www.google.com/search?q=${encodeURIComponent(s.name + ' Nashville menu')}`;
+      html += `<a href="${menuUrl}" target="_blank" rel="noopener" style="background:#ff8c00;color:#fff;">📋 View menu</a>`;
+    }
     const mapsUrl = `https://www.google.com/maps/search/${encodeURIComponent(s.name + ' Nashville TN')}`;
     html += `<a href="${mapsUrl}" target="_blank" rel="noopener" style="background:#34a853;color:#fff;">Open in Maps</a>`;
     const safeName = s.name.replace(/'/g, "\\'");
