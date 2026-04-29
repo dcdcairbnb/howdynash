@@ -3435,11 +3435,40 @@ function showRideOptions() {
     <a href="#" onclick="return rideClick('waymo',null,event)" style="background:#5f6df1;">Open Waymo</a>
   </div>`;
   addMessage(html, 'bot', true);
+
+  // Compare rides card. Lets user enter any destination and launch all 3 apps.
+  const compareHtml = `<div class="card" style="background:#fff5f5;border-left:3px solid #d62828;">
+    <div class="card-title">⚡ Compare rides to anywhere</div>
+    <div class="card-desc">Type a destination once. Open Uber, Lyft, and Waymo with the address pre-filled. Compare fares in 30 seconds.</div>
+    <input type="text" id="compareRideAddress" placeholder="e.g. Husk Nashville, Ryman Auditorium, BNA airport" style="width:100%;padding:10px 12px;border:1px solid #ddd;border-radius:8px;font-size:14px;margin-top:8px;outline:none;box-sizing:border-box;">
+    <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;">
+      <button onclick="compareRideLaunch('uber')" style="background:#000;color:#fff;border:none;padding:10px 14px;border-radius:8px;font-weight:600;cursor:pointer;flex:1;min-width:90px;">Open in Uber</button>
+      <button onclick="compareRideLaunch('lyft')" style="background:#ff00bf;color:#fff;border:none;padding:10px 14px;border-radius:8px;font-weight:600;cursor:pointer;flex:1;min-width:90px;">Open in Lyft</button>
+      <button onclick="compareRideLaunch('waymo')" style="background:#5f6df1;color:#fff;border:none;padding:10px 14px;border-radius:8px;font-weight:600;cursor:pointer;flex:1;min-width:90px;">Open in Waymo</button>
+    </div>
+    <div style="font-size:11px;color:#888;margin-top:8px;line-height:1.4;">Tip: open all three to see live fare estimates. Waymo is usually cheaper at peak hours, Uber and Lyft swap depending on surge.</div>
+  </div>`;
+  addMessage(compareHtml, 'bot', true);
+
   if (!userLocation) {
     setTimeout(() => {
       addQuickReplies(['Share my location']);
     }, 300);
   }
+}
+
+// Read the address from the Compare rides input and open the chosen rideshare app with destination pre-filled.
+function compareRideLaunch(service) {
+  const input = document.getElementById('compareRideAddress');
+  const addr = (input?.value || '').trim();
+  if (!addr) {
+    if (input) input.focus();
+    addMessage("Type a destination first, then tap Uber, Lyft, or Waymo.", 'bot');
+    return;
+  }
+  // Append " Nashville TN" if not already specified, so apps geocode correctly.
+  const dest = /nashville|tn|tennessee|airport|bna/i.test(addr) ? addr : addr + ' Nashville TN';
+  rideClick(service, dest, null);
 }
 
 function renderRestaurantCard(r) {
