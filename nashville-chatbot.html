@@ -3385,37 +3385,39 @@ function showGroceries() {
   showStoreType('grocery store', 'supermarket', 'grocery stores');
 }
 
-// Curated annual Nashville festivals. Updated yearly. Shown first, always.
+// Curated annual Nashville festivals with 2026 dates. Verify against official sites yearly.
+// "month" is used by getMonthOrder + daysUntilFestival for sorting; "dates" is the user-facing label.
 const CURATED_NASHVILLE_FESTIVALS = [
-  { name: "CMA Fest", month: "June", venue: "Downtown Nashville", desc: "Country music's biggest party. 4 days, 50+ artists, free daytime stages, paid nightly Nissan Stadium shows.", url: "https://www.cmafest.com" },
-  { name: "Pilgrimage Music & Cultural Festival", month: "September", venue: "The Park at Harlinsdale Farm, Franklin", desc: "Two-day festival in Franklin. Indie, rock, folk, country. Justin Timberlake co-founded.", url: "https://pilgrimagefestival.com" },
-  { name: "Tomato Art Fest", month: "August", venue: "East Nashville", desc: "Quirky East Nashville street fest. Tomato-themed art, music, parade, costume contests. Free.", url: "https://www.tomatoartfest.com" },
-  { name: "Music City Hot Chicken Festival", month: "July 4", venue: "East Park", desc: "Free July 4th festival celebrating Nashville hot chicken. Vendors, music, contests.", url: "https://hotchickenfestival.com" },
-  { name: "Live on the Green", month: "August - September", venue: "Public Square Park", desc: "Free outdoor music series. National headliners every Thursday for 6 weeks.", url: "https://liveonthegreen.com" },
-  { name: "Musicians Corner", month: "Spring & Fall, every Saturday", venue: "Centennial Park", desc: "Free outdoor concerts every Saturday. Local artists. Bring a blanket.", url: "https://musicianscorner.com" },
-  { name: "Nashville Pride Festival", month: "June", venue: "Public Square Park", desc: "Two-day LGBTQ+ pride festival with parade, performances, vendors. Free.", url: "https://nashvillepride.org" },
-  { name: "AmericanaFest", month: "September", venue: "Various venues citywide", desc: "Six-day Americana music festival. Concerts, conferences, awards show.", url: "https://americanamusic.org" },
-  { name: "Iroquois Steeplechase", month: "May (second Saturday)", venue: "Percy Warner Park", desc: "Nashville's oldest sporting event. Horse racing, hats, tailgating.", url: "https://iroquoissteeplechase.org" },
-  { name: "East Nashville Beer Festival", month: "October", venue: "East Park", desc: "Local brewery showcase. Tastings, food trucks, live music.", url: "https://eastnashvillebeerfestival.com" },
-  { name: "Nashville Film Festival", month: "September", venue: "Regal Green Hills + Belcourt Theatre", desc: "10-day independent film festival. Premieres, panels, parties.", url: "https://nashvillefilmfestival.org" },
-  { name: "Nashville Whiskey Festival", month: "September", venue: "Music City Center", desc: "Whiskey, bourbon, and rye tasting from 100+ distilleries.", url: "https://nashvillewhiskeyfestival.com" },
-  { name: "Cheekwood Cherry Blossom Festival", month: "March - April", venue: "Cheekwood Estate & Gardens", desc: "Hundreds of cherry trees in bloom. Tea ceremonies, taiko drumming, art.", url: "https://cheekwood.org" },
-  { name: "Cheekwood Holiday Lights", month: "November - January", venue: "Cheekwood Estate & Gardens", desc: "1+ million holiday lights, Santa visits, hot cocoa.", url: "https://cheekwood.org" },
-  { name: "Tennessee Craft Fair", month: "May & September", venue: "Centennial Park", desc: "Juried craft show. Pottery, jewelry, woodwork, textiles. Free entry.", url: "https://tennesseecraft.org" },
-  { name: "Nashville Earth Day Festival", month: "April", venue: "Centennial Park", desc: "Free outdoor festival celebrating Earth Day. Music, vendors, kids' zone.", url: "https://nashvilleearthday.org" },
-  { name: "African Street Festival", month: "September", venue: "Hadley Park", desc: "Three-day cultural celebration. African music, dance, food, vendors.", url: "https://www.africanamericanculturalalliance.com" },
-  { name: "Nashville Greek Festival", month: "September", venue: "Holy Trinity Greek Orthodox Church", desc: "Greek food, music, dance, pastries. Free admission.", url: "https://nashvillegreekfestival.com" },
-  { name: "Oktoberfest Nashville", month: "October", venue: "Germantown", desc: "Authentic Bavarian beer hall vibes. Music, food, biergartens, costume contests.", url: "https://nashvilleoktoberfest.com" },
-  { name: "Italian Lights Festival", month: "October", venue: "Bicentennial Capitol Mall", desc: "Italian food, wine, live music, lights. Free admission.", url: "https://italianlightsfestival.com" },
-  { name: "Nashville Fashion Week", month: "April", venue: "Various", desc: "Five days of runway shows, parties, designer pop-ups.", url: "https://nashvillefashionweek.com" },
-  { name: "St. Patrick's Day Parade", month: "March 17", venue: "Downtown Broadway", desc: "Annual parade and celebration on Lower Broadway.", url: "https://nashvilleirish.org" },
-  { name: "New Year's Eve Bash on Broadway", month: "December 31", venue: "Lower Broadway", desc: "Free outdoor concert with the Music Note Drop at midnight.", url: "https://www.visitmusiccity.com" },
-  { name: "CMA Country Christmas", month: "November", venue: "Bridgestone Arena", desc: "Annual TV special concert. Top country artists, holiday classics.", url: "https://www.cmaworld.com" },
-  { name: "Music City BBQ Festival", month: "September", venue: "Riverfront Park", desc: "BBQ competition and tasting. Live music. Free entry, pay per plate.", url: "https://musiccitybbqfestival.com" },
-  { name: "Wilson County Fair", month: "August", venue: "Lebanon, TN (~30 mi east)", desc: "Largest fair in Tennessee. Rides, livestock, fair food, country concerts.", url: "https://www.wilsoncountyfair.net" },
-  { name: "Bonnaroo Music & Arts Festival", month: "June", venue: "Manchester, TN (~75 mi southeast)", desc: "Four-day mega festival. Massive lineup. Camping required.", url: "https://www.bonnaroo.com" },
-  { name: "Country Music Hall of Fame Inductions", month: "October - November", venue: "Country Music Hall of Fame", desc: "Annual induction ceremony. Open to public, sometimes free.", url: "https://countrymusichalloffame.org" },
-  { name: "Nashville Scene Best of Nashville Party", month: "October", venue: "Various", desc: "Annual party celebrating local award winners. Food, drinks, music.", url: "https://www.nashvillescene.com" }
+  { name: "CMA Fest", month: "June 4", dates: "Jun 4-7, 2026", venue: "Downtown Nashville", desc: "Country music's biggest party. 4 days, 50+ artists, free daytime stages, paid nightly Nissan Stadium shows.", url: "https://www.cmafest.com" },
+  { name: "Pilgrimage Music & Cultural Festival", month: "September 26", dates: "Sept 26-27, 2026", venue: "The Park at Harlinsdale Farm, Franklin", desc: "Two-day festival in Franklin. Indie, rock, folk, country. Justin Timberlake co-founded.", url: "https://pilgrimagefestival.com" },
+  { name: "Tomato Art Fest", month: "August 8", dates: "Aug 8, 2026 (2nd Saturday)", venue: "East Nashville", desc: "Quirky East Nashville street fest. Tomato-themed art, music, parade, costume contests. Free.", url: "https://www.tomatoartfest.com" },
+  { name: "Music City Hot Chicken Festival", month: "July 4", dates: "Jul 4, 2026", venue: "East Park", desc: "Free July 4th festival celebrating Nashville hot chicken. Vendors, music, contests.", url: "https://hotchickenfestival.com" },
+  { name: "Live on the Green", month: "August 13", dates: "Thu nights, Aug 13 - Sept 17, 2026", venue: "Public Square Park", desc: "Free outdoor music series. National headliners every Thursday for 6 weeks.", url: "https://liveonthegreen.com" },
+  { name: "Musicians Corner", month: "April 25", dates: "Saturdays, May - June and Sept - Oct 2026", venue: "Centennial Park", desc: "Free outdoor concerts every Saturday. Local artists. Bring a blanket.", url: "https://musicianscorner.com" },
+  { name: "Nashville Pride Festival", month: "June 27", dates: "Jun 27-28, 2026", venue: "Public Square Park", desc: "Two-day LGBTQ+ pride festival with parade, performances, vendors. Free.", url: "https://nashvillepride.org" },
+  { name: "AmericanaFest", month: "September 15", dates: "Sept 15-19, 2026", venue: "Various venues citywide", desc: "Six-day Americana music festival. Concerts, conferences, awards show.", url: "https://americanamusic.org" },
+  { name: "Iroquois Steeplechase", month: "May 9", dates: "May 9, 2026 (2nd Saturday)", venue: "Percy Warner Park", desc: "Nashville's oldest sporting event. Horse racing, hats, tailgating.", url: "https://iroquoissteeplechase.org" },
+  { name: "East Nashville Beer Festival", month: "October 17", dates: "Oct 17, 2026 (estimated)", venue: "East Park", desc: "Local brewery showcase. Tastings, food trucks, live music.", url: "https://eastnashvillebeerfestival.com" },
+  { name: "Nashville Film Festival", month: "September 24", dates: "Sept 24 - Oct 4, 2026 (estimated)", venue: "Regal Green Hills + Belcourt Theatre", desc: "10-day independent film festival. Premieres, panels, parties.", url: "https://nashvillefilmfestival.org" },
+  { name: "Nashville Whiskey Festival", month: "September 12", dates: "Sept 12, 2026 (estimated)", venue: "Music City Center", desc: "Whiskey, bourbon, and rye tasting from 100+ distilleries.", url: "https://nashvillewhiskeyfestival.com" },
+  { name: "Cheekwood Cherry Blossom Festival", month: "March 28", dates: "Mar 28 - Apr 5, 2026 (estimated)", venue: "Cheekwood Estate & Gardens", desc: "Hundreds of cherry trees in bloom. Tea ceremonies, taiko drumming, art.", url: "https://cheekwood.org" },
+  { name: "Cheekwood Holiday Lights", month: "November 13", dates: "Nov 13, 2026 - Jan 3, 2027", venue: "Cheekwood Estate & Gardens", desc: "1+ million holiday lights, Santa visits, hot cocoa.", url: "https://cheekwood.org" },
+  { name: "Tennessee Craft Fair (Spring)", month: "May 1", dates: "May 1-3, 2026", venue: "Centennial Park", desc: "Juried craft show. Pottery, jewelry, woodwork, textiles. Free entry.", url: "https://tennesseecraft.org" },
+  { name: "Tennessee Craft Fair (Fall)", month: "September 25", dates: "Sept 25-27, 2026", venue: "Centennial Park", desc: "Juried craft show. Pottery, jewelry, woodwork, textiles. Free entry.", url: "https://tennesseecraft.org" },
+  { name: "Nashville Earth Day Festival", month: "April 25", dates: "Apr 25, 2026 (estimated)", venue: "Centennial Park", desc: "Free outdoor festival celebrating Earth Day. Music, vendors, kids' zone.", url: "https://nashvilleearthday.org" },
+  { name: "African Street Festival", month: "September 18", dates: "Sept 18-20, 2026 (estimated)", venue: "Hadley Park", desc: "Three-day cultural celebration. African music, dance, food, vendors.", url: "https://www.africanamericanculturalalliance.com" },
+  { name: "Nashville Greek Festival", month: "September 25", dates: "Sept 25-27, 2026 (estimated)", venue: "Holy Trinity Greek Orthodox Church", desc: "Greek food, music, dance, pastries. Free admission.", url: "https://nashvillegreekfestival.com" },
+  { name: "Oktoberfest Nashville", month: "October 9", dates: "Oct 9-11, 2026 (estimated)", venue: "Germantown", desc: "Authentic Bavarian beer hall vibes. Music, food, biergartens, costume contests.", url: "https://nashvilleoktoberfest.com" },
+  { name: "Italian Lights Festival", month: "October 3", dates: "Oct 3, 2026 (estimated)", venue: "Bicentennial Capitol Mall", desc: "Italian food, wine, live music, lights. Free admission.", url: "https://italianlightsfestival.com" },
+  { name: "Nashville Fashion Week", month: "April 6", dates: "Apr 6-10, 2026 (estimated)", venue: "Various", desc: "Five days of runway shows, parties, designer pop-ups.", url: "https://nashvillefashionweek.com" },
+  { name: "St. Patrick's Day Parade", month: "March 14", dates: "Mar 14, 2026 (Saturday before)", venue: "Downtown Broadway", desc: "Annual parade and celebration on Lower Broadway.", url: "https://nashvilleirish.org" },
+  { name: "New Year's Eve Bash on Broadway", month: "December 31", dates: "Dec 31, 2026", venue: "Lower Broadway", desc: "Free outdoor concert with the Music Note Drop at midnight.", url: "https://www.visitmusiccity.com" },
+  { name: "CMA Country Christmas", month: "November 17", dates: "Nov 17, 2026 (TV taping, estimated)", venue: "Bridgestone Arena", desc: "Annual TV special concert. Top country artists, holiday classics.", url: "https://www.cmaworld.com" },
+  { name: "Music City BBQ Festival", month: "September 5", dates: "Sept 5, 2026 (estimated)", venue: "Riverfront Park", desc: "BBQ competition and tasting. Live music. Free entry, pay per plate.", url: "https://musiccitybbqfestival.com" },
+  { name: "Wilson County Fair", month: "August 14", dates: "Aug 14-22, 2026 (estimated)", venue: "Lebanon, TN (~30 mi east)", desc: "Largest fair in Tennessee. Rides, livestock, fair food, country concerts.", url: "https://www.wilsoncountyfair.net" },
+  { name: "Bonnaroo Music & Arts Festival", month: "June 11", dates: "Jun 11-14, 2026", venue: "Manchester, TN (~75 mi southeast)", desc: "Four-day mega festival. Massive lineup. Camping required.", url: "https://www.bonnaroo.com" },
+  { name: "Country Music Hall of Fame Inductions", month: "October 19", dates: "Oct 19, 2026 (estimated)", venue: "Country Music Hall of Fame", desc: "Annual induction ceremony. Open to public, sometimes free.", url: "https://countrymusichalloffame.org" },
+  { name: "Nashville Scene Best of Nashville Party", month: "October 23", dates: "Oct 23, 2026 (estimated)", venue: "Various", desc: "Annual party celebrating local award winners. Food, drinks, music.", url: "https://www.nashvillescene.com" }
 ];
 
 function getMonthOrder(monthStr) {
@@ -3461,11 +3463,12 @@ async function showFestivals() {
   // Sort by next occurrence so the soonest festival appears first.
   const sorted = [...CURATED_NASHVILLE_FESTIVALS].sort((a, b) => daysUntilFestival(a) - daysUntilFestival(b));
   sorted.forEach(f => {
-    const star = renderSaveStar({ name: f.name, note: f.month, address: f.venue });
-    const share = renderShareButton({ name: f.name, desc: `${f.month} - ${f.venue}`, url: f.url || '' });
+    const dateLabel = f.dates || f.month;
+    const star = renderSaveStar({ name: f.name, note: dateLabel, address: f.venue });
+    const share = renderShareButton({ name: f.name, desc: `${dateLabel} - ${f.venue}`, url: f.url || '' });
     let html = `<div class="card">
       <div class="card-title">${star}${share}${f.name}</div>
-      <div class="card-meta">${f.month} · ${f.venue}</div>
+      <div class="card-meta">${dateLabel} · ${f.venue}</div>
       <div class="card-desc">${f.desc}</div>`;
     if (f.url) html += `<a href="${f.url}" target="_blank" rel="noopener">Festival website</a>`;
     const mapsUrl = `https://www.google.com/maps/search/${encodeURIComponent(f.venue + ' Nashville TN')}`;
