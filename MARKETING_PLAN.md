@@ -20,7 +20,7 @@ Why DAU. Tourists are episodic users. Daily numbers smooth out the noise. Higher
 
 Before any marketing dollars or effort.
 
-Step 1. Buy howdynashville.com or .app. $12 to $40.
+Step 1. Buy howdynash.com. $12 to $40.
 
 Step 2. Install Plausible analytics. $9/month. Tracks DAU, page views, button clicks, conversions.
 
@@ -32,11 +32,11 @@ Instagram: @howdynash
 
 TikTok: @howdynash
 
-X: @howdynashville
+X: @howdynash
 
-Threads: @howdynashville
+Threads: @howdynash
 
-Pinterest: @howdynashville (huge for travel discovery)
+Pinterest: @howdynash (huge for travel discovery)
 
 Step 5. Submit sitemap to Google. Vercel auto-generates this.
 

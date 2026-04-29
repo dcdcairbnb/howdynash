@@ -170,7 +170,7 @@ Step 1. Add Plausible analytics. $9/month. One day of work.
 
 Step 2. Migrate to LLM tool use. Two days of work. Eliminates hallucinations.
 
-Step 3. Buy howdynashville.com domain. $12/year. One hour.
+Step 3. Buy howdynash.com domain. $12/year. One hour.
 
 Step 4. Pitch 10 Nashville hotels for white-label deals. Two weeks of outreach.
 

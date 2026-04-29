@@ -455,15 +455,15 @@ Brand colors: red gradient (#d62828 to #f77f00) for header, white background for
 
 Font: system default (San Francisco on Mac, Segoe UI on Windows, Roboto on Android).
 
-Domain (when purchased): howdynashville.com or howdynashville.app
+Domain: howdynash.com
 
-Social handles to claim: @howdynashville on Instagram, TikTok, X.
+Social handles: @howdynash on Instagram, TikTok, X, Threads, Pinterest.
 
 ---
 
 ## Future Roadmap (TODO)
 
-Buy custom domain (howdynashville.com or .app).
+Custom domain: howdynash.com (purchased and live).
 
 Add Plausible analytics.
 
