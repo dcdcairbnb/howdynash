@@ -3434,27 +3434,27 @@ function getMonthOrder(monthStr) {
   return earliest;
 }
 
-// Days from today until the festival's start month. Festivals already past this year
-// wrap to next year so they sort to the bottom.
+// Days from today until the festival's start. Past festivals wrap to next year
+// so they sort to the bottom.
 function daysUntilFestival(festival) {
   const monthNum = getMonthOrder(festival.month);
   if (monthNum === 13) return 9999; // year-round events
   const today = new Date();
-  const currentMonth = today.getMonth() + 1; // 1-12
-  const currentDay = today.getDate();
-  // Estimate festival day-of-month. Look for explicit day numbers, else assume mid-month.
+  // Strip time so comparisons are date-only.
+  today.setHours(0, 0, 0, 0);
+  // Look for an explicit day number in the month string ("June 4" -> 4).
   const dayMatch = (festival.month || '').match(/(\d{1,2})/);
   const festivalDay = dayMatch ? parseInt(dayMatch[1], 10) : 15;
   const thisYear = today.getFullYear();
   // Build a Date for the festival in the current year first.
   let fest = new Date(thisYear, monthNum - 1, festivalDay);
-  // If that date is more than 14 days in the past, roll it to next year.
-  const diffMs = fest.getTime() - today.getTime();
-  const diffDays = diffMs / (1000 * 60 * 60 * 24);
-  if (diffDays < -14) {
+  fest.setHours(0, 0, 0, 0);
+  // If the festival is in the past (even by 1 day), roll it to next year.
+  if (fest.getTime() < today.getTime()) {
     fest = new Date(thisYear + 1, monthNum - 1, festivalDay);
+    fest.setHours(0, 0, 0, 0);
   }
-  return (fest.getTime() - today.getTime()) / (1000 * 60 * 60 * 24);
+  return Math.round((fest.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
 }
 
 async function showFestivals() {
