@@ -1773,7 +1773,19 @@ function routeIntent(text) {
     return;
   }
 
-  if (matches(lower, ['live music', 'honky tonk', 'broadway', 'concert', 'show tonight', 'opry', 'ryman', 'bluebird'])) {
+  // Broadway bars must be checked BEFORE live music because "broadway" substring matches both.
+  if (lower === '🎸 broadway bars' || matches(lower, ['broadway bars', 'lower broadway', 'broadway strip', 'all broadway'])) {
+    showBroadwayBars();
+    return;
+  }
+
+  // Honky tonks must also come before live music for the same reason.
+  if (lower === 'honky tonks' || matches(lower, ['honky tonk', 'honky-tonk', 'country bar', "tootsie", "robert's"])) {
+    showHonkyTonks();
+    return;
+  }
+
+  if (matches(lower, ['live music', 'concert', 'show tonight', 'opry', 'ryman', 'bluebird'])) {
     showLiveMusic();
     return;
   }
@@ -1790,16 +1802,6 @@ function routeIntent(text) {
 
   if (matches(lower, ['grocery', 'groceries', 'supermarket', 'market', 'food store', 'kroger', 'publix', 'whole foods', 'trader joe'])) {
     showGroceries();
-    return;
-  }
-
-  if (lower === '🎸 broadway bars' || matches(lower, ['broadway bars', 'lower broadway', 'broadway strip', 'all broadway'])) {
-    showBroadwayBars();
-    return;
-  }
-
-  if (matches(lower, ['honky tonk', 'honky-tonk', 'country bar', "tootsie", "robert's"])) {
-    showHonkyTonks();
     return;
   }
 
