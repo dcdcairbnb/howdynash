@@ -3421,17 +3421,45 @@ const CURATED_NASHVILLE_FESTIVALS = [
 function getMonthOrder(monthStr) {
   const months = ['january','february','march','april','may','june','july','august','september','october','november','december'];
   const m = (monthStr || '').toLowerCase();
+  // Find the EARLIEST month referenced in the string. "August - September" returns 8,
+  // "October - November" returns 10. Year-round entries fall through to month 13.
+  let earliest = 13;
   for (let i = 0; i < months.length; i++) {
-    if (m.includes(months[i])) return i + 1;
+    if (m.includes(months[i])) {
+      earliest = Math.min(earliest, i + 1);
+    }
   }
-  return 13;
+  return earliest;
+}
+
+// Days from today until the festival's start month. Festivals already past this year
+// wrap to next year so they sort to the bottom.
+function daysUntilFestival(festival) {
+  const monthNum = getMonthOrder(festival.month);
+  if (monthNum === 13) return 9999; // year-round events
+  const today = new Date();
+  const currentMonth = today.getMonth() + 1; // 1-12
+  const currentDay = today.getDate();
+  // Estimate festival day-of-month. Look for explicit day numbers, else assume mid-month.
+  const dayMatch = (festival.month || '').match(/(\d{1,2})/);
+  const festivalDay = dayMatch ? parseInt(dayMatch[1], 10) : 15;
+  const thisYear = today.getFullYear();
+  // Build a Date for the festival in the current year first.
+  let fest = new Date(thisYear, monthNum - 1, festivalDay);
+  // If that date is more than 14 days in the past, roll it to next year.
+  const diffMs = fest.getTime() - today.getTime();
+  const diffDays = diffMs / (1000 * 60 * 60 * 24);
+  if (diffDays < -14) {
+    fest = new Date(thisYear + 1, monthNum - 1, festivalDay);
+  }
+  return (fest.getTime() - today.getTime()) / (1000 * 60 * 60 * 24);
 }
 
 async function showFestivals() {
-  addMessage("Nashville festivals worth the trip:", 'bot');
+  addMessage("Nashville festivals coming up next:", 'bot');
 
-  // Sort curated by month for the calendar feel.
-  const sorted = [...CURATED_NASHVILLE_FESTIVALS].sort((a, b) => getMonthOrder(a.month) - getMonthOrder(b.month));
+  // Sort by next occurrence so the soonest festival appears first.
+  const sorted = [...CURATED_NASHVILLE_FESTIVALS].sort((a, b) => daysUntilFestival(a) - daysUntilFestival(b));
   sorted.forEach(f => {
     const star = renderSaveStar({ name: f.name, note: f.month, address: f.venue });
     const share = renderShareButton({ name: f.name, desc: `${f.month} - ${f.venue}`, url: f.url || '' });
