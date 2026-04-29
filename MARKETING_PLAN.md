@@ -30,7 +30,7 @@ Step 4. Claim social handles. Free.
 
 Instagram: @howdynashville
 
-TikTok: @howdynashville
+TikTok: @howdynash
 
 X: @howdynashville
 
