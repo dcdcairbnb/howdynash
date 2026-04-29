@@ -192,19 +192,32 @@ function dedupe(items) {
   return Array.from(seen.values());
 }
 
+// Only keep events that look like an actual festival, not a single-night concert.
+// Filters by name keywords. Removes most concerts that slipped through.
+function isActualFestival(item) {
+  const name = (item.name || '').toLowerCase();
+  const festivalKeywords = /\bfest\b|festival|fair\b|street fair|block party|market|jubilee|celebration|expo|carnival|parade|crawl|tomato art|cma fest|pilgrimage|beale street|bonnaroo|country to country/i;
+  if (festivalKeywords.test(name)) return true;
+  // Common concert patterns we want to exclude
+  const concertPatterns = /\bw\/\b|\bwith\b|\bfeat\.\b|\bft\.\b|\btour\b|\blive at\b|: the|presents:/i;
+  if (concertPatterns.test(name)) return false;
+  // If it does not match festival keywords and looks generic, drop it. The
+  // Nashville Open Data feed already only returns permitted events so let those through.
+  if (item.source === 'nashville-open-data') return true;
+  return false;
+}
+
 export default async function handler(req, res) {
   const { lat, lng } = req.query;
 
   try {
-    const [festivals, music, family, eventbrite, nash] = await Promise.all([
+    const [festivals, eventbrite, nash] = await Promise.all([
       fetchTicketmasterFestivals(lat, lng, 'Festival'),
-      fetchTicketmasterFestivals(lat, lng, 'Music'),
-      fetchTicketmasterFestivals(lat, lng, 'Family'),
       fetchEventbriteFestivals(lat, lng),
       fetchNashvilleSpecialEvents()
     ]);
 
-    let combined = dedupe([...festivals, ...music, ...family, ...eventbrite, ...nash]);
+    let combined = dedupe([...festivals, ...eventbrite, ...nash]).filter(isActualFestival);
 
     if (lat && lng) {
       combined.sort((a, b) => {
@@ -225,8 +238,6 @@ export default async function handler(req, res) {
       source: 'combined',
       sources: {
         festivals: festivals.length,
-        music: music.length,
-        family: family.length,
         eventbrite: eventbrite.length,
         nashville: nash.length
       },
