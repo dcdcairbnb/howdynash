@@ -2262,15 +2262,6 @@ function renderCuratedCard(s, label, liveMatch) {
     <div class="card-meta">${meta}</div>
     <div class="card-desc">${s.desc || ''}</div>`;
   if (s.url) html += `<a href="${s.url}" target="_blank">Website</a>`;
-  // Menu link for any spot that serves food. Skip when hasFood is explicitly false.
-  // For honky tonks, rooftops, cocktail bars: default to showing menu since most have food.
-  // For shopping, spas, nail salons, photo spots: skip unless menu is explicitly set.
-  const noFoodLabels = ['shopping', 'spas', 'nail salons', 'photo spots'];
-  const isFoodLabel = !noFoodLabels.includes(label);
-  if (s.menu || (isFoodLabel && s.hasFood !== false)) {
-    const menuUrl = s.menu || `https://www.google.com/search?q=${encodeURIComponent(s.name + ' Nashville menu')}`;
-    html += `<a href="${menuUrl}" target="_blank" rel="noopener" style="background:#ff8c00;color:#fff;">📋 View menu</a>`;
-  }
   const mapsUrl = liveMatch?.mapsUrl || `https://www.google.com/maps/search/${encodeURIComponent(s.name + ' Nashville TN')}`;
   html += `<a href="${mapsUrl}" target="_blank" rel="noopener" style="background:#34a853;color:#fff;">Open in Maps</a>`;
   const safeName = s.name.replace(/'/g, "\\'");
@@ -2465,11 +2456,6 @@ function showBroadwayBars() {
       <div class="card-meta">${s.neighborhood}</div>
       <div class="card-desc">${s.desc}</div>`;
     if (s.url) html += `<a href="${s.url}" target="_blank" rel="noopener">Website</a>`;
-    // Menu link: direct URL if known, otherwise Google search fallback. Skip for bars without food.
-    if (s.hasFood !== false) {
-      const menuUrl = s.menu || `https://www.google.com/search?q=${encodeURIComponent(s.name + ' Nashville menu')}`;
-      html += `<a href="${menuUrl}" target="_blank" rel="noopener" style="background:#ff8c00;color:#fff;">📋 View menu</a>`;
-    }
     const mapsUrl = `https://www.google.com/maps/search/${encodeURIComponent(s.name + ' Nashville TN')}`;
     html += `<a href="${mapsUrl}" target="_blank" rel="noopener" style="background:#34a853;color:#fff;">Open in Maps</a>`;
     const safeName = s.name.replace(/'/g, "\\'");
