@@ -930,8 +930,8 @@ function requestLocation() {
           savedAt: Date.now()
         }));
       } catch (e) { /* ignore quota errors */ }
-      bar.classList.add('active');
-      status.textContent = `📍 Pickup location set (${userLocation.lat.toFixed(3)}, ${userLocation.lng.toFixed(3)})`;
+      // Hide the location bar to free up screen space on mobile. User can still re-share via Refresh.
+      if (bar) bar.style.display = 'none';
       btn.textContent = 'Refresh';
       btn.disabled = false;
       updateRideLinks();
@@ -3815,15 +3815,11 @@ function maybeShowIosInstallHint() {
 }
 
 checkApiHealth();
-// If we restored a cached location, reflect it in the location bar UI immediately.
+// If we restored a cached location, hide the bar to save screen space.
 if (userLocation) {
   setTimeout(() => {
     const bar = document.getElementById('locationBar');
-    const status = document.getElementById('locationStatus');
-    const btn = document.getElementById('locationBtn');
-    if (bar) bar.classList.add('active');
-    if (status) status.textContent = `📍 Pickup location set (${userLocation.lat.toFixed(3)}, ${userLocation.lng.toFixed(3)})`;
-    if (btn) btn.textContent = 'Refresh';
+    if (bar) bar.style.display = 'none';
     if (typeof updateRideLinks === 'function') updateRideLinks();
   }, 50);
 }
