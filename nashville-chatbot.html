@@ -1863,6 +1863,15 @@ function routeIntent(text) {
     return;
   }
 
+  if (matches(lower, ['find my group', 'group location', 'share location with group', 'find friends', 'group sharing', 'find group', 'group map', '👯 find my group'])) {
+    showFindGroup();
+    return;
+  }
+  if (lower.startsWith('🍹 6 hours')) { createGroupWithDuration(6); return; }
+  if (lower.startsWith('🌞 12 hours')) { createGroupWithDuration(12); return; }
+  if (lower.startsWith('🎉 24 hours')) { createGroupWithDuration(24); return; }
+  if (lower === '← cancel') { showMainMenu(); return; }
+
   if (matches(lower, ['bachelorette', 'bach party', 'pedal tavern', 'party bus', 'bach weekend'])) {
     showBachelorette();
     return;
@@ -2186,6 +2195,7 @@ function showMainMenu() {
     '🏨 Stay & Get Around',
     '👶 Family friendly',
     '👰 Bachelorette',
+    '👯 Find my group',
     '🛒 Essentials',
     'Weather',
     'Sports',
@@ -2767,6 +2777,13 @@ function showEastNashville() {
 }
 function showFamilyFriendly() {
   addMessage("Nashville with kids. Music City does family well.", 'bot');
+  // Group location card for families
+  const groupCard = `<div class="card" style="border:2px solid #d62828;">
+    <div class="card-title">👯 Stay together with the family</div>
+    <div class="card-desc">Live map of every parent and older kid in your group. Auto-expires after 6, 12, or 24 hours. Great for big amusement parks and split-up days.</div>
+    <a href="#" onclick="showFindGroup();return false;" style="background:#d62828;color:#fff;">Set up family location sharing</a>
+  </div>`;
+  addMessage(groupCard, 'bot', true);
   showCuratedThenLive(CURATED_FAMILY_FRIENDLY, 'family kids attraction park zoo museum', 'tourist_attraction', 'family-friendly Nashville spots');
   setTimeout(() => {
     addMessage('<div class="card"><div class="card-title">🍗 Kids on Lower Broadway</div><div class="card-desc">Most Broadway honky tonks allow all ages until 6pm. After 6pm they switch to 21 and over. Best to do honky tonk hop before dinner with kids. Tootsie\'s, Robert\'s, and Acme Feed and Seed are the most kid-friendly during the day.</div></div>', 'bot', true);
@@ -2776,8 +2793,237 @@ function showLineDancing() {
   addMessage("Where to line dance and two-step in Nashville. Wildhorse Saloon teaches free lessons every night at 7pm.", 'bot');
   showCuratedThenLive(CURATED_LINE_DANCING, 'line dancing two step country dance', 'restaurant', 'line dancing spots');
 }
+
+// ===== GROUP LOCATION SHARING =====
+
+const GROUP_KEY = 'howdy-nash-group-session';
+
+function getSavedGroupSession() {
+  try {
+    const raw = localStorage.getItem(GROUP_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch (e) { return null; }
+}
+
+function saveGroupSession(session) {
+  try {
+    if (session) localStorage.setItem(GROUP_KEY, JSON.stringify(session));
+    else localStorage.removeItem(GROUP_KEY);
+  } catch (e) { /* ignore */ }
+}
+
+async function groupApi(payload) {
+  const r = await fetch('/api/group', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+  return { ok: r.ok, status: r.status, data: await r.json().catch(() => ({})) };
+}
+
+function showFindGroup() {
+  const saved = getSavedGroupSession();
+  if (saved && saved.code && saved.memberId) {
+    addMessage(`You're already in group ${saved.code}. Resuming the live map.`, 'bot');
+    setTimeout(() => showGroupSession(saved.code, saved.memberId, saved.isLeader, saved.name), 200);
+    return;
+  }
+  addMessage("Find your group. Two options:", 'bot');
+  const html = `<div class="card">
+    <div class="card-title">👯 Group Location Sharing</div>
+    <div class="card-desc">Stay connected with the group on Lower Broadway. Each person gets a pin on a live Nashville map. Auto-expires after the duration you pick.</div>
+    <a href="#" onclick="startGroupFlow();return false;" style="background:#d62828;color:#fff;">Start a new group</a>
+    <a href="#" onclick="joinGroupFlow();return false;" style="background:#2563eb;color:#fff;">Join a group with code</a>
+  </div>`;
+  addMessage(html, 'bot', true);
+}
+
+function startGroupFlow() {
+  addMessage("How long should the group last?", 'bot');
+  addQuickReplies([
+    '🍹 6 hours · Tonight',
+    '🌞 12 hours · All day',
+    '🎉 24 hours · Full weekend',
+    '← Cancel'
+  ]);
+}
+
+function joinGroupFlow() {
+  addMessage("Enter the 4-letter group code (e.g., PARTY).", 'bot');
+  const html = `<div class="card">
+    <div class="card-title">Join a group</div>
+    <input id="groupCodeInput" type="text" maxlength="4" placeholder="ABCD" style="text-transform:uppercase;width:100%;padding:12px;font-size:24px;text-align:center;letter-spacing:8px;border:2px solid #d62828;border-radius:8px;margin:8px 0;">
+    <input id="groupNameInput" type="text" maxlength="40" placeholder="Your name (e.g., Megan)" style="width:100%;padding:10px;font-size:14px;border:1px solid #ccc;border-radius:6px;margin:6px 0;">
+    <a href="#" onclick="submitJoinGroup();return false;" style="background:#2563eb;color:#fff;">Join group</a>
+  </div>`;
+  addMessage(html, 'bot', true);
+  setTimeout(() => {
+    const el = document.getElementById('groupCodeInput');
+    if (el) el.focus();
+  }, 200);
+}
+
+async function createGroupWithDuration(durationHours) {
+  const leaderName = window.prompt('Your name? (visible to the group)', 'Group leader');
+  if (!leaderName) return;
+  addMessage(`Creating a ${durationHours}-hour group...`, 'bot');
+  const memberId = `m_${Math.random().toString(36).slice(2, 10)}_${Date.now().toString(36)}`;
+  const r = await groupApi({ action: 'create', durationHours, leaderName, memberId });
+  if (!r.ok) {
+    addMessage(`Could not create group: ${r.data.error || 'unknown error'}`, 'bot');
+    return;
+  }
+  saveGroupSession({ code: r.data.code, memberId, isLeader: true, name: leaderName });
+  showGroupSession(r.data.code, memberId, true, leaderName);
+}
+
+async function submitJoinGroup() {
+  const code = (document.getElementById('groupCodeInput')?.value || '').trim().toUpperCase();
+  const name = (document.getElementById('groupNameInput')?.value || '').trim() || 'Friend';
+  if (code.length < 3) { alert('Enter the 4-letter code from the group leader.'); return; }
+  const memberId = `m_${Math.random().toString(36).slice(2, 10)}_${Date.now().toString(36)}`;
+  const check = await groupApi({ action: 'get', code });
+  if (!check.ok) {
+    addMessage(`That code isn't active. Either the group ended or the code was typed wrong.`, 'bot');
+    return;
+  }
+  saveGroupSession({ code, memberId, isLeader: false, name });
+  showGroupSession(code, memberId, false, name);
+}
+
+let groupPollTimer = null;
+let groupGeoWatchId = null;
+
+function showGroupSession(code, memberId, isLeader, name) {
+  // Render the persistent session card
+  addMessage(`Group ${code} is live. Sharing your location now.`, 'bot');
+  const containerId = `group-session-${code}`;
+  const html = `<div class="card" id="${containerId}">
+    <div class="card-title">👯 Group ${code}</div>
+    <div class="card-desc" id="group-status">Connecting...</div>
+    <div id="group-members" style="margin:12px 0;"></div>
+    <div id="group-actions">
+      <a href="#" onclick="shareGroupCode('${code}');return false;" style="background:#34a853;color:#fff;">📤 Share code with friends</a>
+      <a href="#" onclick="leaveGroup();return false;" style="background:#666;color:#fff;">Leave group</a>
+      ${isLeader ? `<a href="#" onclick="endGroup();return false;" style="background:#d62828;color:#fff;">End group</a>` : ''}
+    </div>
+  </div>`;
+  addMessage(html, 'bot', true);
+
+  // Begin sharing location
+  if (navigator.geolocation) {
+    if (groupGeoWatchId != null) navigator.geolocation.clearWatch(groupGeoWatchId);
+    groupGeoWatchId = navigator.geolocation.watchPosition(async (pos) => {
+      await groupApi({
+        action: 'update',
+        code, memberId, name,
+        lat: pos.coords.latitude, lng: pos.coords.longitude
+      });
+    }, (err) => {
+      const status = document.getElementById('group-status');
+      if (status) status.textContent = `Location not shared. Allow location to appear on the group map.`;
+    }, { enableHighAccuracy: true, maximumAge: 15000 });
+  }
+
+  // Poll every 10 seconds
+  if (groupPollTimer) clearInterval(groupPollTimer);
+  const refresh = async () => {
+    const r = await groupApi({ action: 'get', code });
+    if (!r.ok) {
+      const status = document.getElementById('group-status');
+      if (status) status.textContent = `Group ended or expired.`;
+      stopGroupSession();
+      return;
+    }
+    if (r.data.ended) {
+      const status = document.getElementById('group-status');
+      if (status) status.textContent = `The group leader ended the party.`;
+      stopGroupSession();
+      saveGroupSession(null);
+      return;
+    }
+    renderGroupMembers(r.data.members, r.data.expiresAt);
+  };
+  refresh();
+  groupPollTimer = setInterval(refresh, 10000);
+}
+
+function stopGroupSession() {
+  if (groupPollTimer) { clearInterval(groupPollTimer); groupPollTimer = null; }
+  if (groupGeoWatchId != null) { navigator.geolocation.clearWatch(groupGeoWatchId); groupGeoWatchId = null; }
+}
+
+function renderGroupMembers(members, expiresAt) {
+  const el = document.getElementById('group-members');
+  if (!el) return;
+  const status = document.getElementById('group-status');
+  if (status) {
+    const minsLeft = Math.max(0, Math.round((expiresAt - Date.now()) / 60000));
+    status.textContent = `${members.length} in the group · expires in ${minsLeft} min`;
+  }
+  if (!members.length) { el.innerHTML = '<div class="card-desc">No members yet.</div>'; return; }
+  // Center map on the average position
+  const withCoords = members.filter(m => m.lat != null && m.lng != null);
+  let mapsLink = `https://www.google.com/maps/search/Nashville+TN`;
+  if (withCoords.length) {
+    const avgLat = withCoords.reduce((s, m) => s + m.lat, 0) / withCoords.length;
+    const avgLng = withCoords.reduce((s, m) => s + m.lng, 0) / withCoords.length;
+    mapsLink = `https://www.google.com/maps?q=${avgLat},${avgLng}&z=15`;
+  }
+  let h = '<ul style="list-style:none;padding:0;margin:0;">';
+  members.forEach(m => {
+    const ageMin = Math.round((Date.now() - m.updatedAt) / 60000);
+    const ageStr = ageMin < 1 ? 'now' : `${ageMin}m ago`;
+    const dot = m.lat != null ? '🟢' : '⚪';
+    const star = m.isLeader ? ' ⭐' : '';
+    let pin = '';
+    if (m.lat != null && m.lng != null) {
+      pin = `<a href="https://www.google.com/maps?q=${m.lat},${m.lng}" target="_blank" style="font-size:12px;color:#2563eb;text-decoration:underline;">view pin</a>`;
+    }
+    h += `<li style="padding:6px 0;border-bottom:1px solid #eee;">${dot} <strong>${(m.name || 'Friend').replace(/</g,'')}</strong>${star} <span style="color:#888;font-size:12px;">· ${ageStr}</span> ${pin}</li>`;
+  });
+  h += '</ul>';
+  h += `<a href="${mapsLink}" target="_blank" rel="noopener" style="display:inline-block;background:#34a853;color:#fff;padding:10px 16px;border-radius:8px;text-decoration:none;font-weight:600;margin-top:8px;">Open group map</a>`;
+  el.innerHTML = h;
+}
+
+function shareGroupCode(code) {
+  const text = `Join my Nashville group on Howdy Nash! Code: ${code}\nhttps://howdynash.com (tap Find My Group, then Join)`;
+  if (navigator.share) {
+    navigator.share({ title: 'Howdy Nash group', text }).catch(() => {});
+  } else {
+    window.location.href = `sms:?&body=${encodeURIComponent(text)}`;
+  }
+}
+
+async function leaveGroup() {
+  const saved = getSavedGroupSession();
+  if (!saved) return;
+  await groupApi({ action: 'leave', code: saved.code, memberId: saved.memberId });
+  stopGroupSession();
+  saveGroupSession(null);
+  addMessage('You left the group. Your pin is gone.', 'bot');
+}
+
+async function endGroup() {
+  const saved = getSavedGroupSession();
+  if (!saved) return;
+  if (!confirm('End the group for everyone? This kicks all members off the live map.')) return;
+  await groupApi({ action: 'end', code: saved.code, memberId: saved.memberId });
+  stopGroupSession();
+  saveGroupSession(null);
+  addMessage('Group ended. Everyone is off the live map.', 'bot');
+}
 function showBachelorette() {
   addMessage("Bachelorette mode activated. Nashville is the bachelorette capital. Here is everything you need.", 'bot');
+
+  // Group location sharing card - first because bachelorettes lose each other on Broadway
+  const groupCard = `<div class="card" style="border:2px solid #d62828;">
+    <div class="card-title">👯 Stay together with the crew</div>
+    <div class="card-desc">Live map of everyone in your group. Auto-expires after 6, 12, or 24 hours. Lower Broadway is chaos, this fixes that.</div>
+    <a href="#" onclick="showFindGroup();return false;" style="background:#d62828;color:#fff;">Set up group location sharing</a>
+  </div>`;
+  addMessage(groupCard, 'bot', true);
 
   const viatorSearch = (q) => `https://www.viator.com/searchResults/all?text=${encodeURIComponent(q)}&pid=${VIATOR_PID}`;
   const gygSearch = (q) => `https://www.getyourguide.com/s/?q=${encodeURIComponent(q)}&partner_id=${GETYOURGUIDE_PID}`;
