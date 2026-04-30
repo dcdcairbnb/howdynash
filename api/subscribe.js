@@ -76,7 +76,7 @@ function buildWelcomeEmail({ name, source, unsubscribeUrl, savedSpots }) {
     savedSpotsBlock = `<h3 style="margin:24px 0 8px;">Your saved Nashville spots</h3><ul style="padding-left:18px;">${items}</ul>`;
   }
   const sourceBlurb = {
-    'cheatsheet': 'Your free Nashville 3-Day Cheat Sheet is attached as a link below. Open it on your phone, save the page, take it on the road.',
+    'cheatsheet': 'Your free Nashville 3-Day Cheat Sheet is attached as a link below. Open it on your phone. Save the page. Take it on the road.',
     'saved-spots': 'Here are the spots you starred. Tap any to open them in Maps.',
     'bachelorette': 'Bachelorette weekend incoming. Below is the planner with pedal taverns, party buses, photo spots, and brunch picks.',
     'general': 'You are on the list. Once a week I send a quick Nashville roundup with new restaurants, weekend events, and deals.'

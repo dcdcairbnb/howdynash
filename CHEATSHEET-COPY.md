@@ -27,19 +27,19 @@ Uber, Lyft, and Waymo all run downtown. Waymo is cheapest at peak hours.
 
 ## PAGE 2: DAY 1 - ARRIVAL AND BROADWAY
 
-### Morning: biscuits
+### Morning: Biscuits
 
 Biscuit Love (The Gulch) for the famous bonuts. Get there before 10am.
 
 Or Loveless Cafe (Bellevue) if you have a car. Iconic biscuits and country ham.
 
-### Lunch: hot chicken
+### Lunch: Hot Chicken
 
 Hattie B's on Charlotte Pike. Mild is hotter than you think. Try medium.
 
 Or Prince's Hot Chicken (East Nashville). The original. Walk-in.
 
-### Afternoon: museum or Music Row
+### Afternoon: Museum or Music Row
 
 Country Music Hall of Fame for the legend stuff.
 
@@ -51,7 +51,7 @@ Husk for upscale Southern in a historic mansion.
 
 Or Pinewood Social if you want food plus bowling.
 
-### Night: honky tonk crawl
+### Night: Honky Tonk Crawl
 
 Tootsie's, Robert's Western World, Legends Corner. All on Lower Broadway, all free music.
 
@@ -61,23 +61,23 @@ End at Acme Feed & Seed rooftop for skyline views.
 
 ## PAGE 3: DAY 2 - LOCAL NASHVILLE
 
-### Morning: brunch in 12 South
+### Morning: Brunch in 12 South
 
 Burger Up, Frothy Monkey, or Edley's BBQ for breakfast tacos.
 
 Walk 12 South: Draper James, Imogene + Willie, the I Believe in Nashville mural.
 
-### Afternoon: distillery tour
+### Afternoon: Distillery Tour
 
 Nelson's Green Brier (downtown). Whiskey tour and tasting.
 
 Or Corsair Distillery (Marathon Village). Smaller, weirder spirits.
 
-### Evening: dinner in East Nashville
+### Evening: Dinner in East Nashville
 
 Folk for wood-fired pizza. Margot Cafe for refined French. Two Ten Jack for ramen.
 
-### Night: live music outside Broadway
+### Night: Live Music Outside Broadway
 
 Bluebird Cafe (Green Hills) for songwriter rounds. Reservations required, book ahead.
 
@@ -89,7 +89,7 @@ Station Inn (The Gulch) for bluegrass. Cash only, tiny, magical.
 
 ## PAGE 4: DAY 3 - DEEP CUTS AND DEPARTURE
 
-### Morning: photo spots
+### Morning: Photo Spots
 
 I Believe in Nashville mural (12 South).
 
@@ -97,13 +97,13 @@ The What Lifts You wings mural (The Gulch).
 
 Pedestrian Bridge over the Cumberland for skyline shots.
 
-### Lunch: meat-and-three
+### Lunch: Meat-and-Three
 
 Arnold's Country Kitchen (Mon-Fri lunch only). Cafeteria-style Southern classic.
 
 Or Monell's (Germantown) for shared-table family-style.
 
-### Afternoon: depending on time
+### Afternoon: Depending on Time
 
 Belle Meade Plantation tour. Or Andrew Jackson's Hermitage.
 
