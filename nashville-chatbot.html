@@ -2956,12 +2956,83 @@ function showGroupSession(code, memberId, isLeader, name) {
       if (status) status.textContent = `The group leader ended the party.`;
       stopGroupSession();
       saveGroupSession(null);
+      // Show post-session upsell (recovery brunch, plan another trip)
+      showAffiliateForElapsed(999, isLeader);
       return;
     }
     renderGroupMembers(r.data.members, r.data.expiresAt);
+    // Time-based affiliate prompts
+    const dur = r.data.durationHours || 6;
+    const createdAt = r.data.expiresAt - dur * 60 * 60 * 1000;
+    const hoursElapsed = (Date.now() - createdAt) / 3600000;
+    showAffiliateForElapsed(hoursElapsed, isLeader);
   };
   refresh();
   groupPollTimer = setInterval(refresh, 10000);
+}
+
+// Tracks which time-based affiliate prompts have been shown this session.
+const shownGroupMilestones = new Set();
+
+function showAffiliateForElapsed(hoursElapsed, isLeader) {
+  const VIATOR_PID_LOCAL = (typeof VIATOR_PID !== 'undefined' && VIATOR_PID) ? VIATOR_PID : '';
+  const GYG_PID_LOCAL = (typeof GETYOURGUIDE_PID !== 'undefined' && GETYOURGUIDE_PID) ? GETYOURGUIDE_PID : '';
+  const viatorSearch = (q) => `https://www.viator.com/searchResults/all?text=${encodeURIComponent(q)}&pid=${VIATOR_PID_LOCAL}`;
+  const gygSearch = (q) => `https://www.getyourguide.com/s/?q=${encodeURIComponent(q)}&partner_id=${GYG_PID_LOCAL}`;
+
+  // Hour 1: ride share for the group
+  if (hoursElapsed >= 1 && !shownGroupMilestones.has('h1')) {
+    shownGroupMilestones.add('h1');
+    addMessage(`<div class="card" style="border:2px dashed #2563eb;">
+      <div class="card-title">🚗 Need a ride between bars?</div>
+      <div class="card-desc">Uber XL fits 6, splits the fare. Faster than scattering on Lyfts.</div>
+      <a href="https://m.uber.com/ul/?action=setPickup&pickup=my_location" target="_blank" rel="noopener" style="background:#000;color:#fff;">Open Uber</a>
+      <a href="https://lyft.com/ride" target="_blank" rel="noopener" style="background:#ff00bf;color:#fff;">Open Lyft</a>
+    </div>`, 'bot', true);
+  }
+
+  // Hour 3: rooftop / next-stop suggestion
+  if (hoursElapsed >= 3 && !shownGroupMilestones.has('h3')) {
+    shownGroupMilestones.add('h3');
+    addMessage(`<div class="card" style="border:2px dashed #d62828;">
+      <div class="card-title">🌃 Where to next?</div>
+      <div class="card-desc">Best Nashville rooftops walking distance from Broadway. L.A. Jackson, Acme, White Limozeen, Bobby Hotel.</div>
+      <a href="#" onclick="showRooftops();return false;" style="background:#d62828;color:#fff;">Show rooftops</a>
+      <a href="${viatorSearch('Nashville rooftop bars tour')}" target="_blank" rel="noopener" style="background:#328e3a;color:#fff;">Rooftop tours on Viator</a>
+    </div>`, 'bot', true);
+  }
+
+  // Hour 5: late-night food
+  if (hoursElapsed >= 5 && !shownGroupMilestones.has('h5')) {
+    shownGroupMilestones.add('h5');
+    addMessage(`<div class="card" style="border:2px dashed #f59e0b;">
+      <div class="card-title">🍗 Soaking up the night?</div>
+      <div class="card-desc">Late-night Nashville food. Hot chicken at Hattie B's, smash burgers at Joyland, biscuits all night at Loveless.</div>
+      <a href="#" onclick="showRestaurants(NASHVILLE_DATA.restaurants.filter(r => r.cuisine.toLowerCase().includes('hot chicken')), 'Hot chicken spots:');return false;" style="background:#d62828;color:#fff;">Hot chicken near you</a>
+    </div>`, 'bot', true);
+  }
+
+  // Hour 8: hangover brunch for tomorrow
+  if (hoursElapsed >= 8 && !shownGroupMilestones.has('h8')) {
+    shownGroupMilestones.add('h8');
+    addMessage(`<div class="card" style="border:2px dashed #0a8754;">
+      <div class="card-title">🥞 Plan tomorrow's brunch now</div>
+      <div class="card-desc">Big groups need reservations. Biscuit Love, Pancake Pantry, Frothy Monkey, Marche.</div>
+      <a href="https://www.opentable.com/r/biscuit-love-the-gulch-nashville" target="_blank" rel="noopener" style="background:#da3743;color:#fff;">Reserve Biscuit Love</a>
+      <a href="https://resy.com/cities/nashville-tn" target="_blank" rel="noopener" style="background:#000;color:#fff;">Browse Resy</a>
+    </div>`, 'bot', true);
+  }
+
+  // Group ended: plan the next trip (post-expiry upsell)
+  if (hoursElapsed >= 999 && !shownGroupMilestones.has('post')) {
+    shownGroupMilestones.add('post');
+    addMessage(`<div class="card" style="border:2px dashed #7c3aed;">
+      <div class="card-title">🎉 Plan another Nashville night?</div>
+      <div class="card-desc">Most bachelorettes book pedal taverns and party buses ahead. Browse before they sell out.</div>
+      <a href="${viatorSearch('Nashville pedal tavern bachelorette')}" target="_blank" rel="noopener" style="background:#328e3a;color:#fff;">Pedal taverns on Viator</a>
+      <a href="${gygSearch('nashville bachelorette')}" target="_blank" rel="noopener" style="background:#ff5533;color:#fff;">Bachelorette tours on GetYourGuide</a>
+    </div>`, 'bot', true);
+  }
 }
 
 function stopGroupSession() {
@@ -2972,6 +3043,8 @@ function stopGroupSession() {
     groupMapInstance = null;
     groupMapMarkers = [];
   }
+  // Reset milestones so next group starts fresh
+  shownGroupMilestones.clear();
 }
 
 function ensureLeafletLoaded() {
