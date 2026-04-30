@@ -3059,6 +3059,7 @@ function renderGroupMembers(members, expiresAt) {
   }
   if (!members.length) { el.innerHTML = '<div class="card-desc">No members yet.</div>'; renderGroupLiveMap([]); return; }
   // Only render the member list here. The map div is persistent in showGroupSession.
+  const withCoords = members.filter(m => m.lat != null && m.lng != null);
   let h = '<ul style="list-style:none;padding:0;margin:0;">';
   members.forEach(m => {
     const ageMin = Math.round((Date.now() - m.updatedAt) / 60000);
@@ -3067,11 +3068,20 @@ function renderGroupMembers(members, expiresAt) {
     const star = m.isLeader ? ' ⭐' : '';
     let pin = '';
     if (m.lat != null && m.lng != null) {
-      pin = `<a href="https://www.google.com/maps?q=${m.lat},${m.lng}" target="_blank" style="font-size:12px;color:#2563eb;text-decoration:underline;">view in Maps</a>`;
+      pin = `<a href="https://www.google.com/maps?q=${m.lat},${m.lng}" target="_blank" style="font-size:12px;color:#2563eb;text-decoration:underline;">solo pin</a>`;
     }
     h += `<li style="padding:6px 0;border-bottom:1px solid #eee;">${dot} <strong>${(m.name || 'Friend').replace(/</g,'')}</strong>${star} <span style="color:#888;font-size:12px;">· ${ageStr}</span> ${pin}</li>`;
   });
   h += '</ul>';
+  // Add "Open all in Google Maps" button when we have 2+ members with coords
+  if (withCoords.length >= 2) {
+    const origin = `${withCoords[0].lat},${withCoords[0].lng}`;
+    const destination = `${withCoords[withCoords.length - 1].lat},${withCoords[withCoords.length - 1].lng}`;
+    const middle = withCoords.slice(1, -1).map(m => `${m.lat},${m.lng}`).join('|');
+    const waypoints = middle ? `&waypoints=${encodeURIComponent(middle)}` : '';
+    const allUrl = `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${destination}${waypoints}&travelmode=walking`;
+    h += `<a href="${allUrl}" target="_blank" rel="noopener" style="display:inline-block;background:#34a853;color:#fff;padding:10px 16px;border-radius:8px;text-decoration:none;font-weight:600;margin-top:10px;">🗺️ Open all in Google Maps</a>`;
+  }
   el.innerHTML = h;
   // Update map markers (map container is persistent and managed separately)
   renderGroupLiveMap(members);
