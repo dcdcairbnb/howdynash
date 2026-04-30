@@ -676,6 +676,13 @@ const NASHVILLE_DATA = {
     { name: "Bolton's Spicy Chicken & Fish", cuisine: "Hot chicken", neighborhood: "East Nashville", price: "$", vibe: "no-frills, fiery", phone: "(615) 254-8015", note: "Walk-in.", booking: { walkin: true, yelp: "https://www.yelp.com/biz/boltons-spicy-chicken-and-fish-nashville" } },
     { name: "Pepperfire Hot Chicken", cuisine: "Hot chicken", neighborhood: "East Nashville", price: "$", vibe: "spicier than the legends", phone: "(615) 582-4824", booking: { walkin: true, yelp: "https://www.yelp.com/biz/pepperfire-hot-chicken-nashville" } },
     { name: "400 Degrees", cuisine: "Hot chicken", neighborhood: "Charlotte Pike", price: "$", vibe: "named after spice levels", phone: "(615) 244-4467", booking: { walkin: true, yelp: "https://www.yelp.com/biz/400-degrees-nashville" } },
+    { name: "Party Fowl", cuisine: "Hot chicken", neighborhood: "Donelson, Cool Springs, Murfreesboro", price: "$$", vibe: "trendy, full bar, brunch on weekends", phone: "(615) 916-5366", note: "Reservations available. Famous for hot chicken sliders and bachelorette groups.", booking: { walkin: true, yelp: "https://www.yelp.com/biz/party-fowl-nashville" } },
+    { name: "Helen's Hot Chicken", cuisine: "Hot chicken", neighborhood: "Multiple locations", price: "$", vibe: "Black-owned, casual, fast-growing", note: "Walk-in. Quick service.", booking: { walkin: true, yelp: "https://www.yelp.com/biz/helens-hot-chicken-nashville" } },
+    { name: "Slim & Husky's Pizza Beeria", cuisine: "Hot chicken", neighborhood: "North Nashville, Antioch, Trinity Lane", price: "$", vibe: "hot chicken pizza, hip-hop vibes", note: "Try the hot chicken slice. Beer and wine on tap.", booking: { walkin: true, yelp: "https://www.yelp.com/biz/slim-and-huskys-pizza-beeria-nashville" } },
+    { name: "Big Shake's Hot Chicken & Fish", cuisine: "Hot chicken", neighborhood: "Franklin, Cool Springs", price: "$", vibe: "casual, also serves seafood", note: "Walk-in. Half-and-half plates available.", booking: { walkin: true, yelp: "https://www.yelp.com/biz/big-shakes-hot-chicken-and-fish-franklin" } },
+    { name: "Edley's Bar-B-Que", cuisine: "Hot chicken", neighborhood: "12 South, East Nashville, multiple", price: "$$", vibe: "BBQ joint with a hot chicken plate", note: "BBQ menu plus hot chicken. Bachelorette-friendly patio.", booking: { walkin: true, yelp: "https://www.yelp.com/biz/edleys-bar-b-que-nashville" } },
+    { name: "Joyland", cuisine: "Hot chicken", neighborhood: "Hillsboro Village", price: "$$", vibe: "modern, chef-driven by Sean Brock", note: "Counter-service. Hot chicken sandwich and a smash burger.", booking: { walkin: true, yelp: "https://www.yelp.com/biz/joyland-nashville" } },
+    { name: "Crawford's Hot Chicken", cuisine: "Hot chicken", neighborhood: "Madison", price: "$", vibe: "newer spot, generous portions", note: "Walk-in. Less crowded than the Broadway tourist spots.", booking: { walkin: true, yelp: "https://www.yelp.com/biz/crawfords-hot-chicken-madison" } },
     { name: "Rolf and Daughters", cuisine: "Italian", neighborhood: "Germantown", price: "$$$", vibe: "modern Italian, handmade pasta", phone: "(615) 866-9897", booking: { resy: "https://resy.com/cities/nashville-tn/venues/rolf-and-daughters", opentable: "https://www.opentable.com/r/rolf-and-daughters-nashville" } },
     { name: "City House", cuisine: "Italian", neighborhood: "Germantown", price: "$$$", vibe: "wood-fired pizza, Sunday Suppa", phone: "(615) 736-5838", booking: { opentable: "https://www.opentable.com/r/city-house-nashville" } },
     { name: "Pinewood Social", cuisine: "American", neighborhood: "SoBro", price: "$$", vibe: "social hub, bowling lanes", phone: "(615) 751-8111", booking: { resy: "https://resy.com/cities/nashville-tn/venues/pinewood-social" } },
@@ -1836,6 +1843,16 @@ function routeIntent(text) {
     return;
   }
 
+  if (matches(lower, ['free things', 'free stuff', 'free to do', 'cheap things', 'budget', 'no money', 'on a budget', 'free activities'])) {
+    showFreeThings();
+    return;
+  }
+
+  if (matches(lower, ['east nashville', 'hidden gems', 'where locals go', 'local spots', 'off broadway', 'five points', 'indie nashville'])) {
+    showEastNashville();
+    return;
+  }
+
   if (matches(lower, ['bachelorette', 'bach party', 'pedal tavern', 'party bus', 'bach weekend'])) {
     showBachelorette();
     return;
@@ -2430,6 +2447,49 @@ const CURATED_PHOTO_SPOTS = [
   { name: "Music Row giant guitar", neighborhood: "Music Row", desc: "Classic photo with the Music Row guitar statue.", url: null }
 ];
 
+const CURATED_FREE_THINGS = [
+  { name: "Centennial Park and the Parthenon", neighborhood: "West End", desc: "Full-scale Parthenon replica in a 132-acre park. The exterior and grounds are free. Inside the Parthenon costs $10.", url: "https://www.nashville.gov/departments/parks/parthenon" },
+  { name: "Pedestrian Bridge skyline view", neighborhood: "Downtown", desc: "Walk across the Cumberland River for the best skyline shot in Nashville. Sunrise and sunset are stunning.", url: null },
+  { name: "Lower Broadway honky tonks", neighborhood: "Lower Broadway", desc: "Live country music every day starting at 10am. No cover charges. Tip the band a few bucks.", url: null },
+  { name: "Tennessee State Capitol tour", neighborhood: "Downtown", desc: "Free guided tours of the 1859 capitol building. Andrew Johnson and James Polk are buried on the grounds.", url: "https://www.capitol.tn.gov" },
+  { name: "Bicentennial Capitol Mall State Park", neighborhood: "Downtown", desc: "200-foot granite map of Tennessee, World War II Memorial, and a 95-bell carillon. Free 24/7.", url: "https://tnstateparks.com/parks/bicentennial-mall" },
+  { name: "Tennessee State Museum", neighborhood: "Germantown", desc: "Free admission. State history from prehistoric to present. Plan 2 hours.", url: "https://tnmuseum.org" },
+  { name: "I Believe in Nashville mural", neighborhood: "12 South", desc: "Wood-painted mural at Draper James. The classic Nashville photo. Free to visit anytime.", url: null },
+  { name: "What Lifts You wings mural", neighborhood: "The Gulch", desc: "Painted angel wings on a building wall. Insta-famous. Free to photograph.", url: null },
+  { name: "Music Row drive", neighborhood: "Music Row", desc: "Drive past the legendary studios where Elvis, Dolly, and Johnny Cash recorded. RCA Studio B is worth a paid tour but the drive is free.", url: null },
+  { name: "Musicians Corner concerts", neighborhood: "Centennial Park", desc: "Free outdoor concerts every Saturday May to October. Bring a blanket and a picnic.", url: "https://musicianscorner.org" },
+  { name: "Musicians Corner Family Fun Zone", neighborhood: "Centennial Park", desc: "Kid-friendly programming during Musicians Corner concerts. Crafts, games, music.", url: null },
+  { name: "Live music on Broadway", neighborhood: "Lower Broadway", desc: "Tootsie's, Robert's, Legends Corner all have free live country music. Buy a beer, tip the band.", url: null },
+  { name: "Hatch Show Print Gallery", neighborhood: "Lower Broadway", desc: "Walk into the iconic letterpress shop. Browsing is free, prints range from $20 to $200.", url: "https://hatchshowprint.com" },
+  { name: "Country Music Walk of Fame", neighborhood: "Downtown", desc: "Outdoor walk with stars honoring country music legends. Adjacent to the Country Music Hall of Fame.", url: null },
+  { name: "Riverfront Park", neighborhood: "Downtown", desc: "Riverside park with seasonal free concerts and Independence Day fireworks.", url: null },
+  { name: "Cumberland Park", neighborhood: "East Bank", desc: "Free playground, splash pad, and lawn space across the river from downtown. Great for families.", url: null },
+  { name: "Shelby Bottoms Greenway", neighborhood: "East Nashville", desc: "5 miles of paved trails along the Cumberland. Free parking, biking, walking, birdwatching.", url: "https://www.nashville.gov/departments/parks/greenways/shelby-bottoms" },
+  { name: "Radnor Lake State Park", neighborhood: "Oak Hill", desc: "85-acre lake with hiking trails. Wildlife viewing including deer and herons. Free admission.", url: "https://tnstateparks.com/parks/radnor-lake" },
+  { name: "Warner Parks", neighborhood: "Belle Meade", desc: "3,180 acres of forest and trails 9 miles from downtown. Free to enter.", url: "https://friendsofwarnerparks.org" },
+  { name: "Beaman Park", neighborhood: "North Nashville", desc: "1,696 acres of preserved forest. Hiking, picnicking, nature center. Free.", url: null },
+  { name: "Public Square Park", neighborhood: "Downtown", desc: "Free park outside the Davidson County courthouse. Public art and seasonal events.", url: null },
+  { name: "Frist Art Museum (free under 18)", neighborhood: "Downtown", desc: "Always free for visitors under 18. Adults $15. Thursday and Friday after 5pm is reduced for adults.", url: "https://fristartmuseum.org" },
+  { name: "Vanderbilt Fine Arts Gallery", neighborhood: "West End", desc: "Free admission to the Vanderbilt University art collection.", url: "https://www.library.vanderbilt.edu/gallery" },
+  { name: "Goo Goo Cluster Shop", neighborhood: "SoBro", desc: "The original Nashville candy bar since 1912. Free samples sometimes. Cheap candy souvenirs.", url: "https://googoo.com" },
+  { name: "Belle Meade Plantation grounds (free walk)", neighborhood: "Belle Meade", desc: "Walking the historic grounds is free. The mansion tour is paid. Photo spots throughout.", url: "https://bellemeadehistoricsite.com" }
+];
+
+const CURATED_EAST_NASHVILLE_GEMS = [
+  { name: "Five Points", neighborhood: "East Nashville", desc: "The heart of East Nashville. Restaurants, bars, coffee shops, and indie boutiques in a walkable cluster.", url: null },
+  { name: "Margot Cafe and Bar", neighborhood: "East Nashville", desc: "French and Italian bistro from chef Margot McCormack. The brunch menu is the local favorite.", url: "https://www.margotcafe.com" },
+  { name: "Lockeland Table", neighborhood: "East Nashville", desc: "Wood-fired pizzas, charcuterie, and a strong cocktail list. The community happy hour donates to local schools.", url: "https://lockelandtable.com" },
+  { name: "Folk", neighborhood: "East Nashville", desc: "Wood-fired pizza and farm-to-table small plates. Reservations recommended on weekends.", url: "https://eatatfolk.com" },
+  { name: "Two Ten Jack", neighborhood: "East Nashville", desc: "Japanese izakaya with ramen, yakitori, and sake. The tonkotsu is the move.", url: "https://twotenjack.com" },
+  { name: "The 5 Spot", neighborhood: "East Nashville", desc: "Indie live music venue. The Monday Night Soul party is a Nashville institution. Cheap drinks.", url: "https://www.the5spotlive.com" },
+  { name: "Mickey's Tavern", neighborhood: "East Nashville", desc: "Beloved East Nashville dive bar. Cash only. The grilled cheese is famous.", url: null },
+  { name: "Star Bagel Cafe", neighborhood: "East Nashville", desc: "New York-style bagels in a converted house. Walk-up window, picnic seating outside.", url: "https://starbagel.com" },
+  { name: "Pelican and Pig", neighborhood: "East Nashville", desc: "Wood-fired smoked meats and house-made everything. Patio dining and craft cocktails.", url: "https://pelicanandpig.com" },
+  { name: "Vinyl Tap", neighborhood: "East Nashville", desc: "Record store and bar combo. Browse vinyl while sipping a craft beer. Local crowd.", url: "https://vinyltapnashville.com" },
+  { name: "Bobbie's Dairy Dip", neighborhood: "Charlotte Pike (East-adjacent)", desc: "Old-school walk-up ice cream stand. Cash only, classic soft serve, hot dogs.", url: null },
+  { name: "Eastside Bowl", neighborhood: "Madison/East", desc: "Vintage bowling alley plus live music venue plus restaurant. A whole-night-out kind of place.", url: "https://eastsidebowl.com" }
+];
+
 const CURATED_BROADWAY_BARS = [
   { name: "Tootsie's Orchid Lounge", neighborhood: "Lower Broadway", desc: "The original honky tonk. Live music from 10am. Hank Williams used to drink here.", url: "https://tootsies.net" },
   { name: "Robert's Western World", neighborhood: "Lower Broadway", desc: "Boots and burgers. Recession Special: fried bologna sandwich, chips, MoonPie, PBR for $6.", url: "https://robertswesternworld.com", hasFood: false },
@@ -2626,6 +2686,12 @@ function showDistilleries() {
 }
 function showPhotoSpots() {
   showCuratedThenLive(CURATED_PHOTO_SPOTS, 'instagram mural photo spot landmark', 'tourist_attraction', 'photo spots');
+}
+function showFreeThings() {
+  showCuratedThenLive(CURATED_FREE_THINGS, 'free park museum mural', 'tourist_attraction', 'free things to do');
+}
+function showEastNashville() {
+  showCuratedThenLive(CURATED_EAST_NASHVILLE_GEMS, 'East Nashville restaurant bar coffee', 'restaurant', 'East Nashville hidden gems');
 }
 function showBachelorette() {
   addMessage("Bachelorette mode activated. Nashville is the bachelorette capital. Here is everything you need.", 'bot');
