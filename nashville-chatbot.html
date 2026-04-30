@@ -3664,7 +3664,7 @@ function renderRestaurantCard(r) {
   if (b.resy) html += `<a class="resy-btn" href="${b.resy}" target="_blank">Resy</a>`;
   if (b.tock) html += `<a class="tock-btn" href="${b.tock}" target="_blank">Tock</a>`;
   if (b.yelp) html += `<a class="yelp-btn" href="${b.yelp}" target="_blank">Yelp</a>`;
-  html += `<a class="call-btn" href="tel:${r.phone}">Call ${r.phone}</a>`;
+  if (r.phone) html += `<a class="call-btn" href="tel:${r.phone}">Call ${r.phone}</a>`;
   html += `<a class="doordash-btn" href="#" onclick="return rideClick('doordash','${safeName}',event)">DoorDash</a>`;
   html += `<a class="ubereats-btn" href="#" onclick="return rideClick('ubereats','${safeName}',event)">Uber Eats</a>`;
   html += `<a href="#" onclick="return rideClick('uber','${safeName}',event)" style="background:#000;">Uber here</a>`;
