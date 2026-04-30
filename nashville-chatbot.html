@@ -4611,7 +4611,22 @@ setTimeout(() => {
   setTimeout(() => maybeShowWeatherAlertBanner(), 1200);
   // Refresh alerts every 5 minutes while the page is open.
   setInterval(() => maybeShowWeatherAlertBanner(), 5 * 60 * 1000);
+  // Auto-resume group share session if one is active.
+  setTimeout(() => maybeResumeGroupSession(), 800);
 }, 300);
+
+async function maybeResumeGroupSession() {
+  const saved = getSavedGroupSession();
+  if (!saved || !saved.code || !saved.memberId) return;
+  // Verify the group is still active
+  const r = await groupApi({ action: 'get', code: saved.code });
+  if (!r.ok || r.data.expired || r.data.ended) {
+    saveGroupSession(null);
+    return;
+  }
+  addMessage(`You're still in group ${saved.code}. Resuming the live map.`, 'bot');
+  setTimeout(() => showGroupSession(saved.code, saved.memberId, saved.isLeader, saved.name), 200);
+}
 
 // Active weather alert banner. Pulls from Weather.gov via /api/weather.
 // Stays pinned at the top of the viewport until the alert expires or the user dismisses it.
