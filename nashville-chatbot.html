@@ -2302,8 +2302,25 @@ async function enrichCuratedWithLive(items, query, type) {
   }
 }
 
+function haversineMiles(a, b) {
+  if (!a || !b) return null;
+  const R = 3958.8;
+  const toRad = d => d * Math.PI / 180;
+  const dLat = toRad(b.lat - a.lat);
+  const dLng = toRad(b.lng - a.lng);
+  const lat1 = toRad(a.lat);
+  const lat2 = toRad(b.lat);
+  const x = Math.sin(dLat / 2) ** 2 + Math.sin(dLng / 2) ** 2 * Math.cos(lat1) * Math.cos(lat2);
+  return Number((R * 2 * Math.atan2(Math.sqrt(x), Math.sqrt(1 - x))).toFixed(1));
+}
+
 function renderCuratedCard(s, label, liveMatch) {
-  const distStr = liveMatch && liveMatch.distanceMiles != null ? ` · 📍 ${liveMatch.distanceMiles} mi` : '';
+  // Compute distance: use live match first, fall back to hardcoded coords + user location.
+  let dist = liveMatch && liveMatch.distanceMiles != null ? liveMatch.distanceMiles : null;
+  if (dist == null && s.coords && userLocation) {
+    dist = haversineMiles(userLocation, s.coords);
+  }
+  const distStr = dist != null ? ` · 📍 ${dist} mi` : '';
   const ratingStr = liveMatch && liveMatch.rating ? `★ ${liveMatch.rating}` : '';
   const reviewStr = liveMatch && liveMatch.reviewCount ? ` (${liveMatch.reviewCount})` : '';
   const meta = [s.neighborhood || '', s.note ? '· ' + s.note : '', ratingStr + reviewStr + distStr].filter(x => x).join(' ');
@@ -2334,14 +2351,20 @@ async function showCuratedThenLive(curatedList, query, type, label) {
     }
   }
 
-  // Sort curated items by distance when we have user location and live matches.
+  // Sort curated items by distance when we have user location.
+  // Use live match distance first, fall back to hardcoded coords.
   let items = curatedList.map(c => ({ item: c, match: findLiveMatch(c, live) }));
-  if (userLocation && items.some(x => x.match && x.match.distanceMiles != null)) {
-    items.sort((a, b) => {
-      const da = a.match?.distanceMiles ?? 9999;
-      const db = b.match?.distanceMiles ?? 9999;
-      return da - db;
+  if (userLocation) {
+    items = items.map(x => {
+      let dist = x.match?.distanceMiles ?? null;
+      if (dist == null && x.item.coords) {
+        dist = haversineMiles(userLocation, x.item.coords);
+      }
+      return { ...x, dist };
     });
+    if (items.some(x => x.dist != null)) {
+      items.sort((a, b) => (a.dist ?? 9999) - (b.dist ?? 9999));
+    }
   }
 
   addMessage(`Top Nashville ${label}:`, 'bot');
@@ -2507,21 +2530,21 @@ const CURATED_LINE_DANCING = [
 ];
 
 const CURATED_FAMILY_FRIENDLY = [
-  { name: "Nashville Zoo at Grassmere", neighborhood: "South Nashville", desc: "200+ acres with Andean bears, big cats, primates, and a kangaroo walkthrough. Splash pad and playground in summer.", url: "https://www.nashvillezoo.org" },
-  { name: "Adventure Science Center", neighborhood: "Wedgewood-Houston", desc: "Hands-on science exhibits, rock-climbing wall, and the Sudekum Planetarium. Great for kids 4-12.", url: "https://www.adventuresci.org" },
-  { name: "Cheekwood Estate and Gardens", neighborhood: "Belle Meade", desc: "55-acre botanical garden with seasonal exhibits, treehouses, and a kids' adventure trail.", url: "https://cheekwood.org" },
-  { name: "Country Music Hall of Fame", neighborhood: "Downtown", desc: "Family-friendly with junior audio guides for kids. Country music history made fun.", url: "https://countrymusichalloffame.org" },
-  { name: "Centennial Park and Parthenon", neighborhood: "West End", desc: "132-acre park with playground, paddle boats on the lake, and a full-scale Parthenon replica. Free.", url: "https://www.nashville.gov/departments/parks/parthenon" },
-  { name: "Nashville Public Library Wishing Chair Productions", neighborhood: "Downtown", desc: "Free puppet shows for kids. Beautiful library with hands-on children's area.", url: "https://library.nashville.org" },
-  { name: "Lane Motor Museum", neighborhood: "South Nashville", desc: "Quirky cars, motorcycles, and microcars. Free first Sunday of the month.", url: "https://www.lanemotormuseum.org" },
-  { name: "Fannie Mae Dees Park (Dragon Park)", neighborhood: "Hillsboro Village", desc: "Iconic mosaic dragon sculpture kids can climb. Free playground.", url: null },
-  { name: "Topgolf Nashville", neighborhood: "Antioch", desc: "Driving range meets bowling alley. Climate-controlled bays with food and drinks. Kids can play too.", url: "https://topgolf.com/us/nashville" },
-  { name: "The Escape Game Nashville", neighborhood: "Downtown and Opry Mills", desc: "60-minute themed escape rooms. Kids 10+ work great for the easier rooms.", url: "https://nashvilleescapegame.com" },
-  { name: "Nashville Sounds Baseball", neighborhood: "Germantown", desc: "Minor league baseball at First Horizon Park. Kid-friendly atmosphere, food, and the iconic guitar scoreboard.", url: "https://www.milb.com/nashville" },
-  { name: "Bicentennial Capitol Mall State Park", neighborhood: "Downtown", desc: "Free 19-acre park with Tennessee history walk, splash pad, and 95-bell carillon kids love.", url: "https://tnstateparks.com/parks/bicentennial-mall" },
-  { name: "Pinewood Social", neighborhood: "SoBro", desc: "Bowling, food, and bocce ball. Family-friendly during the day, more grown-up at night.", url: "https://pinewoodsocial.com" },
-  { name: "Stardust Drive-In Theatre", neighborhood: "Watertown (40 min east)", desc: "Old-school drive-in movies. Cash only, double features, family-priced.", url: "https://www.stardustdrivein.com" },
-  { name: "Wave Country (summer only)", neighborhood: "Madison", desc: "Public water park with wave pool, slides, and lazy river. Open Memorial Day to Labor Day.", url: "https://www.nashville.gov/departments/parks/aquatics/wave-country" }
+  { name: "Nashville Zoo at Grassmere", neighborhood: "South Nashville", desc: "200+ acres with Andean bears, big cats, primates, and a kangaroo walkthrough. Splash pad and playground in summer.", url: "https://www.nashvillezoo.org", coords: { lat: 36.1058, lng: -86.7517 } },
+  { name: "Adventure Science Center", neighborhood: "Wedgewood-Houston", desc: "Hands-on science exhibits, rock-climbing wall, and the Sudekum Planetarium. Great for kids 4-12.", url: "https://www.adventuresci.org", coords: { lat: 36.1487, lng: -86.7733 } },
+  { name: "Cheekwood Estate and Gardens", neighborhood: "Belle Meade", desc: "55-acre botanical garden with seasonal exhibits, treehouses, and a kids' adventure trail.", url: "https://cheekwood.org", coords: { lat: 36.0892, lng: -86.8769 } },
+  { name: "Country Music Hall of Fame", neighborhood: "Downtown", desc: "Family-friendly with junior audio guides for kids. Country music history made fun.", url: "https://countrymusichalloffame.org", coords: { lat: 36.1581, lng: -86.7762 } },
+  { name: "Centennial Park and Parthenon", neighborhood: "West End", desc: "132-acre park with playground, paddle boats on the lake, and a full-scale Parthenon replica. Free.", url: "https://www.nashville.gov/departments/parks/parthenon", coords: { lat: 36.1497, lng: -86.8133 } },
+  { name: "Nashville Public Library Wishing Chair Productions", neighborhood: "Downtown", desc: "Free puppet shows for kids. Beautiful library with hands-on children's area.", url: "https://library.nashville.org", coords: { lat: 36.1638, lng: -86.7831 } },
+  { name: "Lane Motor Museum", neighborhood: "South Nashville", desc: "Quirky cars, motorcycles, and microcars. Free first Sunday of the month.", url: "https://www.lanemotormuseum.org", coords: { lat: 36.1289, lng: -86.7400 } },
+  { name: "Fannie Mae Dees Park (Dragon Park)", neighborhood: "Hillsboro Village", desc: "Iconic mosaic dragon sculpture kids can climb. Free playground.", url: null, coords: { lat: 36.1336, lng: -86.7980 } },
+  { name: "Topgolf Nashville", neighborhood: "Antioch", desc: "Driving range meets bowling alley. Climate-controlled bays with food and drinks. Kids can play too.", url: "https://topgolf.com/us/nashville", coords: { lat: 36.0658, lng: -86.6589 } },
+  { name: "The Escape Game Nashville", neighborhood: "Downtown and Opry Mills", desc: "60-minute themed escape rooms. Kids 10+ work great for the easier rooms.", url: "https://nashvilleescapegame.com", coords: { lat: 36.1605, lng: -86.7775 } },
+  { name: "Nashville Sounds Baseball", neighborhood: "Germantown", desc: "Minor league baseball at First Horizon Park. Kid-friendly atmosphere, food, and the iconic guitar scoreboard.", url: "https://www.milb.com/nashville", coords: { lat: 36.1707, lng: -86.7866 } },
+  { name: "Bicentennial Capitol Mall State Park", neighborhood: "Downtown", desc: "Free 19-acre park with Tennessee history walk, splash pad, and 95-bell carillon kids love.", url: "https://tnstateparks.com/parks/bicentennial-mall", coords: { lat: 36.1693, lng: -86.7836 } },
+  { name: "Pinewood Social", neighborhood: "SoBro", desc: "Bowling, food, and bocce ball. Family-friendly during the day, more grown-up at night.", url: "https://pinewoodsocial.com", coords: { lat: 36.1568, lng: -86.7708 } },
+  { name: "Stardust Drive-In Theatre", neighborhood: "Watertown (40 min east)", desc: "Old-school drive-in movies. Cash only, double features, family-priced.", url: "https://www.stardustdrivein.com", coords: { lat: 36.1006, lng: -86.1361 } },
+  { name: "Wave Country (summer only)", neighborhood: "Madison", desc: "Public water park with wave pool, slides, and lazy river. Open Memorial Day to Labor Day.", url: "https://www.nashville.gov/departments/parks/aquatics/wave-country", coords: { lat: 36.2647, lng: -86.7156 } }
 ];
 
 const CURATED_EAST_NASHVILLE_GEMS = [
