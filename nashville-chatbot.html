@@ -1843,13 +1843,18 @@ function routeIntent(text) {
     return;
   }
 
-  if (matches(lower, ['free things', 'free stuff', 'free to do', 'cheap things', 'budget', 'no money', 'on a budget', 'free activities'])) {
+  if (matches(lower, ['free things', 'free stuff', 'free to do', 'cheap things', 'budget', 'no money', 'on a budget', 'free activities', 'free things to do'])) {
     showFreeThings();
     return;
   }
 
-  if (matches(lower, ['east nashville', 'hidden gems', 'where locals go', 'local spots', 'off broadway', 'five points', 'indie nashville'])) {
+  if (matches(lower, ['east nashville', 'hidden gems', 'where locals go', 'local spots', 'off broadway', 'five points', 'indie nashville', 'east nashville gems'])) {
     showEastNashville();
+    return;
+  }
+
+  if (matches(lower, ['family friendly', 'kid friendly', 'kids', 'family', 'with kids', 'children', 'kid', 'family activities', 'things to do with kids'])) {
+    showFamilyFriendly();
     return;
   }
 
@@ -2205,6 +2210,9 @@ function showThingsToDoMenu(skipPush) {
     'Festivals',
     'What\'s happening',
     'Tourist attractions',
+    'Family friendly',
+    'Free things to do',
+    'East Nashville gems',
     'Sports',
     'Book a tour',
     'Photo spots',
@@ -2477,6 +2485,24 @@ const CURATED_FREE_THINGS = [
   { name: "Belle Meade Plantation grounds (free walk)", neighborhood: "Belle Meade", desc: "Walking the historic grounds is free. The mansion tour is paid. Photo spots throughout.", url: "https://bellemeadehistoricsite.com" }
 ];
 
+const CURATED_FAMILY_FRIENDLY = [
+  { name: "Nashville Zoo at Grassmere", neighborhood: "South Nashville", desc: "200+ acres with Andean bears, big cats, primates, and a kangaroo walkthrough. Splash pad and playground in summer.", url: "https://www.nashvillezoo.org" },
+  { name: "Adventure Science Center", neighborhood: "Wedgewood-Houston", desc: "Hands-on science exhibits, rock-climbing wall, and the Sudekum Planetarium. Great for kids 4-12.", url: "https://www.adventuresci.org" },
+  { name: "Cheekwood Estate and Gardens", neighborhood: "Belle Meade", desc: "55-acre botanical garden with seasonal exhibits, treehouses, and a kids' adventure trail.", url: "https://cheekwood.org" },
+  { name: "Country Music Hall of Fame", neighborhood: "Downtown", desc: "Family-friendly with junior audio guides for kids. Country music history made fun.", url: "https://countrymusichalloffame.org" },
+  { name: "Centennial Park and Parthenon", neighborhood: "West End", desc: "132-acre park with playground, paddle boats on the lake, and a full-scale Parthenon replica. Free.", url: "https://www.nashville.gov/departments/parks/parthenon" },
+  { name: "Nashville Public Library Wishing Chair Productions", neighborhood: "Downtown", desc: "Free puppet shows for kids. Beautiful library with hands-on children's area.", url: "https://library.nashville.org" },
+  { name: "Lane Motor Museum", neighborhood: "South Nashville", desc: "Quirky cars, motorcycles, and microcars. Free first Sunday of the month.", url: "https://www.lanemotormuseum.org" },
+  { name: "Fannie Mae Dees Park (Dragon Park)", neighborhood: "Hillsboro Village", desc: "Iconic mosaic dragon sculpture kids can climb. Free playground.", url: null },
+  { name: "Topgolf Nashville", neighborhood: "Antioch", desc: "Driving range meets bowling alley. Climate-controlled bays with food and drinks. Kids can play too.", url: "https://topgolf.com/us/nashville" },
+  { name: "The Escape Game Nashville", neighborhood: "Downtown and Opry Mills", desc: "60-minute themed escape rooms. Kids 10+ work great for the easier rooms.", url: "https://nashvilleescapegame.com" },
+  { name: "Nashville Sounds Baseball", neighborhood: "Germantown", desc: "Minor league baseball at First Horizon Park. Kid-friendly atmosphere, food, and the iconic guitar scoreboard.", url: "https://www.milb.com/nashville" },
+  { name: "Bicentennial Capitol Mall State Park", neighborhood: "Downtown", desc: "Free 19-acre park with Tennessee history walk, splash pad, and 95-bell carillon kids love.", url: "https://tnstateparks.com/parks/bicentennial-mall" },
+  { name: "Pinewood Social", neighborhood: "SoBro", desc: "Bowling, food, and bocce ball. Family-friendly during the day, more grown-up at night.", url: "https://pinewoodsocial.com" },
+  { name: "Stardust Drive-In Theatre", neighborhood: "Watertown (40 min east)", desc: "Old-school drive-in movies. Cash only, double features, family-priced.", url: "https://www.stardustdrivein.com" },
+  { name: "Wave Country (summer only)", neighborhood: "Madison", desc: "Public water park with wave pool, slides, and lazy river. Open Memorial Day to Labor Day.", url: "https://www.nashville.gov/departments/parks/aquatics/wave-country" }
+];
+
 const CURATED_EAST_NASHVILLE_GEMS = [
   { name: "Five Points", neighborhood: "East Nashville", desc: "The heart of East Nashville. Restaurants, bars, coffee shops, and indie boutiques in a walkable cluster.", url: null },
   { name: "Margot Cafe and Bar", neighborhood: "East Nashville", desc: "French and Italian bistro from chef Margot McCormack. The brunch menu is the local favorite.", url: "https://www.margotcafe.com" },
@@ -2694,6 +2720,13 @@ function showFreeThings() {
 }
 function showEastNashville() {
   showCuratedThenLive(CURATED_EAST_NASHVILLE_GEMS, 'East Nashville restaurant bar coffee', 'restaurant', 'East Nashville hidden gems');
+}
+function showFamilyFriendly() {
+  addMessage("Nashville with kids. Music City does family well.", 'bot');
+  showCuratedThenLive(CURATED_FAMILY_FRIENDLY, 'family kids attraction park zoo museum', 'tourist_attraction', 'family-friendly Nashville spots');
+  setTimeout(() => {
+    addMessage('<div class="card"><div class="card-title">🍗 Kids on Lower Broadway</div><div class="card-desc">Most Broadway honky tonks allow all ages until 6pm. After 6pm they switch to 21 and over. Best to do honky tonk hop before dinner with kids. Tootsie\'s, Robert\'s, and Acme Feed and Seed are the most kid-friendly during the day.</div></div>', 'bot', true);
+  }, 600);
 }
 function showBachelorette() {
   addMessage("Bachelorette mode activated. Nashville is the bachelorette capital. Here is everything you need.", 'bot');
@@ -2974,7 +3007,7 @@ function renderHostPickCard(opts) {
     <img src="/musiccity-hero.jpg" alt="Music City Retreat living room with Nashville skyline art" style="width:100%;height:200px;object-fit:cover;display:block;" onerror="this.style.display='none'">
     <div style="padding:14px;">
       <div class="card-title">⭐ Host's Pick: Music City Retreat</div>
-      <div class="card-desc"><strong>Germantown · 2 bedroom · Free parking</strong></div>
+      <div class="card-desc"><strong>Germantown · 2 bedroom · Sleeps 6 · Free parking</strong></div>
       <div class="card-desc">Walk to Broadway. The Howdy Nash host's own Airbnb. Book direct, support the guide.</div>
       ${cheaperLine}
       <a href="https://www.airbnb.com/rooms/1546687115825271453" target="_blank" rel="noopener" style="background:#FF5A5F;">Book Music City Retreat</a>
@@ -2989,16 +3022,16 @@ function showVacationRentals() {
   // Backup picks if the host's listing isn't a fit
   const backup1 = `<div class="card">
     <div class="card-title">Germantown alternate · Location Matters</div>
-    <div class="card-desc"><strong>2 bedroom · 3 beds · Free parking · Entertainment-focused</strong></div>
+    <div class="card-desc"><strong>2 bedroom · 3 beds · Sleeps 6 · Free parking</strong></div>
     <div class="card-desc">Same Germantown neighborhood. Great backup if Music City Retreat is booked.</div>
     <a href="https://www.airbnb.com/rooms/823879694871437688" target="_blank" rel="noopener" style="background:#FF5A5F;">View on Airbnb</a>
   </div>`;
   addMessage(backup1, 'bot', true);
 
   const backup2 = `<div class="card">
-    <div class="card-title">Germantown alternate · Sleeps 6</div>
-    <div class="card-desc"><strong>2 bedroom · 4 beds · 1 bath · Free parking · Sleeps 6</strong></div>
-    <div class="card-desc">Larger group? This one fits 6. Same neighborhood, walking distance to downtown.</div>
+    <div class="card-title">Germantown alternate · 2BR with full beds</div>
+    <div class="card-desc"><strong>2 bedroom · 4 beds · 1 bath · Sleeps 6 · Free parking</strong></div>
+    <div class="card-desc">Same Germantown neighborhood. Walking distance to downtown.</div>
     <a href="https://www.airbnb.com/rooms/1290117954789053772" target="_blank" rel="noopener" style="background:#FF5A5F;">View on Airbnb</a>
   </div>`;
   addMessage(backup2, 'bot', true);
