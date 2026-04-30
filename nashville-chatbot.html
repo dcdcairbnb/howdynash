@@ -1991,6 +1991,8 @@ function formatMarkdown(text) {
   // Convert dash bullets to readable bullets
   s = s.replace(/^-\s+(.+)$/gm, '• $1');
   // Convert numbered lists already formatted (1. item) - keep as is
+  // Auto-link URLs (http/https) so the LLM's text URLs become clickable.
+  s = s.replace(/\b(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" rel="noopener" style="color:#d62828;text-decoration:underline;">$1</a>');
   // Convert newlines to <br>
   s = s.replace(/\n/g, '<br>');
   return s;
