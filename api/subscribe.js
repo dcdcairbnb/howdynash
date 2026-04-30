@@ -96,7 +96,7 @@ function buildWelcomeEmail({ name, source, unsubscribeUrl, savedSpots }) {
       <p style="margin:0 0 12px;">${sourceBlurb}</p>
       ${source === 'cheatsheet' ? `<p style="margin:16px 0;"><a href="${CHEATSHEET_URL}" style="display:inline-block;background:#d62828;color:#fff;padding:12px 20px;border-radius:8px;text-decoration:none;font-weight:600;">Open the Cheat Sheet</a></p>` : ''}
       ${savedSpotsBlock}
-      <p style="margin:24px 0 12px;">P.S. I send a Nashville roundup every Friday with restaurant openings, weekend events, hotel deals, and tour discounts. Reply to this email anytime, I read every one.</p>
+      <p style="margin:24px 0 12px;">P.S. Every Friday I send a roundup of upcoming Nashville festivals and concerts. Reply to this email anytime, I read every one.</p>
       <p style="margin:0;">Howdy,<br>Howdy Nash</p>
     </div>
     <div style="border-top:1px solid #eee;padding:16px 0;font-size:12px;color:#888;text-align:center;">
