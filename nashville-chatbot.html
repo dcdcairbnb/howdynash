@@ -2965,15 +2965,31 @@ function showLuggageStorage() {
   }
 }
 
+function renderHostPickCard(opts) {
+  opts = opts || {};
+  const cheaperLine = opts.cheaper ? '<div class="card-desc" style="color:#0a8754;font-weight:600;">Often cheaper than downtown hotels.</div>' : '';
+  return `<div class="card" style="border:2px solid #d62828;overflow:hidden;padding:0;">
+    <img src="/musiccity-hero.jpg" alt="Music City Retreat living room with Nashville skyline art" style="width:100%;height:200px;object-fit:cover;display:block;" onerror="this.style.display='none'">
+    <div style="padding:14px;">
+      <div class="card-title">⭐ Host's Pick: Music City Retreat</div>
+      <div class="card-desc"><strong>Germantown · 2 bedroom · Free parking</strong></div>
+      <div class="card-desc">Walk to Broadway. The Howdy Nash host's own Airbnb. Book direct, support the guide.</div>
+      ${cheaperLine}
+      <a href="https://www.airbnb.com/rooms/1546687115825271453" target="_blank" rel="noopener" style="background:#FF5A5F;">Book Music City Retreat</a>
+    </div>
+  </div>`;
+}
+
 function showVacationRentals() {
-  addMessage("Vacation rentals in Nashville. Both options below open the official site or app.", 'bot');
+  addMessage("Vacation rentals in Nashville. Stay with the Howdy Nash host or browse the full list.", 'bot');
+  addMessage(renderHostPickCard(), 'bot', true);
 
   const airbnbUrl = buildAirbnbUrl();
   const vrboUrl = buildVrboUrl();
   const locationNote = userLocation ? "Centered on your current location." : "Search starts in Nashville. Share your location for nearby filters.";
 
   const html = `<div class="card">
-    <div class="card-title">Where to stay</div>
+    <div class="card-title">Browse all Nashville rentals</div>
     <div class="card-desc">${locationNote}</div>
     <a href="${airbnbUrl}" target="_blank" rel="noopener" style="background:#FF5A5F;">Open Airbnb</a>
     <a href="${vrboUrl}" target="_blank" rel="noopener" style="background:#0F4B8E;">Open VRBO</a>
@@ -3333,6 +3349,9 @@ function buildExpediaUrl() {
 }
 
 async function showHotels() {
+  // Show host's pick first with "often cheaper" line
+  addMessage(renderHostPickCard({ cheaper: true }), 'bot', true);
+
   if (!userLocation) {
     addMessage("Pulling Nashville hotels from Google Places...", 'bot');
   } else {

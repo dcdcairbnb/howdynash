@@ -5,7 +5,7 @@
 
 set -e
 
-PROJECT_DIR="/Users/dan/Documents/howdy-nashville"
+PROJECT_DIR="/Users/dan/Documents/howdynash"
 REPO_URL="https://github.com/dcdcairbnb/howdynash.git"
 BRANCH="main"
 
