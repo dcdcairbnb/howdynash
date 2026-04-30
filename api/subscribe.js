@@ -96,7 +96,7 @@ function buildWelcomeEmail({ name, source, unsubscribeUrl, savedSpots }) {
       <p style="margin:0 0 12px;">${sourceBlurb}</p>
       ${source === 'cheatsheet' ? `<p style="margin:16px 0;"><a href="${CHEATSHEET_URL}" style="display:inline-block;background:#d62828;color:#fff;padding:12px 20px;border-radius:8px;text-decoration:none;font-weight:600;">Open the Cheat Sheet</a></p>` : ''}
       ${savedSpotsBlock}
-      <p style="margin:24px 0 12px;">P.S. Every Friday I send a roundup of upcoming Nashville festivals and concerts. Reply to this email anytime, I read every one.</p>
+      <p style="margin:24px 0 12px;">P.S. Every Friday I send a roundup of upcoming Nashville festivals, concerts, and new restaurant openings. Reply to this email anytime, I read every one.</p>
       <p style="margin:0;">Howdy,<br>Howdy Nash</p>
     </div>
     <div style="border-top:1px solid #eee;padding:16px 0;font-size:12px;color:#888;text-align:center;">
@@ -116,6 +116,40 @@ function escapeHtml(s) {
 // Pulls fresh festivals/events and emails to all active subscribers.
 // Triggered manually via POST { action: 'newsletter-send', token: ADMIN_TOKEN }
 // Or preview HTML with: POST { action: 'newsletter-preview' }
+
+async function fetchEaterOpenings() {
+  // Scrapes Eater Nashville's RSS feed for restaurant opening articles.
+  try {
+    const r = await fetch('https://nashville.eater.com/rss/index.xml', {
+      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; HowdyNash/1.0)' }
+    });
+    if (!r.ok) return [];
+    const xml = await r.text();
+    const cdata = (s) => (s || '').replace(/<!\[CDATA\[|\]\]>/g, '').trim();
+    const items = [];
+    const itemMatches = xml.match(/<item>[\s\S]*?<\/item>/g) || [];
+    for (const item of itemMatches.slice(0, 25)) {
+      const title = cdata((item.match(/<title>([\s\S]*?)<\/title>/) || [])[1]);
+      const link = cdata((item.match(/<link>([\s\S]*?)<\/link>/) || [])[1]);
+      const dateRaw = (item.match(/<pubDate>([\s\S]*?)<\/pubDate>/) || [])[1] || '';
+      // Filter for restaurant openings, debuts, first looks
+      if (/\b(open|opens|opening|debut|coming soon|first look|new\s)/i.test(title)) {
+        const isFood = /restaurant|cafe|coffee|bar|brewery|bakery|kitchen|grill|chicken|bbq|pizza|burger|taco|diner|cocktail|food|chef/i.test(title);
+        if (isFood) {
+          items.push({
+            name: title,
+            url: link,
+            date: dateRaw ? new Date(dateRaw).toISOString().split('T')[0] : null,
+            source: 'eater'
+          });
+        }
+      }
+    }
+    return items.slice(0, 4);
+  } catch (e) {
+    return [];
+  }
+}
 
 async function fetchThisWeekendEvents() {
   const now = new Date();
@@ -177,7 +211,7 @@ async function fetchThisWeekendEvents() {
   return merged;
 }
 
-function buildNewsletterHTML(events) {
+function buildNewsletterHTML(events, openings) {
   const today = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
   const festRows = events.map(e => `
     <tr><td style="padding:10px 0;border-bottom:1px solid #eee;">
@@ -186,6 +220,17 @@ function buildNewsletterHTML(events) {
       ${e.url ? `<br><a href="${e.url}" style="color:#d62828;font-size:13px;">Details</a>` : ''}
     </td></tr>
   `).join('');
+  const openingsBlock = (openings && openings.length) ? `
+    <h3 style="margin:24px 0 8px;color:#d62828;">🍴 Restaurant Openings</h3>
+    <table style="width:100%;border-collapse:collapse;">
+      ${openings.map(o => `
+        <tr><td style="padding:10px 0;border-bottom:1px solid #eee;">
+          <strong style="color:#d62828;font-size:15px;">${(o.name || '').slice(0, 100)}</strong><br>
+          <a href="${o.url}" style="color:#d62828;font-size:13px;">Read on Eater Nashville</a>
+        </td></tr>
+      `).join('')}
+    </table>
+  ` : '';
   return `<!doctype html>
 <html><head><meta charset="utf-8"><title>This Weekend in Nashville</title></head>
 <body style="margin:0;padding:0;background:#f5f5f5;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;color:#222;">
@@ -199,6 +244,7 @@ function buildNewsletterHTML(events) {
       <p style="margin:0 0 16px;">Here is what's happening in Nashville this week. Tap any event for tickets and details.</p>
       <h3 style="margin:24px 0 8px;color:#d62828;">🎵 Festivals & Events</h3>
       <table style="width:100%;border-collapse:collapse;">${festRows || '<tr><td style="padding:12px 0;color:#666;">No major festivals scheduled. Tap below for live music.</td></tr>'}</table>
+      ${openingsBlock}
       <p style="margin:24px 0 12px;">For live music tonight, weekend brunch, hot chicken lines, and group location sharing, open the full guide:</p>
       <p style="margin:16px 0;text-align:center;"><a href="${SITE_URL}" style="display:inline-block;background:#d62828;color:#fff;padding:14px 28px;border-radius:8px;text-decoration:none;font-weight:600;">Open Howdy Nash</a></p>
       <p style="margin:24px 0 12px;font-size:14px;color:#666;">Heading to Nashville for a bachelorette? Reply to this email and tell me when. I will send you a personalized planner.</p>
@@ -206,7 +252,7 @@ function buildNewsletterHTML(events) {
     </div>
     <div style="border-top:1px solid #eee;padding:16px 0;font-size:12px;color:#888;text-align:center;">
       <a href="${SITE_URL}" style="color:#d62828;text-decoration:none;">howdynash.com</a> &middot; <a href="{{UNSUB_URL}}" style="color:#888;text-decoration:underline;">Unsubscribe</a>
-      <div style="margin-top:8px;">You are receiving this because you signed up at howdynash.com.</div>
+      <div style="margin-top:8px;">You are receiving this because you signed up at howdynash.com. Restaurant news from Eater Nashville.</div>
     </div>
   </div>
 </body></html>`;
@@ -215,8 +261,8 @@ function buildNewsletterHTML(events) {
 async function sendWeeklyNewsletter(resend) {
   await ensureTable();
   const subs = await getPool().query(`SELECT email, name, unsubscribe_token FROM subscribers WHERE unsubscribed_at IS NULL`);
-  const events = await fetchThisWeekendEvents();
-  const baseHtml = buildNewsletterHTML(events);
+  const [events, openings] = await Promise.all([fetchThisWeekendEvents(), fetchEaterOpenings()]);
+  const baseHtml = buildNewsletterHTML(events, openings);
   const subject = `This Weekend in Nashville · ${new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`;
   let sent = 0, failed = 0;
   for (const row of subs.rows) {
@@ -271,8 +317,8 @@ export default async function handler(req, res) {
 
   // Newsletter actions (admin only)
   if (body.action === 'newsletter-preview') {
-    const events = await fetchThisWeekendEvents();
-    const html = buildNewsletterHTML(events).replace('{{UNSUB_URL}}', '#preview');
+    const [events, openings] = await Promise.all([fetchThisWeekendEvents(), fetchEaterOpenings()]);
+    const html = buildNewsletterHTML(events, openings).replace('{{UNSUB_URL}}', '#preview');
     res.setHeader('Content-Type', 'text/html');
     return res.status(200).send(html);
   }
