@@ -1877,7 +1877,7 @@ function routeIntent(text) {
     return;
   }
 
-  if (matches(lower, ['find my group', 'group location', 'share location with group', 'find friends', 'group sharing', 'find group', 'group map', '👯 find my group'])) {
+  if (matches(lower, ['share location', '📍 share location', 'find my group', 'group location', 'share location with group', 'find friends', 'group sharing', 'find group', 'group map', '👯 find my group'])) {
     showFindGroup();
     return;
   }
@@ -2209,7 +2209,7 @@ function showMainMenu() {
     '🏨 Stay & Get Around',
     '👶 Family friendly',
     '👰 Bachelorette',
-    '👯 Find my group',
+    '📍 Share location',
     '🛒 Essentials',
     'Weather',
     'Sports',
@@ -3215,12 +3215,12 @@ function showBachelorette() {
   addMessage("Bachelorette mode activated. Nashville is the bachelorette capital. Here is everything you need.", 'bot');
 
   // Group location sharing card - first because bachelorettes lose each other on Broadway
-  const groupCard = `<div class="card" style="border:2px solid #d62828;">
-    <div class="card-title">👯 Stay together with the crew</div>
+  const bachGroupCard = `<div class="card" style="border:2px solid #d62828;">
+    <div class="card-title">📍 Share location with the crew</div>
     <div class="card-desc">Live map of everyone in your group. Auto-expires after 6, 12, or 24 hours. Lower Broadway is chaos, this fixes that.</div>
-    <a href="#" onclick="showFindGroup();return false;" style="background:#d62828;color:#fff;">Set up group location sharing</a>
+    <button type="button" onclick="showFindGroup()" style="background:#d62828;color:#fff;border:none;padding:10px 16px;border-radius:8px;font-weight:600;cursor:pointer;font-size:14px;margin:4px 0;">Set up location sharing</button>
   </div>`;
-  addMessage(groupCard, 'bot', true);
+  addMessage(bachGroupCard, 'bot', true);
 
   const viatorSearch = (q) => `https://www.viator.com/searchResults/all?text=${encodeURIComponent(q)}&pid=${VIATOR_PID}`;
   const gygSearch = (q) => `https://www.getyourguide.com/s/?q=${encodeURIComponent(q)}&partner_id=${GETYOURGUIDE_PID}`;
