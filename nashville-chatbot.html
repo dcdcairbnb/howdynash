@@ -645,7 +645,12 @@
     <p>Restaurant info, hours, prices, ratings, and event details come from third parties including Foursquare, Google Places, Ticketmaster, SeatGeek, and the City of Nashville Open Data Portal. Information may be inaccurate or outdated. Verify with the venue before going.</p>
 
     <h3>Location Data</h3>
-    <p>If you share your location, we use it only to find nearby restaurants, events, and stores. Your location is not stored on our servers, sold, or shared with third parties beyond the API providers needed to fulfill your request.</p>
+    <p>If you share your location for nearby search, we use it only to find restaurants, events, and stores around you. We do not store this location on our servers, sell it, or share it beyond the API providers needed to fulfill your request.</p>
+
+    <h3>Group Location Sharing</h3>
+    <p>When you start or join a group via the Find My Group feature, your location updates are stored temporarily on our backend (Upstash Redis) so other members of the same group code can see your pin on a live map. Group sessions auto-expire after the duration you pick (6, 12, or 24 hours), at which point all location data is permanently deleted. You can leave a group at any time, which removes your pin immediately. Group leaders can end the session for everyone. We never share group location data with third parties or use it for marketing.</p>
+    <p>Group sharing is opt-in only. You and every group member must tap "Share location" to appear on the map. We do not track members who haven't actively joined the session.</p>
+    <p><strong>You are responsible for who you share your group code with.</strong> Anyone with the code can see member locations during the session. Treat it like a temporary password and only share it with people you trust.</p>
 
     <h3>Booking & Transactions</h3>
     <p>We do not process reservations, payments, or rides. All bookings happen on third-party platforms (OpenTable, Resy, Tock, Yelp, Uber, Lyft, Waymo, DoorDash, Uber Eats). Howdy Nash is not responsible for service quality, cancellations, refunds, or disputes with these providers.</p>
@@ -660,7 +665,16 @@
     <p>Uber, Lyft, Waymo, DoorDash, Uber Eats, OpenTable, Resy, Tock, Yelp, Foursquare, Google, Ticketmaster, and SeatGeek are trademarks of their respective owners. Howdy Nash is not affiliated with, endorsed by, or sponsored by any of these companies.</p>
 
     <h3>Limitation of Liability</h3>
-    <p>This service is provided "as is" without warranties of any kind. Howdy Nash is not liable for any damages arising from your use of this site or the third-party services it links to.</p>
+    <p>This service is provided "as is" without warranties of any kind, express or implied. Howdy Nash is not liable for any damages, losses, injuries, or claims arising from your use of this site or the third-party services it links to. This includes but is not limited to:</p>
+    <ul>
+      <li>Inaccurate location data, pin position errors, or GPS drift in group sharing</li>
+      <li>Any incident that occurs while traveling between locations shown on this site</li>
+      <li>Personal safety, theft, or harm at any venue we recommend or list</li>
+      <li>Disagreements, accidents, or harm involving members of a shared group</li>
+      <li>Failure to find a group member due to expired sessions, dead phones, or stale pins</li>
+      <li>Service quality, cancellations, refunds, or disputes with third-party providers</li>
+    </ul>
+    <p>You are solely responsible for your own safety, decisions, and conduct. Travel with people you trust. Verify venue hours and addresses with the business directly before going. By using this site, you agree to these terms.</p>
 
     <button class="modal-close" onclick="closeDisclaimer()">Close</button>
   </div>
@@ -2832,6 +2846,7 @@ function showFindGroup() {
   const html = `<div class="card">
     <div class="card-title">👯 Group Location Sharing</div>
     <div class="card-desc">Stay connected with the group on Lower Broadway. Each person gets a pin on a live Nashville map. Auto-expires after the duration you pick.</div>
+    <div class="card-desc" style="font-size:12px;color:#666;border-top:1px solid #eee;padding-top:8px;margin-top:8px;">Heads up: only share your group code with people you trust. Locations are deleted when the session ends. Howdy Nash is not responsible for incidents during travel between locations or between members. <a onclick="openDisclaimer();return false;" style="color:#d62828;cursor:pointer;text-decoration:underline;">Full disclaimer</a></div>
     <a href="#" onclick="startGroupFlow();return false;" style="background:#d62828;color:#fff;">Start a new group</a>
     <a href="#" onclick="joinGroupFlow();return false;" style="background:#2563eb;color:#fff;">Join a group with code</a>
   </div>`;
