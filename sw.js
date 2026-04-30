@@ -1,7 +1,7 @@
 // Howdy Nash service worker. Caches static assets for offline use.
 // Bump CACHE_VERSION when deploying changes you want users to see immediately.
 
-const CACHE_VERSION = 'howdynash-v2';
+const CACHE_VERSION = 'howdynash-v3';
 const STATIC_CACHE = `${CACHE_VERSION}-static`;
 
 const STATIC_ASSETS = [
@@ -28,6 +28,12 @@ self.addEventListener('activate', event => {
 });
 
 self.addEventListener('fetch', event => {
+  // Never intercept non-GET requests. The Cache API only supports GET.
+  // POST/PUT/DELETE need to pass through to the network untouched.
+  if (event.request.method !== 'GET') {
+    return;
+  }
+
   const url = new URL(event.request.url);
 
   // Never cache API responses (they need to be fresh).
