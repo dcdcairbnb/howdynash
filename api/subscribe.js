@@ -118,7 +118,7 @@ function escapeHtml(s) {
 // Or preview HTML with: POST { action: 'newsletter-preview' }
 
 async function fetchEaterOpenings() {
-  // Scrapes Eater Nashville's RSS feed for restaurant opening articles.
+  // Scrapes Eater Nashville (ATOM feed format) for restaurant opening articles.
   try {
     const r = await fetch('https://nashville.eater.com/rss/index.xml', {
       headers: { 'User-Agent': 'Mozilla/5.0 (compatible; HowdyNash/1.0)' }
@@ -127,21 +127,22 @@ async function fetchEaterOpenings() {
     const xml = await r.text();
     const cdata = (s) => (s || '').replace(/<!\[CDATA\[|\]\]>/g, '').trim();
     const items = [];
-    const itemMatches = xml.match(/<item>[\s\S]*?<\/item>/g) || [];
-    for (const item of itemMatches.slice(0, 25)) {
-      const title = cdata((item.match(/<title>([\s\S]*?)<\/title>/) || [])[1]);
-      const link = cdata((item.match(/<link>([\s\S]*?)<\/link>/) || [])[1]);
-      const dateRaw = (item.match(/<pubDate>([\s\S]*?)<\/pubDate>/) || [])[1] || '';
+    // ATOM uses <entry> tags, RSS uses <item>. Eater Nashville uses ATOM.
+    const entries = xml.match(/<entry[\s\S]*?<\/entry>/g) || xml.match(/<item>[\s\S]*?<\/item>/g) || [];
+    for (const entry of entries.slice(0, 25)) {
+      const title = cdata((entry.match(/<title[^>]*>([\s\S]*?)<\/title>/) || [])[1]);
+      // ATOM link is an attribute: <link rel="alternate" href="..."/>
+      // RSS link is text: <link>...</link>
+      let link = '';
+      const atomLink = entry.match(/<link[^>]*rel=["']alternate["'][^>]*href=["']([^"']+)["']/);
+      const rssLink = entry.match(/<link>([\s\S]*?)<\/link>/);
+      if (atomLink) link = atomLink[1];
+      else if (rssLink) link = cdata(rssLink[1]);
       // Filter for restaurant openings, debuts, first looks
-      if (/\b(open|opens|opening|debut|coming soon|first look|new\s)/i.test(title)) {
-        const isFood = /restaurant|cafe|coffee|bar|brewery|bakery|kitchen|grill|chicken|bbq|pizza|burger|taco|diner|cocktail|food|chef/i.test(title);
-        if (isFood) {
-          items.push({
-            name: title,
-            url: link,
-            date: dateRaw ? new Date(dateRaw).toISOString().split('T')[0] : null,
-            source: 'eater'
-          });
+      if (/\b(open|opens|opening|debut|coming soon|first look|new\s|arrives|launches|launching|expands)/i.test(title)) {
+        const isFood = /restaurant|cafe|coffee|bar|brewery|bakery|kitchen|grill|chicken|bbq|pizza|burger|taco|diner|cocktail|food|chef|eatery|deli|donut|ice cream/i.test(title);
+        if (isFood && link) {
+          items.push({ name: title, url: link, source: 'eater' });
         }
       }
     }
