@@ -14,7 +14,14 @@
 //   end      { code, memberId }   (only the leader can end)
 //             -> { ok }
 
-import { kv } from '@vercel/kv';
+import { Redis } from '@upstash/redis';
+
+// Upstash created env vars with KV_ prefix when we connected via Vercel.
+// Pass them explicitly so the SDK finds them.
+const kv = new Redis({
+  url: process.env.KV_REST_API_URL,
+  token: process.env.KV_REST_API_TOKEN
+});
 
 const ALLOWED_DURATIONS = [6, 12, 24];
 const STALE_AFTER_MS = 60 * 1000; // member pin disappears if not updated in 60s
