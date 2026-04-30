@@ -322,6 +322,23 @@ export default async function handler(req, res) {
     res.setHeader('Content-Type', 'text/html');
     return res.status(200).send(html);
   }
+  if (body.action === 'eater-debug') {
+    // Debug: show raw Eater scrape result so we can see why it's empty
+    try {
+      const r = await fetch('https://nashville.eater.com/rss/index.xml', {
+        headers: { 'User-Agent': 'Mozilla/5.0 (compatible; HowdyNash/1.0)' }
+      });
+      const status = r.status;
+      const xml = r.ok ? await r.text() : '';
+      const cdata = (s) => (s || '').replace(/<!\[CDATA\[|\]\]>/g, '').trim();
+      const itemMatches = xml.match(/<item>[\s\S]*?<\/item>/g) || [];
+      const titles = itemMatches.slice(0, 25).map(it => cdata((it.match(/<title>([\s\S]*?)<\/title>/) || [])[1]));
+      const filtered = await fetchEaterOpenings();
+      return res.status(200).json({ status, totalItems: itemMatches.length, titles, matched: filtered });
+    } catch (e) {
+      return res.status(500).json({ error: e.message });
+    }
+  }
   if (body.action === 'newsletter-send') {
     if (!process.env.ADMIN_TOKEN || body.token !== process.env.ADMIN_TOKEN) {
       return res.status(403).json({ error: 'admin token required' });
