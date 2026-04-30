@@ -2910,12 +2910,13 @@ let groupPollTimer = null;
 let groupGeoWatchId = null;
 
 function showGroupSession(code, memberId, isLeader, name) {
-  // Render the persistent session card
+  // Render the persistent session card with separate map and list containers
   addMessage(`Group ${code} is live. Sharing your location now.`, 'bot');
   const containerId = `group-session-${code}`;
   const html = `<div class="card" id="${containerId}">
     <div class="card-title">👯 Group ${code}</div>
     <div class="card-desc" id="group-status">Connecting...</div>
+    <div id="group-live-map" style="width:100%;height:300px;border-radius:8px;background:#f5f5f5;display:flex;align-items:center;justify-content:center;color:#888;margin:8px 0;">Loading live map...</div>
     <div id="group-members" style="margin:12px 0;"></div>
     <div id="group-actions">
       <a href="#" onclick="shareGroupCode('${code}');return false;" style="background:#34a853;color:#fff;">📤 Share code with friends</a>
@@ -3004,13 +3005,23 @@ async function renderGroupLiveMap(members) {
   }
   // Init or re-use map
   if (!groupMapInstance) {
+    // Reset placeholder styles so Leaflet can render properly
     mapDiv.style.height = '300px';
+    mapDiv.style.display = 'block';
+    mapDiv.style.background = '';
+    mapDiv.style.color = '';
     mapDiv.innerHTML = '';
-    groupMapInstance = L.map(mapDiv).setView([withCoords[0].lat, withCoords[0].lng], 14);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '© OpenStreetMap contributors',
-      maxZoom: 19
-    }).addTo(groupMapInstance);
+    try {
+      groupMapInstance = L.map(mapDiv).setView([withCoords[0].lat, withCoords[0].lng], 14);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors',
+        maxZoom: 19
+      }).addTo(groupMapInstance);
+    } catch (e) {
+      console.error('Map init failed:', e);
+      mapDiv.innerHTML = '<div style="padding:14px;color:#d62828;">Map failed to load. Refresh the page.</div>';
+      return;
+    }
   }
   // Clear old markers
   groupMapMarkers.forEach(m => groupMapInstance.removeLayer(m));
@@ -3046,9 +3057,9 @@ function renderGroupMembers(members, expiresAt) {
     const minsLeft = Math.max(0, Math.round((expiresAt - Date.now()) / 60000));
     status.textContent = `${members.length} in the group · expires in ${minsLeft} min`;
   }
-  if (!members.length) { el.innerHTML = '<div class="card-desc">No members yet.</div>'; return; }
-  let h = '<div id="group-live-map" style="width:100%;height:300px;border-radius:8px;background:#f5f5f5;display:flex;align-items:center;justify-content:center;color:#888;margin-bottom:8px;">Loading live map...</div>';
-  h += '<ul style="list-style:none;padding:0;margin:0;">';
+  if (!members.length) { el.innerHTML = '<div class="card-desc">No members yet.</div>'; renderGroupLiveMap([]); return; }
+  // Only render the member list here. The map div is persistent in showGroupSession.
+  let h = '<ul style="list-style:none;padding:0;margin:0;">';
   members.forEach(m => {
     const ageMin = Math.round((Date.now() - m.updatedAt) / 60000);
     const ageStr = ageMin < 1 ? 'now' : `${ageMin}m ago`;
@@ -3062,7 +3073,7 @@ function renderGroupMembers(members, expiresAt) {
   });
   h += '</ul>';
   el.innerHTML = h;
-  // Render the live map after DOM is updated
+  // Update map markers (map container is persistent and managed separately)
   renderGroupLiveMap(members);
 }
 
