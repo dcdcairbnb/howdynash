@@ -2981,8 +2981,25 @@ function renderHostPickCard(opts) {
 }
 
 function showVacationRentals() {
-  addMessage("Vacation rentals in Nashville. Stay with the Howdy Nash host or browse the full list.", 'bot');
+  addMessage("Vacation rentals in Nashville. Stay with the Howdy Nash host or browse the alternates below.", 'bot');
   addMessage(renderHostPickCard(), 'bot', true);
+
+  // Backup picks if the host's listing isn't a fit
+  const backup1 = `<div class="card">
+    <div class="card-title">Germantown alternate · Location Matters</div>
+    <div class="card-desc"><strong>2 bedroom · 3 beds · Free parking · Entertainment-focused</strong></div>
+    <div class="card-desc">Same Germantown neighborhood. Great backup if Music City Retreat is booked.</div>
+    <a href="https://www.airbnb.com/rooms/823879694871437688" target="_blank" rel="noopener" style="background:#FF5A5F;">View on Airbnb</a>
+  </div>`;
+  addMessage(backup1, 'bot', true);
+
+  const backup2 = `<div class="card">
+    <div class="card-title">Germantown alternate · Sleeps 6</div>
+    <div class="card-desc"><strong>2 bedroom · 4 beds · 1 bath · Free parking · Sleeps 6</strong></div>
+    <div class="card-desc">Larger group? This one fits 6. Same neighborhood, walking distance to downtown.</div>
+    <a href="https://www.airbnb.com/rooms/1290117954789053772" target="_blank" rel="noopener" style="background:#FF5A5F;">View on Airbnb</a>
+  </div>`;
+  addMessage(backup2, 'bot', true);
 
   const airbnbUrl = buildAirbnbUrl();
   const vrboUrl = buildVrboUrl();
