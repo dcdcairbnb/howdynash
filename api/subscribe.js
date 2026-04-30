@@ -323,21 +323,30 @@ export default async function handler(req, res) {
     return res.status(200).send(html);
   }
   if (body.action === 'eater-debug') {
-    // Debug: show raw Eater scrape result so we can see why it's empty
-    try {
-      const r = await fetch('https://nashville.eater.com/rss/index.xml', {
-        headers: { 'User-Agent': 'Mozilla/5.0 (compatible; HowdyNash/1.0)' }
-      });
-      const status = r.status;
-      const xml = r.ok ? await r.text() : '';
-      const cdata = (s) => (s || '').replace(/<!\[CDATA\[|\]\]>/g, '').trim();
-      const itemMatches = xml.match(/<item>[\s\S]*?<\/item>/g) || [];
-      const titles = itemMatches.slice(0, 25).map(it => cdata((it.match(/<title>([\s\S]*?)<\/title>/) || [])[1]));
-      const filtered = await fetchEaterOpenings();
-      return res.status(200).json({ status, totalItems: itemMatches.length, titles, matched: filtered });
-    } catch (e) {
-      return res.status(500).json({ error: e.message });
+    // Test multiple Eater URL variants and Nashville Scene as fallback
+    const urls = [
+      'https://nashville.eater.com/rss/index.xml',
+      'https://nashville.eater.com/rss/current.xml',
+      'https://www.eater.com/rss/region/nashville.xml',
+      'https://www.nashvillescene.com/feeds/news/rss.xml',
+      'https://www.nashvillescene.com/feeds/food-drink/rss.xml'
+    ];
+    const results = [];
+    for (const url of urls) {
+      try {
+        const r = await fetch(url, {
+          headers: { 'User-Agent': 'Mozilla/5.0 (compatible; HowdyNash/1.0)' }
+        });
+        const text = r.ok ? await r.text() : '';
+        const itemCount = (text.match(/<item>/g) || []).length;
+        const entryCount = (text.match(/<entry>/g) || []).length;
+        const sample = text.slice(0, 500);
+        results.push({ url, status: r.status, items: itemCount, entries: entryCount, sample });
+      } catch (e) {
+        results.push({ url, error: e.message });
+      }
     }
+    return res.status(200).json({ results });
   }
   if (body.action === 'newsletter-send') {
     if (!process.env.ADMIN_TOKEN || body.token !== process.env.ADMIN_TOKEN) {
