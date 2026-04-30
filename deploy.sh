@@ -6,7 +6,7 @@
 set -e
 
 PROJECT_DIR="/Users/dan/Documents/howdy-nashville"
-REPO_URL="https://github.com/dcdcairbnb/howdy-nashville.git"
+REPO_URL="https://github.com/dcdcairbnb/howdynash.git"
 BRANCH="main"
 
 cd "$PROJECT_DIR"
@@ -70,7 +70,7 @@ git push origin "$BRANCH"
 echo ""
 echo "Deploy initiated."
 echo "Vercel will auto-deploy in 30 to 90 seconds."
-echo "Live URL: https://howdy-nashville.vercel.app"
+echo "Live URL: https://howdynash.com"
 echo ""
 echo "Watch the deployment at:"
 echo "  https://vercel.com/dashboard"
