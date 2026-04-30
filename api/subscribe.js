@@ -117,21 +117,64 @@ function escapeHtml(s) {
 // Triggered manually via POST { action: 'newsletter-send', token: ADMIN_TOKEN }
 // Or preview HTML with: POST { action: 'newsletter-preview' }
 
-async function fetchThisWeekendFestivals() {
+async function fetchThisWeekendEvents() {
+  const now = new Date();
+  const cutoff = new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000);
+  const inWindow = (e) => {
+    if (!e.date) return false;
+    const d = new Date(e.date);
+    return d >= now && d <= cutoff;
+  };
+
+  // 1) Curated festivals first (your branded list)
+  let festivals = [];
   try {
     const r = await fetch(`${SITE_URL}/api/festivals?source=curated`);
-    if (!r.ok) return [];
-    const data = await r.json();
-    const events = data.events || [];
-    // Filter to next 14 days
-    const now = new Date();
-    const cutoff = new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000);
-    return events.filter(e => {
-      if (!e.date) return false;
-      const d = new Date(e.date);
-      return d >= now && d <= cutoff;
-    }).slice(0, 6);
-  } catch (e) { return []; }
+    if (r.ok) {
+      const data = await r.json();
+      festivals = (data.events || []).filter(inWindow);
+    }
+  } catch (e) { /* keep going */ }
+
+  // 2) Visit Music City scraper (community festivals not in your curated list)
+  let vmcFestivals = [];
+  try {
+    const r = await fetch(`${SITE_URL}/api/festivals?source=visitmusiccity`);
+    if (r.ok) {
+      const data = await r.json();
+      vmcFestivals = (data.events || []).filter(inWindow);
+    }
+  } catch (e) { /* keep going */ }
+
+  // 3) Ticketmaster + SeatGeek + Eventbrite for big concerts and events
+  let liveEvents = [];
+  try {
+    const startISO = now.toISOString().split('.')[0] + 'Z';
+    const endISO = cutoff.toISOString().split('.')[0] + 'Z';
+    const r = await fetch(`${SITE_URL}/api/events?startDateTime=${encodeURIComponent(startISO)}&endDateTime=${encodeURIComponent(endISO)}`);
+    if (r.ok) {
+      const data = await r.json();
+      liveEvents = (data.events || []).slice(0, 12);
+    }
+  } catch (e) { /* keep going */ }
+
+  // Merge in priority order: curated, Visit Music City, live events. Dedupe by first-30-chars name.
+  const merged = [];
+  const seen = new Set();
+  const push = (arr) => {
+    for (const e of arr) {
+      const key = (e.name || '').toLowerCase().slice(0, 30);
+      if (!seen.has(key) && merged.length < 6) {
+        merged.push(e);
+        seen.add(key);
+      }
+    }
+  };
+  push(festivals);
+  push(vmcFestivals);
+  push(liveEvents);
+
+  return merged;
 }
 
 function buildNewsletterHTML(events) {
@@ -172,7 +215,7 @@ function buildNewsletterHTML(events) {
 async function sendWeeklyNewsletter(resend) {
   await ensureTable();
   const subs = await getPool().query(`SELECT email, name, unsubscribe_token FROM subscribers WHERE unsubscribed_at IS NULL`);
-  const events = await fetchThisWeekendFestivals();
+  const events = await fetchThisWeekendEvents();
   const baseHtml = buildNewsletterHTML(events);
   const subject = `This Weekend in Nashville · ${new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`;
   let sent = 0, failed = 0;
@@ -207,7 +250,7 @@ export default async function handler(req, res) {
 
   // Newsletter actions (admin only)
   if (body.action === 'newsletter-preview') {
-    const events = await fetchThisWeekendFestivals();
+    const events = await fetchThisWeekendEvents();
     const html = buildNewsletterHTML(events).replace('{{UNSUB_URL}}', '#preview');
     res.setHeader('Content-Type', 'text/html');
     return res.status(200).send(html);
