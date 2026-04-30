@@ -3002,12 +3002,31 @@ function renderGroupMembers(members, expiresAt) {
   el.innerHTML = h;
 }
 
-function shareGroupCode(code) {
+async function shareGroupCode(code) {
   const text = `Join my Nashville group on Howdy Nash! Code: ${code}\nhttps://howdynash.com (tap Find My Group, then Join)`;
+  // Try the native share sheet first (iOS / Android Chrome)
   if (navigator.share) {
-    navigator.share({ title: 'Howdy Nash group', text }).catch(() => {});
-  } else {
-    window.location.href = `sms:?&body=${encodeURIComponent(text)}`;
+    try {
+      await navigator.share({ title: 'Howdy Nash group', text });
+      return;
+    } catch (e) { /* user cancelled or unsupported, fall through */ }
+  }
+  // Try clipboard copy
+  try {
+    await navigator.clipboard.writeText(text);
+    addMessage(`Copied to clipboard. Paste into your group chat. Code is <strong>${code}</strong>.`, 'bot');
+  } catch (e) {
+    // Clipboard blocked, show the text so user can copy manually
+    const safeCode = code.replace(/[<>]/g, '');
+    const safeText = text.replace(/</g, '&lt;');
+    const html = `<div class="card">
+      <div class="card-title">Share this with your group</div>
+      <div class="card-desc">Code: <strong style="font-size:24px;letter-spacing:6px;">${safeCode}</strong></div>
+      <textarea readonly style="width:100%;min-height:80px;padding:8px;font-size:13px;border:1px solid #ccc;border-radius:6px;margin:6px 0;" onclick="this.select()">${safeText}</textarea>
+      <a href="sms:?&body=${encodeURIComponent(text)}" style="background:#34a853;color:#fff;">Open SMS app</a>
+      <a href="mailto:?subject=Howdy%20Nash%20group&body=${encodeURIComponent(text)}" style="background:#2563eb;color:#fff;">Open email app</a>
+    </div>`;
+    addMessage(html, 'bot', true);
   }
 }
 
