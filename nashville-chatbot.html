@@ -1489,6 +1489,8 @@ function pushMenu(menuName) {
   }
   saveMenuState();
   updateBackBtn();
+  // Dismiss the persistent cheat sheet card the moment user navigates anywhere
+  if (typeof dismissCheatSheetCard === 'function') dismissCheatSheetCard();
 }
 function updateBackBtn() {
   const disabled = menuStack.length < 2;
@@ -1881,6 +1883,11 @@ function routeIntent(text) {
     showFindGroup();
     return;
   }
+
+  if (matches(lower, ['free 3-day guide', '📧 free 3-day guide', 'cheat sheet', 'free guide', '3-day guide', '3 day guide', 'email me the guide', 'free pdf', 'nashville cheat sheet'])) {
+    openSignupModal('cheatsheet');
+    return;
+  }
   if (lower.startsWith('🍹 6 hours')) { createGroupWithDuration(6); return; }
   if (lower.startsWith('🌞 12 hours')) { createGroupWithDuration(12); return; }
   if (lower.startsWith('🎉 24 hours')) { createGroupWithDuration(24); return; }
@@ -2214,8 +2221,21 @@ function showMainMenu() {
     'Weather',
     'Sports',
     '★ My saved',
-    'Local tips'
+    'Local tips',
+    '📧 Free 3-day guide'
   ]);
+}
+
+function dismissCheatSheetCard() {
+  // Remove the persistent cheat sheet card once the user navigates away from the welcome state.
+  document.querySelectorAll('.message .card').forEach(card => {
+    const title = card.querySelector('.card-title');
+    if (title && /3-Day Nashville Cheat Sheet/i.test(title.innerText)) {
+      const wrap = card.closest('.message');
+      if (wrap) wrap.remove();
+      else card.remove();
+    }
+  });
 }
 
 function showEatDrinkMenu(skipPush) {
