@@ -2698,6 +2698,16 @@ function showBachelorette() {
 
   const viatorSearch = (q) => `https://www.viator.com/searchResults/all?text=${encodeURIComponent(q)}&pid=${VIATOR_PID}`;
   const gygSearch = (q) => `https://www.getyourguide.com/s/?q=${encodeURIComponent(q)}&partner_id=${GETYOURGUIDE_PID}`;
+  const expediaSearch = (q) => {
+    const params = new URLSearchParams();
+    params.set('location', 'Nashville, Tennessee, United States');
+    params.set('q', q);
+    if (typeof EXPEDIA_CAMREF !== 'undefined' && EXPEDIA_CAMREF) {
+      params.set('camref', EXPEDIA_CAMREF);
+      if (typeof EXPEDIA_TPID !== 'undefined') params.set('tpid', EXPEDIA_TPID);
+    }
+    return `https://www.expedia.com/things-to-do/search?${params}`;
+  };
 
   const cards = [
     {
@@ -2705,7 +2715,8 @@ function showBachelorette() {
       desc: 'The signature Nashville bachelorette ride. Bring your own drinks (BYOB Tennessee).',
       links: [
         { label: 'Book on Viator', url: viatorSearch('Nashville pedal tavern party bus'), color: '#328e3a' },
-        { label: 'Book on GetYourGuide', url: gygSearch('nashville pedal tavern'), color: '#ff5533' }
+        { label: 'Book on GetYourGuide', url: gygSearch('nashville pedal tavern'), color: '#ff5533' },
+        { label: 'Book on Expedia', url: expediaSearch('Nashville pedal tavern party bus'), color: '#fbcc09', textColor: '#1a1a1a' }
       ]
     },
     {
@@ -2713,7 +2724,8 @@ function showBachelorette() {
       desc: 'Guided crawls through Broadway honky tonks. Skip-the-line perks at top spots.',
       links: [
         { label: 'Pub crawls on Viator', url: viatorSearch('Nashville pub crawl bachelorette'), color: '#328e3a' },
-        { label: 'Pub crawls on GetYourGuide', url: gygSearch('nashville pub crawl'), color: '#ff5533' }
+        { label: 'Pub crawls on GetYourGuide', url: gygSearch('nashville pub crawl'), color: '#ff5533' },
+        { label: 'Pub crawls on Expedia', url: expediaSearch('Nashville pub crawl bachelorette'), color: '#fbcc09', textColor: '#1a1a1a' }
       ]
     },
     {
@@ -2774,6 +2786,7 @@ function showBachelorette() {
       desc: 'Nelson\'s Green Brier (Marathon Village), Corsair tastings, Big Machine Distillery, Jack Daniel\'s day trip.',
       links: [
         { label: 'Distillery tours on Viator', url: viatorSearch('Nashville bachelorette distillery'), color: '#328e3a' },
+        { label: 'Distillery tours on Expedia', url: expediaSearch('Nashville distillery whiskey'), color: '#fbcc09', textColor: '#1a1a1a' },
         { label: 'Nelson\'s Green Brier', url: 'https://www.greenbrierdistillery.com', color: '#444' }
       ]
     },
@@ -2781,7 +2794,8 @@ function showBachelorette() {
       title: '🚁 Helicopter Tours',
       desc: 'Aerial views over downtown, Cumberland River, Broadway. 15 to 30 minute flights. Group rates.',
       links: [
-        { label: 'Helicopter tours on Viator', url: viatorSearch('Nashville helicopter bachelorette'), color: '#328e3a' }
+        { label: 'Helicopter tours on Viator', url: viatorSearch('Nashville helicopter bachelorette'), color: '#328e3a' },
+        { label: 'Helicopter tours on Expedia', url: expediaSearch('Nashville helicopter tour'), color: '#fbcc09', textColor: '#1a1a1a' }
       ]
     },
     {
@@ -2789,7 +2803,8 @@ function showBachelorette() {
       desc: 'General Jackson Showboat dinner cruise, party yacht charters, BYOB pontoon rentals.',
       links: [
         { label: 'General Jackson', url: 'https://generaljackson.com', color: '#d62828' },
-        { label: 'Boat parties on Viator', url: viatorSearch('Nashville boat tour bachelorette'), color: '#328e3a' }
+        { label: 'Boat parties on Viator', url: viatorSearch('Nashville boat tour bachelorette'), color: '#328e3a' },
+        { label: 'Boat parties on Expedia', url: expediaSearch('Nashville boat cruise'), color: '#fbcc09', textColor: '#1a1a1a' }
       ]
     },
     {
