@@ -1853,7 +1853,7 @@ function routeIntent(text) {
     return;
   }
 
-  if (matches(lower, ['family friendly', 'kid friendly', 'kids', 'family', 'with kids', 'children', 'kid', 'family activities', 'things to do with kids'])) {
+  if (matches(lower, ['family friendly', '👶 family friendly', 'kid friendly', 'kids', 'family', 'with kids', 'children', 'kid', 'family activities', 'things to do with kids'])) {
     showFamilyFriendly();
     return;
   }
@@ -2184,6 +2184,8 @@ function showMainMenu() {
     '🍽️ Eat & Drink',
     '🎵 Things to Do',
     '🏨 Stay & Get Around',
+    '👶 Family friendly',
+    '👰 Bachelorette',
     '🛒 Essentials',
     'Weather',
     'Sports',
