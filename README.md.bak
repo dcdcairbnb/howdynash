@@ -2,12 +2,12 @@
 
 A free conversational tourism chatbot for Nashville visitors. Get restaurant picks, live music, festivals, ride-share deep links, food delivery, vacation rentals, weather, and AI-powered Q&A about Music City. Mobile-first, no signup.
 
-Live: https://howdynash.com
+Live: https://howdy-nashville.vercel.app
 
 ## What's inside
 
 ```
-howdynash/
+howdy-nashville/
 ├── nashville-chatbot.html       Main app (frontend, single file)
 ├── deploy.sh                    Push to GitHub and trigger Vercel deploy
 ├── vercel.json                  Vercel routing and CORS
@@ -57,7 +57,7 @@ chmod +x deploy.sh
 ### Daily workflow
 
 ```bash
-cd /path/to/howdynash
+cd /path/to/howdy-nashville
 ./deploy.sh "your commit message"
 ```
 

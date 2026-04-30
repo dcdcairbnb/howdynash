@@ -1,7 +1,7 @@
-// Howdy Nashville service worker. Caches static assets for offline use.
+// Howdy Nash service worker. Caches static assets for offline use.
 // Bump CACHE_VERSION when deploying changes you want users to see immediately.
 
-const CACHE_VERSION = 'howdy-nashville-v1';
+const CACHE_VERSION = 'howdynash-v2';
 const STATIC_CACHE = `${CACHE_VERSION}-static`;
 
 const STATIC_ASSETS = [

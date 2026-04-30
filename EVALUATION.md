@@ -26,7 +26,7 @@ Mobile-first responsive design.
 
 Free with no signup.
 
-Production deployed at https://howdy-nashville.vercel.app
+Production deployed at https://howdynash.com
 
 ---
 
@@ -98,7 +98,7 @@ LLM model name. Initial code used a model name not available on the Anthropic ac
 
 ### Pain points
 
-Vercel project rename did not auto-update the production domain alias. Had to manually add howdy-nashville.vercel.app as a domain after renaming the project. Not documented well by Vercel.
+Vercel project rename did not auto-update the production domain alias. Had to manually add howdynash.vercel.app as a domain after renaming the project. Not documented well by Vercel.
 
 GitHub web UI markdown auto-linking. Pasting code from chat into GitHub web editor inserted markdown auto-links into the code (e.g. `[e.id](http://e.id)`), breaking the JavaScript. Fix: always upload files via drag-drop, never paste code.
 

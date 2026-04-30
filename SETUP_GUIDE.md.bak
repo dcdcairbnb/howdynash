@@ -12,7 +12,7 @@ Howdy Nashville is a conversational tourism chatbot for Nashville visitors. User
 
 The site is mobile-first, free to use, no signup required.
 
-Live URL: https://howdynash.com
+Live URL: https://howdy-nashville.vercel.app
 
 ---
 
@@ -35,7 +35,7 @@ Stack summary:
 - LLM: Anthropic Claude Haiku 4.5 via /api/chat endpoint
 - Hosting: Vercel hobby plan (free)
 - CI/CD: GitHub auto-deploy to Vercel on push
-- Domain: howdynash.com (custom domain pending)
+- Domain: howdy-nashville.vercel.app (custom domain pending)
 
 ---
 
@@ -83,9 +83,9 @@ Expedia Partner Network (EPN). Free, 24-48 hour approval. Pays 4-6% on hotel boo
 
 Login at github.com.
 
-Create a new repo named "howdynash". Set to public.
+Create a new repo named "howdy-nashville". Set to public.
 
-Note the repo URL: https://github.com/YOUR_USERNAME/howdynash.git
+Note the repo URL: https://github.com/YOUR_USERNAME/howdy-nashville.git
 
 ### Step 2. Create Vercel project
 
@@ -93,13 +93,13 @@ Login at vercel.com using GitHub OAuth.
 
 Click "Add New, Project".
 
-Import your GitHub repo "howdynash".
+Import your GitHub repo "howdy-nashville".
 
 Use default build settings (no build command needed).
 
 Click Deploy.
 
-Vercel gives you a URL like https://howdynash.com
+Vercel gives you a URL like https://howdy-nashville.vercel.app
 
 ### Step 3. Get API keys
 
@@ -135,7 +135,7 @@ ANTHROPIC_API_KEY=your_anthropic_key
 
 After saving, redeploy the project so the variables take effect.
 
-Verify everything connected by visiting: https://howdynash.com/api/health
+Verify everything connected by visiting: https://howdy-nashville.vercel.app/api/health
 
 You should see all services true.
 
@@ -232,8 +232,8 @@ Clone the repo locally if not already there.
 
 ```bash
 cd ~/Documents
-git clone https://github.com/YOUR_USERNAME/howdynash.git
-cd howdynash
+git clone https://github.com/YOUR_USERNAME/howdy-nashville.git
+cd howdy-nashville
 chmod +x deploy.sh
 ```
 
@@ -246,7 +246,7 @@ The deploy.sh script handles everything from this point.
 Daily workflow for pushing changes.
 
 ```bash
-cd /Users/dan/Documents/howdynash
+cd /Users/dan/Documents/howdy-nashville
 ./deploy.sh
 ```
 
@@ -272,7 +272,7 @@ Verify deployment.
 
 Open Vercel dashboard at https://vercel.com/dashboard. Click your project. Check Deployments tab for green Ready status.
 
-Hit https://howdynash.com to confirm changes are live.
+Hit https://howdy-nashville.vercel.app to confirm changes are live.
 
 Hard refresh browser if you see old content (Cmd+Shift+R on Mac).
 
@@ -281,7 +281,7 @@ Hard refresh browser if you see old content (Cmd+Shift+R on Mac).
 ## File Structure
 
 ```
-howdynash/
+howdy-nashville/
 ├── nashville-chatbot.html       Main app file (everything in one)
 ├── deploy.sh                     Deploy script
 ├── package.json                  Vercel detects Node project
@@ -314,7 +314,7 @@ howdynash/
 Deploy local changes.
 
 ```bash
-cd /Users/dan/Documents/howdynash && ./deploy.sh
+cd /Users/dan/Documents/howdy-nashville && ./deploy.sh
 ```
 
 Check git status.
@@ -338,14 +338,14 @@ git pull origin main
 Verify health endpoint.
 
 ```bash
-curl https://howdynash.com/api/health
+curl https://howdy-nashville.vercel.app/api/health
 ```
 
 Test specific endpoint.
 
 ```bash
-curl https://howdynash.com/api/weather
-curl https://howdynash.com/api/events?keyword=country
+curl https://howdy-nashville.vercel.app/api/weather
+curl https://howdy-nashville.vercel.app/api/events?keyword=country
 ```
 
 ---
@@ -489,7 +489,7 @@ If something breaks, check this guide first.
 
 Vercel logs: vercel.com/dashboard, your project, Logs tab.
 
-GitHub commits: github.com/YOUR_USERNAME/howdynash/commits
+GitHub commits: github.com/YOUR_USERNAME/howdy-nashville/commits
 
 API status pages: each service has a status page (status.anthropic.com, status.openai.com style).
 

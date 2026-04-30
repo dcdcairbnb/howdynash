@@ -26,11 +26,11 @@ You have 20 to 40 hours of time over 1 to 2 weeks.
 
 Morning. Buy domain howdy[city].com or .app. $12.
 
-Morning. Clone the howdynash repo.
+Morning. Clone the howdy-nashville repo.
 
 ```bash
 cd /Users/dan/Documents
-git clone https://github.com/dcdcairbnb/howdynash.git howdy-[city]
+git clone https://github.com/dcdcairbnb/howdy-nashville.git howdy-[city]
 cd howdy-[city]
 rm -rf .git
 git init
