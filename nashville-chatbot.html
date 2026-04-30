@@ -1858,6 +1858,11 @@ function routeIntent(text) {
     return;
   }
 
+  if (matches(lower, ['line dancing', 'line dance', 'two step', 'two-step', 'country dancing', 'dance lesson', 'wildhorse'])) {
+    showLineDancing();
+    return;
+  }
+
   if (matches(lower, ['bachelorette', 'bach party', 'pedal tavern', 'party bus', 'bach weekend'])) {
     showBachelorette();
     return;
@@ -2211,6 +2216,7 @@ function showThingsToDoMenu(skipPush) {
     'What\'s happening',
     'Tourist attractions',
     'Family friendly',
+    'Line dancing',
     'Free things to do',
     'East Nashville gems',
     'Sports',
@@ -2485,6 +2491,19 @@ const CURATED_FREE_THINGS = [
   { name: "Belle Meade Plantation grounds (free walk)", neighborhood: "Belle Meade", desc: "Walking the historic grounds is free. The mansion tour is paid. Photo spots throughout.", url: "https://bellemeadehistoricsite.com" }
 ];
 
+const CURATED_LINE_DANCING = [
+  { name: "Wildhorse Saloon", neighborhood: "Lower Broadway", desc: "Three floors, free line dancing lessons every night at 7pm. The big one. Bachelorette and birthday party central.", url: "https://www.wildhorsesaloon.com" },
+  { name: "Nashville Palace", neighborhood: "Music Valley", desc: "Traditional country dance hall near the Opry. Live bands, real two-stepping crowd, less touristy.", url: "https://nashville-palace.com" },
+  { name: "Honky Tonk Central", neighborhood: "Lower Broadway", desc: "Three-story honky tonk with dance floors on each level. Live country bands and casual line dancing all day.", url: "https://www.honkytonkcentral.com" },
+  { name: "The Stage on Broadway", neighborhood: "Lower Broadway", desc: "Dance floor, three stages, live country every night. Easy room to two-step.", url: "https://www.thestageonbroadway.com" },
+  { name: "Whiskey Row Nashville", neighborhood: "Lower Broadway", desc: "Dierks Bentley's spot. Two floors, dance floor, line dancing crowd on weekends.", url: "https://nashville.whiskeyrow.com" },
+  { name: "Tin Roof Broadway", neighborhood: "Lower Broadway", desc: "Live music and dancing. Smaller and looser than the big honky tonks. Great for first-timers learning to two-step.", url: "https://tinroofbars.com/nashville-broadway" },
+  { name: "Cadillac Ranch", neighborhood: "Lower Broadway", desc: "Mechanical bull, dance floor, country line dancing crowd. Bachelorette favorite.", url: "https://cadillacranchbar.com" },
+  { name: "Skull's Rainbow Room", neighborhood: "Printers Alley", desc: "Vintage Nashville dance and dinner spot. Burlesque shows plus dance floor. Reservations recommended.", url: "https://skullsrainbowroom.com" },
+  { name: "Two Step Nashville (lessons)", neighborhood: "Multiple", desc: "Private and group two-step / line dancing lessons by professional instructors. Bachelorette parties welcome.", url: "https://twostepnashville.com" },
+  { name: "AJ's Good Time Bar", neighborhood: "Lower Broadway", desc: "Alan Jackson's bar. Live country, dance floor, line dancing on weekends.", url: "https://ajsgoodtimebar.com" }
+];
+
 const CURATED_FAMILY_FRIENDLY = [
   { name: "Nashville Zoo at Grassmere", neighborhood: "South Nashville", desc: "200+ acres with Andean bears, big cats, primates, and a kangaroo walkthrough. Splash pad and playground in summer.", url: "https://www.nashvillezoo.org" },
   { name: "Adventure Science Center", neighborhood: "Wedgewood-Houston", desc: "Hands-on science exhibits, rock-climbing wall, and the Sudekum Planetarium. Great for kids 4-12.", url: "https://www.adventuresci.org" },
@@ -2727,6 +2746,10 @@ function showFamilyFriendly() {
   setTimeout(() => {
     addMessage('<div class="card"><div class="card-title">🍗 Kids on Lower Broadway</div><div class="card-desc">Most Broadway honky tonks allow all ages until 6pm. After 6pm they switch to 21 and over. Best to do honky tonk hop before dinner with kids. Tootsie\'s, Robert\'s, and Acme Feed and Seed are the most kid-friendly during the day.</div></div>', 'bot', true);
   }, 600);
+}
+function showLineDancing() {
+  addMessage("Where to line dance and two-step in Nashville. Wildhorse Saloon teaches free lessons every night at 7pm.", 'bot');
+  showCuratedThenLive(CURATED_LINE_DANCING, 'line dancing two step country dance', 'restaurant', 'line dancing spots');
 }
 function showBachelorette() {
   addMessage("Bachelorette mode activated. Nashville is the bachelorette capital. Here is everything you need.", 'bot');
