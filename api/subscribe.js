@@ -233,6 +233,27 @@ async function sendWeeklyNewsletter(resend) {
 }
 
 export default async function handler(req, res) {
+  // Vercel Cron support: GET /api/subscribe?cron=newsletter triggers the weekly send.
+  // Vercel automatically attaches Authorization: Bearer CRON_SECRET when calling cron paths.
+  if (req.method === 'GET' && req.query && req.query.cron === 'newsletter') {
+    const auth = req.headers.authorization || '';
+    const expected = `Bearer ${process.env.CRON_SECRET || ''}`;
+    if (!process.env.CRON_SECRET || auth !== expected) {
+      return res.status(403).json({ error: 'cron auth required' });
+    }
+    if (!process.env.RESEND_API_KEY || !process.env.POSTGRES_URL) {
+      return res.status(503).json({ error: 'email or db not configured' });
+    }
+    try {
+      const resend = new Resend(process.env.RESEND_API_KEY);
+      const result = await sendWeeklyNewsletter(resend);
+      return res.status(200).json({ ok: true, ...result });
+    } catch (e) {
+      console.error('cron newsletter error', e);
+      return res.status(500).json({ error: e.message });
+    }
+  }
+
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'POST only' });
   }
