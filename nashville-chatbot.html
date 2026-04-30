@@ -1877,7 +1877,7 @@ function routeIntent(text) {
     return;
   }
 
-  if (matches(lower, ['share location', '📍 share location', 'find my group', 'group location', 'share location with group', 'find friends', 'group sharing', 'find group', 'group map', '👯 find my group'])) {
+  if (matches(lower, ['group share', '👯 group share', 'share location', 'find my group', 'group location', 'share location with group', 'find friends', 'group sharing', 'find group', 'group map'])) {
     showFindGroup();
     return;
   }
@@ -2209,7 +2209,7 @@ function showMainMenu() {
     '🏨 Stay & Get Around',
     '👶 Family friendly',
     '👰 Bachelorette',
-    '📍 Share location',
+    '👯 Group share',
     '🛒 Essentials',
     'Weather',
     'Sports',
@@ -2791,13 +2791,6 @@ function showEastNashville() {
 }
 function showFamilyFriendly() {
   addMessage("Nashville with kids. Music City does family well.", 'bot');
-  // Group location card for families
-  const groupCard = `<div class="card" style="border:2px solid #d62828;">
-    <div class="card-title">👯 Stay together with the family</div>
-    <div class="card-desc">Live map of every parent and older kid in your group. Auto-expires after 6, 12, or 24 hours. Great for big amusement parks and split-up days.</div>
-    <a href="#" onclick="showFindGroup();return false;" style="background:#d62828;color:#fff;">Set up family location sharing</a>
-  </div>`;
-  addMessage(groupCard, 'bot', true);
   showCuratedThenLive(CURATED_FAMILY_FRIENDLY, 'family kids attraction park zoo museum', 'tourist_attraction', 'family-friendly Nashville spots');
   setTimeout(() => {
     addMessage('<div class="card"><div class="card-title">🍗 Kids on Lower Broadway</div><div class="card-desc">Most Broadway honky tonks allow all ages until 6pm. After 6pm they switch to 21 and over. Best to do honky tonk hop before dinner with kids. Tootsie\'s, Robert\'s, and Acme Feed and Seed are the most kid-friendly during the day.</div></div>', 'bot', true);
@@ -3213,14 +3206,6 @@ async function endGroup() {
 }
 function showBachelorette() {
   addMessage("Bachelorette mode activated. Nashville is the bachelorette capital. Here is everything you need.", 'bot');
-
-  // Group location sharing card - first because bachelorettes lose each other on Broadway
-  const bachGroupCard = `<div class="card" style="border:2px solid #d62828;">
-    <div class="card-title">📍 Share location with the crew</div>
-    <div class="card-desc">Live map of everyone in your group. Auto-expires after 6, 12, or 24 hours. Lower Broadway is chaos, this fixes that.</div>
-    <button type="button" onclick="showFindGroup()" style="background:#d62828;color:#fff;border:none;padding:10px 16px;border-radius:8px;font-weight:600;cursor:pointer;font-size:14px;margin:4px 0;">Set up location sharing</button>
-  </div>`;
-  addMessage(bachGroupCard, 'bot', true);
 
   const viatorSearch = (q) => `https://www.viator.com/searchResults/all?text=${encodeURIComponent(q)}&pid=${VIATOR_PID}`;
   const gygSearch = (q) => `https://www.getyourguide.com/s/?q=${encodeURIComponent(q)}&partner_id=${GETYOURGUIDE_PID}`;
