@@ -2980,8 +2980,11 @@ function joinGroupFlow() {
     <input id="groupNameInput" type="text" maxlength="40" placeholder="Your name (e.g., Megan)" style="width:100%;padding:10px;font-size:14px;border:1px solid #ccc;border-radius:6px;margin:6px 0;">
     <a href="#" onclick="submitJoinGroup();return false;" style="background:#2563eb;color:#fff;">Join group</a>
   </div>`;
-  addMessage(html, 'bot', true);
+  const card = addMessage(html, 'bot', true);
   setTimeout(() => {
+    if (card && typeof card.scrollIntoView === 'function') {
+      card.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    }
     const el = document.getElementById('groupCodeInput');
     if (el) el.focus();
   }, 200);
@@ -4750,19 +4753,27 @@ setTimeout(() => {
     setTimeout(() => updateBackBtn(), 350);
   } else {
     addMessage(ctx.greeting, 'bot');
-    setTimeout(() => showMainMenu(), 400);
-    // Show the cheat sheet card once per session, but never if the user already signed up.
-    const alreadySignedUp = (() => { try { return !!localStorage.getItem('howdy-nash-email-signed-up'); } catch (e) { return false; } })();
-    if (!alreadySignedUp && !sessionStorage.getItem('cheatsheet-shown')) {
-      sessionStorage.setItem('cheatsheet-shown', '1');
-      setTimeout(() => {
-        const card = `<div class="card" style="background:#fff5f5;border-left:3px solid #d62828;">
-          <div class="card-title">📧 Free 3-Day Nashville Cheat Sheet</div>
-          <div class="card-desc">Restaurants, music, neighborhoods, all in one PDF. Emailed to you, free.</div>
-          <button onclick="openSignupModal('cheatsheet'); return false;" style="background:#d62828;color:#fff;border:none;padding:10px 16px;border-radius:8px;cursor:pointer;font-weight:600;margin-top:8px;">Email me the cheat sheet</button>
-        </div>`;
-        addMessage(card, 'bot', true);
-      }, 1800);
+    // Skip the main menu and cheat sheet when the user is arriving via a group
+    // invite link. They came to join, not to browse.
+    const joiningGroup = (() => {
+      try { return !!new URLSearchParams(window.location.search).get('join'); }
+      catch (e) { return false; }
+    })();
+    if (!joiningGroup) {
+      setTimeout(() => showMainMenu(), 400);
+      // Show the cheat sheet card once per session, but never if the user already signed up.
+      const alreadySignedUp = (() => { try { return !!localStorage.getItem('howdy-nash-email-signed-up'); } catch (e) { return false; } })();
+      if (!alreadySignedUp && !sessionStorage.getItem('cheatsheet-shown')) {
+        sessionStorage.setItem('cheatsheet-shown', '1');
+        setTimeout(() => {
+          const card = `<div class="card" style="background:#fff5f5;border-left:3px solid #d62828;">
+            <div class="card-title">📧 Free 3-Day Nashville Cheat Sheet</div>
+            <div class="card-desc">Restaurants, music, neighborhoods, all in one PDF. Emailed to you, free.</div>
+            <button onclick="openSignupModal('cheatsheet'); return false;" style="background:#d62828;color:#fff;border:none;padding:10px 16px;border-radius:8px;cursor:pointer;font-weight:600;margin-top:8px;">Email me the cheat sheet</button>
+          </div>`;
+          addMessage(card, 'bot', true);
+        }, 1800);
+      }
     }
   }
   setTimeout(() => snapshot('initial'), 500);
