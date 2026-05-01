@@ -3258,7 +3258,8 @@ function shareGroupCode(code) {
   const text = `Join my Nashville group on Howdy Nash!\nCode: ${code}\n\nTap to open and auto-join:\nhttps://howdynash.com/?join=${code}`;
   const safeCode = String(code).replace(/[<>]/g, '');
   const safeText = text.replace(/</g, '&lt;').replace(/"/g, '&quot;');
-  const btnStyle = 'border:none;padding:10px 16px;border-radius:8px;font-weight:600;cursor:pointer;font-size:14px;margin:4px;color:#fff;';
+  const encodedText = encodeURIComponent(text);
+  const linkStyle = 'display:inline-block;padding:10px 16px;border-radius:8px;font-weight:600;font-size:14px;margin:4px;color:#fff;text-decoration:none;';
   const html = `<div class="card">
     <div class="card-title">Share this with your group</div>
     <div class="card-desc">Group code:</div>
@@ -3266,10 +3267,10 @@ function shareGroupCode(code) {
     <div class="card-desc">Or share the message:</div>
     <textarea readonly style="width:100%;min-height:80px;padding:8px;font-size:13px;border:1px solid #ccc;border-radius:6px;margin:6px 0;font-family:inherit;" onclick="this.select()">${safeText}</textarea>
     <div>
-      <button type="button" onclick="copyGroupShareText(this, '${safeCode}')" style="background:#666;${btnStyle}">📋 Copy message</button>
-      <button type="button" onclick="window.location.href='sms:?&body=${encodeURIComponent(text)}'" style="background:#34a853;${btnStyle}">💬 Open SMS</button>
-      <button type="button" onclick="window.location.href='mailto:?subject=Howdy%20Nash%20group&body=${encodeURIComponent(text)}'" style="background:#2563eb;${btnStyle}">✉️ Open Email</button>
-      ${navigator.share ? `<button type="button" onclick="nativeShareGroupCode('${safeCode}')" style="background:#d62828;${btnStyle}">📤 Share to apps</button>` : ''}
+      <a href="#" onclick="copyGroupShareText(this, '${safeCode}');return false;" style="background:#666;${linkStyle}">📋 Copy message</a>
+      <a href="sms:&body=${encodedText}" style="background:#34a853;${linkStyle}">💬 Open SMS</a>
+      <a href="mailto:?subject=Howdy%20Nash%20group&body=${encodedText}" style="background:#2563eb;${linkStyle}">✉️ Open Email</a>
+      ${navigator.share ? `<a href="#" onclick="nativeShareGroupCode('${safeCode}');return false;" style="background:#d62828;${linkStyle}">📤 Share to apps</a>` : ''}
     </div>
   </div>`;
   addMessage(html, 'bot', true);
