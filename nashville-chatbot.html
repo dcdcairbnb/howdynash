@@ -4967,7 +4967,7 @@ async function showAllRestaurants() {
 }
 
 function showRestaurantsPaged(list, startIdx) {
-  const pageSize = 8;
+  const pageSize = 5;
   const slice = list.slice(startIdx, startIdx + pageSize);
   slice.forEach(r => addMessage(renderRestaurantCard(r), 'bot', true));
   const remaining = list.length - (startIdx + pageSize);
@@ -5004,12 +5004,8 @@ async function showRestaurants(list, header) {
   if (userLocation && enriched.some(r => r.distanceMiles != null)) {
     enriched.sort((a, b) => (a.distanceMiles ?? 9999) - (b.distanceMiles ?? 9999));
   }
-  enriched.forEach(r => {
-    addMessage(renderRestaurantCard(r), 'bot', true);
-  });
-  setTimeout(() => {
-    addQuickReplies(['Show me more options', '← Eat & Drink', '← Main menu']);
-  }, 400);
+  // Paginate: render the first 5, then a "Show next 5" button if there are more
+  showRestaurantsPaged(enriched, 0);
 }
 
 async function showLiveMusic() {
