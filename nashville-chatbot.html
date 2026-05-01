@@ -4179,6 +4179,14 @@ function showVacationRentals() {
   </div>`;
   addMessage(backup2, 'bot', true);
 
+  const bigGroup = `<div class="card" style="border:2px dashed #d62828;">
+    <div class="card-title">👯 Bigger group? Try this large house</div>
+    <div class="card-desc"><strong>Sleeps a bigger crew · Bachelorette and bachelor party-friendly</strong></div>
+    <div class="card-desc">For groups that need more space than a 2BR. Same trusted local host network.</div>
+    <a href="https://www.airbnb.com/rooms/1219676997866845597" target="_blank" rel="noopener" style="background:#FF5A5F;">View on Airbnb</a>
+  </div>`;
+  addMessage(bigGroup, 'bot', true);
+
   const airbnbUrl = buildAirbnbUrl();
   const vrboUrl = buildVrboUrl();
   const locationNote = userLocation ? "Centered on your current location." : "Search starts in Nashville. Share your location for nearby filters.";
