@@ -4163,21 +4163,15 @@ function showVacationRentals() {
   addMessage(renderHostPickCard(), 'bot', true);
 
   // Backup picks if the host's listing isn't a fit
-  const backup1 = `<div class="card">
-    <div class="card-title">Germantown alternate · Location Matters</div>
-    <div class="card-desc"><strong>2 bedroom · 3 beds · Sleeps 6 · Free parking</strong></div>
-    <div class="card-desc">Same Germantown neighborhood. Great backup if Music City Retreat is booked.</div>
-    <a href="https://www.airbnb.com/rooms/823879694871437688" target="_blank" rel="noopener" style="background:#FF5A5F;">View on Airbnb</a>
+  const backups = `<div class="card">
+    <div class="card-title">Germantown alternates if Music City Retreat is booked</div>
+    <div class="card-desc">Same Germantown neighborhood, walking distance to downtown. Two solid backup options:</div>
+    <div class="card-desc"><strong>Location Matters</strong> · 2BR · 3 beds · Sleeps 6 · Free parking</div>
+    <a href="https://www.airbnb.com/rooms/823879694871437688" target="_blank" rel="noopener" style="background:#FF5A5F;">View Location Matters</a>
+    <div class="card-desc" style="margin-top:8px;"><strong>2BR with full beds</strong> · 4 beds · 1 bath · Sleeps 6 · Free parking</div>
+    <a href="https://www.airbnb.com/rooms/1290117954789053772" target="_blank" rel="noopener" style="background:#FF5A5F;">View 2BR full-beds</a>
   </div>`;
-  addMessage(backup1, 'bot', true);
-
-  const backup2 = `<div class="card">
-    <div class="card-title">Germantown alternate · 2BR with full beds</div>
-    <div class="card-desc"><strong>2 bedroom · 4 beds · 1 bath · Sleeps 6 · Free parking</strong></div>
-    <div class="card-desc">Same Germantown neighborhood. Walking distance to downtown.</div>
-    <a href="https://www.airbnb.com/rooms/1290117954789053772" target="_blank" rel="noopener" style="background:#FF5A5F;">View on Airbnb</a>
-  </div>`;
-  addMessage(backup2, 'bot', true);
+  addMessage(backups, 'bot', true);
 
   const bigGroup = `<div class="card" style="border:2px dashed #d62828;">
     <div class="card-title">👯 Bigger group? Try this large house</div>
