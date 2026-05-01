@@ -1,8 +1,8 @@
-# Howdy Nashville Setup Guide
+# Howdy Nash Setup Guide
 
 Complete setup documentation for the Nashville tourist chatbot. Reference this whenever you need to remember how something is wired or onboard a partner.
 
-Last updated: April 2026
+Last updated: May 1, 2026
 
 ---
 
