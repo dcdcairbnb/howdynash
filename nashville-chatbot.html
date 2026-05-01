@@ -4117,7 +4117,7 @@ function buildVrboUrl() {
 }
 
 function showLuggageStorage() {
-  addMessage("Need to ditch your bags between checkout and your flight? Three trusted services partner with shops, hotels, and cafes around Nashville.", 'bot');
+  addMessage("Need to ditch your bags between checkout and your flight? Two trusted services partner with shops, hotels, and cafes around Nashville.", 'bot');
 
   const lat = userLocation ? userLocation.lat : 36.1627;
   const lng = userLocation ? userLocation.lng : -86.7816;
@@ -4127,8 +4127,6 @@ function showLuggageStorage() {
   const bounceUrl = `https://bounce.com`;
   // LuggageHero - homepage works in all locations, city deep links 404
   const luggageheroUrl = `https://luggagehero.com`;
-  // Vertoe
-  const vertoeUrl = `https://www.vertoe.com/luggage-storage-nashville`;
   // Google Maps fallback
   const mapsUrl = userLocation
     ? `https://www.google.com/maps/search/luggage+storage/@${lat},${lng},14z`
@@ -4139,7 +4137,6 @@ function showLuggageStorage() {
     <div class="card-desc">${locationNote}</div>
     <a href="${bounceUrl}" target="_blank" rel="noopener" style="background:#ff5b3a;color:#fff;">Bounce ($6/bag/day)</a>
     <a href="${luggageheroUrl}" target="_blank" rel="noopener" style="background:#1f3a93;color:#fff;">LuggageHero ($1/hour)</a>
-    <a href="${vertoeUrl}" target="_blank" rel="noopener" style="background:#00bfa5;color:#fff;">Vertoe ($5.95/bag/day)</a>
     <a href="${mapsUrl}" target="_blank" rel="noopener" style="background:#34a853;color:#fff;">See nearby on Google Maps</a>
     <div class="card-desc" style="font-size:12px;color:#666;margin-top:8px;">Tip: hotels usually hold bags free for guests after checkout. Ask the front desk before paying for storage.</div>
   </div>`;
