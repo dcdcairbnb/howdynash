@@ -2396,27 +2396,31 @@ function findLiveMatch(curatedItem, liveList) {
 
 // Match curated items against a Google Places search to attach distance, rating, and address.
 async function enrichCuratedWithLive(items, query, type) {
-  if (!apiServices.google || !userLocation) return items;
-  try {
-    const live = await apiSearchPlaces(query, type);
-    if (!live || !live.length) return items;
-    return items.map(item => {
-      const match = findLiveMatch(item, live);
-      if (match) {
-        return {
-          ...item,
-          distanceMiles: match.distanceMiles,
-          rating: item.rating || match.rating,
-          reviewCount: item.reviewCount || match.reviewCount,
-          address: item.address || match.address,
-          mapsUrl: item.mapsUrl || match.mapsUrl
-        };
-      }
-      return item;
-    });
-  } catch (e) {
-    return items;
+  if (!userLocation) return items;
+  let live = null;
+  if (apiServices.google) {
+    try { live = await apiSearchPlaces(query, type); } catch (e) { live = null; }
   }
+  return items.map(item => {
+    const match = live && live.length ? findLiveMatch(item, live) : null;
+    let distanceMiles = match?.distanceMiles ?? null;
+    // Fall back to entry coords, then neighborhood center
+    if (distanceMiles == null && item.coords) {
+      distanceMiles = haversineMiles(userLocation, item.coords);
+    }
+    if (distanceMiles == null && item.neighborhood) {
+      const nb = neighborhoodCoords(item.neighborhood);
+      if (nb) distanceMiles = haversineMiles(userLocation, nb);
+    }
+    return {
+      ...item,
+      distanceMiles: distanceMiles ?? item.distanceMiles ?? null,
+      rating: item.rating || match?.rating,
+      reviewCount: item.reviewCount || match?.reviewCount,
+      address: item.address || match?.address,
+      mapsUrl: item.mapsUrl || match?.mapsUrl
+    };
+  });
 }
 
 function haversineMiles(a, b) {
@@ -4554,7 +4558,10 @@ function renderRestaurantCard(r) {
   const b = r.booking || {};
   const isWalkin = !!b.walkin;
   const ratingBadge = r.rating ? `<span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:10px;font-size:12px;font-weight:600;margin-left:6px;">⭐ ${r.rating}${r.reviewCount ? ' · ' + r.reviewCount : ''}</span>` : '';
-  const distStr = r.distanceMiles != null ? ` · 📍 ${r.distanceMiles} mi` : '';
+  // Mark distance as approx if it came from a neighborhood center fallback
+  // (when there's no exact rating, we know it didn't come from Google Places).
+  const isApprox = r.distanceMiles != null && !r.rating;
+  const distStr = r.distanceMiles != null ? ` · 📍 ${r.distanceMiles} mi${isApprox ? ' (approx)' : ''}` : '';
   const star = renderSaveStar({ name: r.name, note: r.vibe || r.cuisine, address: r.neighborhood || '', phone: r.phone || '' });
   const share = renderShareButton({ name: r.name, desc: `${r.cuisine || ''}${r.neighborhood ? ' in ' + r.neighborhood : ''}`, url: b.opentable || b.resy || b.tock || b.yelp || '' });
   let html = `<div class="card">
@@ -4686,47 +4693,55 @@ async function showLiveMusic() {
     }
   }
   const venues = [
-    { name: "Lower Broadway Honky Tonks", desc: "Free live music starting at 10am daily. Tootsie's, Robert's, Acme, Legends Corner.", url: null },
-    { name: "Grand Ole Opry", desc: "The institution. Shows Tue, Fri, Sat. Get tickets in advance.", url: "https://www.opry.com" },
-    { name: "Bluebird Cafe", desc: "Intimate songwriter rounds in Green Hills. Reservations open weeks ahead.", url: "https://bluebirdcafe.com" },
-    { name: "Ryman Auditorium", desc: "Mother Church of Country Music. Touring artists nightly in the historic venue.", url: "https://ryman.com" },
-    { name: "Station Inn", desc: "Bluegrass legend in The Gulch. Cash only. Tiny, magical, must-do.", url: "https://stationinn.com" },
-    { name: "Exit/In", desc: "Indie rock and singer-songwriters on Elliston Place. Historic and gritty.", url: "https://exitin.com" },
-    { name: "3rd and Lindsley", desc: "Wedgewood-Houston live venue with food. Diverse genres, big-name artists.", url: "https://www.3rdandlindsley.com" },
-    { name: "The 5 Spot", desc: "East Nashville indie bands and dance nights. Locals' favorite.", url: "https://www.the5spotnashville.com" },
-    { name: "The Basement", desc: "Belmont underground rock club. New artists, intimate space.", url: "https://thebasementnashville.com" },
-    { name: "Brooklyn Bowl Nashville", desc: "Germantown bowling, food, big-name concerts in one venue.", url: "https://www.brooklynbowl.com/nashville" },
-    { name: "City Winery Nashville", desc: "Cannery Row singer-songwriter shows in an upscale wine bar.", url: "https://citywinery.com/nashville" },
-    { name: "Listening Room Cafe", desc: "SoBro songwriter showcases. Dinner and drinks while you listen.", url: "https://www.listeningroomcafe.com" },
-    { name: "Skull's Rainbow Room", desc: "Historic Printers Alley supper club. Jazz, burlesque, supper club vibe.", url: "https://www.skullsrainbowroom.com" },
-    { name: "Bourbon Street Blues Bar", desc: "New Orleans-style blues club in Printers Alley. Live music nightly.", url: "https://www.bourbonstreetbluesandboogiebar.com" },
-    { name: "Bobby's Idle Hour", desc: "Songwriters' bar that survived Music Row redevelopment. Pure tradition.", url: "https://www.bobbysidlehour.com" },
-    { name: "Schermerhorn Symphony Center", desc: "Home of the Nashville Symphony. Classical, pops, and major touring acts.", url: "https://www.nashvillesymphony.org" },
-    { name: "Marathon Music Works", desc: "Mid-size venue in Marathon Village. National touring acts.", url: "https://www.marathonmusicworks.com" },
-    { name: "Cannery Hall", desc: "Reopened 2024. Multi-room music venue in old cannery building.", url: "https://canneryhall.com" }
+    { name: "Lower Broadway Honky Tonks", neighborhood: "Lower Broadway", desc: "Free live music starting at 10am daily. Tootsie's, Robert's, Acme, Legends Corner.", url: null },
+    { name: "Grand Ole Opry", neighborhood: "Opry Mills", desc: "The institution. Shows Tue, Fri, Sat. Get tickets in advance.", url: "https://www.opry.com" },
+    { name: "Bluebird Cafe", neighborhood: "Green Hills", desc: "Intimate songwriter rounds in Green Hills. Reservations open weeks ahead.", url: "https://bluebirdcafe.com" },
+    { name: "Ryman Auditorium", neighborhood: "Downtown", desc: "Mother Church of Country Music. Touring artists nightly in the historic venue.", url: "https://ryman.com" },
+    { name: "Station Inn", neighborhood: "The Gulch", desc: "Bluegrass legend in The Gulch. Cash only. Tiny, magical, must-do.", url: "https://stationinn.com" },
+    { name: "Exit/In", neighborhood: "Midtown", desc: "Indie rock and singer-songwriters on Elliston Place. Historic and gritty.", url: "https://exitin.com" },
+    { name: "3rd and Lindsley", neighborhood: "Wedgewood-Houston", desc: "Wedgewood-Houston live venue with food. Diverse genres, big-name artists.", url: "https://www.3rdandlindsley.com" },
+    { name: "The 5 Spot", neighborhood: "East Nashville", desc: "East Nashville indie bands and dance nights. Locals' favorite.", url: "https://www.the5spotnashville.com" },
+    { name: "The Basement", neighborhood: "Edgehill", desc: "Belmont underground rock club. New artists, intimate space.", url: "https://thebasementnashville.com" },
+    { name: "Brooklyn Bowl Nashville", neighborhood: "Germantown", desc: "Germantown bowling, food, big-name concerts in one venue.", url: "https://www.brooklynbowl.com/nashville" },
+    { name: "City Winery Nashville", neighborhood: "Downtown", desc: "Cannery Row singer-songwriter shows in an upscale wine bar.", url: "https://citywinery.com/nashville" },
+    { name: "Listening Room Cafe", neighborhood: "SoBro", desc: "SoBro songwriter showcases. Dinner and drinks while you listen.", url: "https://www.listeningroomcafe.com" },
+    { name: "Skull's Rainbow Room", neighborhood: "Printers Alley", desc: "Historic Printers Alley supper club. Jazz, burlesque, supper club vibe.", url: "https://www.skullsrainbowroom.com" },
+    { name: "Bourbon Street Blues Bar", neighborhood: "Printers Alley", desc: "New Orleans-style blues club in Printers Alley. Live music nightly.", url: "https://www.bourbonstreetbluesandboogiebar.com" },
+    { name: "Bobby's Idle Hour", neighborhood: "Music Row", desc: "Songwriters' bar that survived Music Row redevelopment. Pure tradition.", url: "https://www.bobbysidlehour.com" },
+    { name: "Schermerhorn Symphony Center", neighborhood: "Downtown", desc: "Home of the Nashville Symphony. Classical, pops, and major touring acts.", url: "https://www.nashvillesymphony.org" },
+    { name: "Marathon Music Works", neighborhood: "Marathon Village", desc: "Mid-size venue in Marathon Village. National touring acts.", url: "https://www.marathonmusicworks.com" },
+    { name: "Cannery Hall", neighborhood: "Wedgewood-Houston", desc: "Reopened 2024. Multi-room music venue in old cannery building.", url: "https://canneryhall.com" }
   ];
-  let enrichedVenues = venues.map(v => ({ item: v, match: null }));
+  let enrichedVenues = venues.map(v => ({ item: v, match: null, dist: null }));
   if (apiServices.google && userLocation) {
     try {
       const liveVenues = await apiSearchPlaces('live music venue concert hall', '');
-      enrichedVenues = venues.map(v => ({ item: v, match: findLiveMatch(v, liveVenues) }));
-      enrichedVenues.sort((a, b) => {
-        const da = a.match?.distanceMiles ?? 9999;
-        const db = b.match?.distanceMiles ?? 9999;
-        return da - db;
-      });
+      enrichedVenues = venues.map(v => ({ item: v, match: findLiveMatch(v, liveVenues), dist: null }));
     } catch (e) {
       console.warn('venue distance enrichment failed', e);
     }
   }
-  enrichedVenues.forEach(({ item: v, match }) => {
-    const distStr = match && match.distanceMiles != null ? ` · 📍 ${match.distanceMiles} mi` : '';
+  // Compute distance with neighborhood fallback
+  if (userLocation) {
+    enrichedVenues = enrichedVenues.map(x => {
+      let dist = x.match?.distanceMiles ?? null;
+      if (dist == null && x.item.neighborhood) {
+        const nb = neighborhoodCoords(x.item.neighborhood);
+        if (nb) dist = haversineMiles(userLocation, nb);
+      }
+      return { ...x, dist };
+    });
+    enrichedVenues.sort((a, b) => (a.dist ?? 9999) - (b.dist ?? 9999));
+  }
+  enrichedVenues.forEach(({ item: v, match, dist }) => {
+    const isApprox = dist != null && match?.distanceMiles == null;
+    const distStr = dist != null ? ` · 📍 ${dist} mi${isApprox ? ' (approx)' : ''}` : '';
     const ratingStr = match && match.rating ? `★ ${match.rating}` : '';
-    const star = renderSaveStar({ name: v.name, note: v.desc, address: match?.address || 'Nashville' });
+    const star = renderSaveStar({ name: v.name, note: v.desc, address: match?.address || v.neighborhood || 'Nashville' });
     const share = renderShareButton({ name: v.name, desc: v.desc, url: v.url || '' });
     let html = `<div class="card">
       <div class="card-title">${star}${share}${v.name}</div>
-      ${ratingStr || distStr ? `<div class="card-meta">${ratingStr}${distStr}</div>` : ''}
+      ${ratingStr || distStr ? `<div class="card-meta">${v.neighborhood || ''}${ratingStr || distStr ? ' · ' + ratingStr + distStr : ''}</div>` : (v.neighborhood ? `<div class="card-meta">${v.neighborhood}</div>` : '')}
       <div class="card-desc">${v.desc}</div>`;
     if (v.url) html += `<a href="${v.url}" target="_blank">Get tickets</a>`;
     html += `</div>`;
