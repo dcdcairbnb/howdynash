@@ -1523,6 +1523,12 @@ function goBack() {
   else if (target === 'bachelorette') showBachelorette(true);
   else if (target === 'family') showFamilyFriendly();
   else if (target === 'saved') showSavedSpots();
+  else if (target === 'honkytonks') showHonkyTonks();
+  else if (target === 'rehydration') showRehydration();
+  else if (target === 'photospots') showPhotoSpots();
+  else if (target === 'spas') showSpas();
+  else if (target === 'shopping') showShopping();
+  else if (target === 'brunch') showRestaurants(NASHVILLE_DATA.restaurants.filter(r => /breakfast|brunch|cafe/i.test(r.cuisine)), 'Breakfast and brunch spots:');
   else showMainMenu();
   saveMenuState();
   updateBackBtn();
@@ -1571,6 +1577,10 @@ inputEl.addEventListener('keypress', e => {
 });
 
 let scrollAnchor = null;
+// Index in messagesEl.children of the first message added during a navAction
+// call. While set, every new addMessage re-pins this message to the top of the
+// viewport instead of scrolling to the bottom.
+let pendingNavTargetIndex = null;
 
 function addMessage(text, sender, html = false) {
   const div = document.createElement('div');
@@ -1580,30 +1590,43 @@ function addMessage(text, sender, html = false) {
   messagesEl.appendChild(div);
   if (sender === 'user') {
     scrollAnchor = div;
+    pendingNavTargetIndex = null; // user typed something, drop nav pin
   }
   scrollToView();
   return div;
 }
 
 // Use this for any in-app button that navigates to a new section without a
-// user-typed message. It resets the scroll anchor and scrolls to the FIRST
-// new message added by the function (e.g. the section header), not the bottom.
-function navAction(fn) {
+// user-typed message. Pins the first new message to the top of the viewport
+// so async content (API-loaded cards) doesn't push it out of view, and
+// optionally pushes a menu name onto the stack so back nav returns properly.
+function navAction(fn, menuName) {
+  if (menuName) pushMenu(menuName);
   scrollAnchor = null;
-  const beforeCount = messagesEl ? messagesEl.children.length : 0;
+  pendingNavTargetIndex = messagesEl ? messagesEl.children.length : 0;
   try { fn(); } catch (e) { console.error('navAction failed', e); }
+  // Release the pin after async content has had time to load (1.5s covers
+  // the slowest Google Places call). After release, normal scroll resumes.
   setTimeout(() => {
-    if (!messagesEl) return;
-    const firstNew = messagesEl.children[beforeCount];
-    if (firstNew && typeof firstNew.scrollIntoView === 'function') {
-      firstNew.scrollIntoView({ block: 'start', behavior: 'smooth' });
-    } else {
-      messagesEl.scrollTop = messagesEl.scrollHeight;
+    if (pendingNavTargetIndex != null && messagesEl) {
+      const target = messagesEl.children[pendingNavTargetIndex];
+      if (target && typeof target.scrollIntoView === 'function') {
+        target.scrollIntoView({ block: 'start', behavior: 'smooth' });
+      }
     }
-  }, 300);
+    pendingNavTargetIndex = null;
+  }, 1500);
 }
 
 function scrollToView() {
+  // While a navAction is pinning the target, keep the first new message at top
+  if (pendingNavTargetIndex != null && messagesEl) {
+    const target = messagesEl.children[pendingNavTargetIndex];
+    if (target && typeof target.scrollIntoView === 'function') {
+      target.scrollIntoView({ block: 'start', behavior: 'auto' });
+      return;
+    }
+  }
   if (scrollAnchor && messagesEl.contains(scrollAnchor)) {
     scrollAnchor.scrollIntoView({ block: 'start', behavior: 'smooth' });
   } else {
@@ -3201,7 +3224,7 @@ function showAffiliateForElapsed(hoursElapsed, isLeader) {
       <div class="card-title">💧 Need IV recovery tomorrow?</div>
       <div class="card-desc">Mobile IV teams come straight to your Airbnb. Most arrive 9am-noon. Book tonight to lock the slot.</div>
       <a href="https://resetiv.com/pages/packages" target="_blank" rel="noopener" style="background:#34a853;color:#fff;">Reset IV packages</a>
-      <a href="#" onclick="navAction(showRehydration);return false;" style="background:#0a8754;color:#fff;">See all 20 IV providers</a>
+      <a href="#" onclick="navAction(showRehydration, 'rehydration');return false;" style="background:#0a8754;color:#fff;">See all 20 IV providers</a>
     </div>`, 'bot', true);
   }
 
@@ -3425,7 +3448,7 @@ function showBachelorette(skipPush) {
       desc: 'Book mobile IV the night before. Most services come to your Airbnb at 9am-noon and treat the whole crew. Group rates at 4+ people.',
       links: [
         { label: '💧 Reset IV packages', url: 'https://resetiv.com/pages/packages', color: '#34a853' },
-        { label: '💧 See all 20 IV providers', url: '#', color: '#0a8754', onclick: 'navAction(showRehydration);return false;' }
+        { label: '💧 See all 20 IV providers', url: '#', color: '#0a8754', onclick: 'navAction(showRehydration, "rehydration");return false;' }
       ]
     },
     {
@@ -3450,7 +3473,7 @@ function showBachelorette(skipPush) {
       title: '🥃 Honky Tonks on Broadway',
       desc: 'Tootsie\'s, Robert\'s, Acme, Honky Tonk Central. Free music from 10am. Tip the bands.',
       links: [
-        { label: 'See all honky tonks', url: '#', color: '#34a853', onclick: 'navAction(showHonkyTonks);return false;' }
+        { label: 'See all honky tonks', url: '#', color: '#34a853', onclick: 'navAction(showHonkyTonks, "honkytonks");return false;' }
       ]
     },
     {
@@ -3458,7 +3481,7 @@ function showBachelorette(skipPush) {
       desc: 'Biscuit Love, Pancake Pantry, Milk and Honey, The Diner, Frothy Monkey. Bottomless mimosas common.',
       links: [
         { label: 'Biscuit Love', url: 'https://biscuitlove.com', color: '#d62828' },
-        { label: 'See all brunch spots', url: '#', color: '#34a853', onclick: "navAction(() => showRestaurants(NASHVILLE_DATA.restaurants.filter(r => /breakfast|brunch|cafe/i.test(r.cuisine)), 'Breakfast and brunch spots:'));return false;" }
+        { label: 'See all brunch spots', url: '#', color: '#34a853', onclick: "navAction(() => showRestaurants(NASHVILLE_DATA.restaurants.filter(r => /breakfast|brunch|cafe/i.test(r.cuisine)), 'Breakfast and brunch spots:'), 'brunch');return false;" }
       ]
     },
     {
@@ -3473,7 +3496,7 @@ function showBachelorette(skipPush) {
       title: '📸 Mural Photo Spots',
       desc: 'I Believe in Nashville (12 South), Wings (Gulch), What Lifts You wings (Gulch), Make Music Not War (12 South), Patsy Cline (Berry Hill).',
       links: [
-        { label: 'See all photo spots', url: '#', color: '#34a853', onclick: 'navAction(showPhotoSpots);return false;' }
+        { label: 'See all photo spots', url: '#', color: '#34a853', onclick: 'navAction(showPhotoSpots, "photospots");return false;' }
       ]
     },
     {
@@ -3529,7 +3552,7 @@ function showBachelorette(skipPush) {
       title: '🧖 Spa Days and Massages',
       desc: 'Spa at Hutton Hotel, JW Marriott spa, Belmont Spa, mobile spa parties to your Airbnb.',
       links: [
-        { label: 'See all spas', url: '#', color: '#34a853', onclick: 'navAction(showSpas);return false;' }
+        { label: 'See all spas', url: '#', color: '#34a853', onclick: 'navAction(showSpas, "spas");return false;' }
       ]
     },
     {
@@ -3551,7 +3574,7 @@ function showBachelorette(skipPush) {
       title: '🤠 Costume and Props',
       desc: 'Cowboy hats, sashes, banners, custom shirts. Boot stores on Broadway, Hatch Show Print custom posters, Etsy bachelorette kits.',
       links: [
-        { label: 'See all shopping', url: '#', color: '#34a853', onclick: 'navAction(showShopping);return false;' },
+        { label: 'See all shopping', url: '#', color: '#34a853', onclick: 'navAction(showShopping, "shopping");return false;' },
         { label: 'Hatch Show Print', url: 'https://hatchshowprint.com', color: '#444' }
       ]
     },
