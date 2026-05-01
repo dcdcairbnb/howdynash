@@ -1528,6 +1528,7 @@ function goBack() {
   else if (target === 'photospots') showPhotoSpots();
   else if (target === 'spas') showSpas();
   else if (target === 'shopping') showShopping();
+  else if (target === 'mobileglam') showMobileGlam();
   else if (target === 'brunch') showRestaurants(NASHVILLE_DATA.restaurants.filter(r => /breakfast|brunch|cafe/i.test(r.cuisine)), 'Breakfast and brunch spots:');
   else showMainMenu();
   saveMenuState();
@@ -2575,6 +2576,21 @@ const CURATED_ROOFTOPS = [
   { name: "George Jones Rooftop", neighborhood: "Downtown", desc: "On top of the Johnny Cash Museum building. Country music views.", url: "https://www.georgejones.com" }
 ];
 
+const CURATED_MOBILE_GLAM = [
+  { name: "GlamSquad Nashville", neighborhood: "Mobile (to your Airbnb or hotel)", desc: "On-demand hair, makeup, and nails. Book in app, pros arrive in about an hour. Bachelorette and bridal packages.", url: "https://www.glamsquad.com/locations/nashville" },
+  { name: "StyleSeat Mobile Pros", neighborhood: "Mobile", desc: "Browse hundreds of Nashville-based independent stylists who travel. Filter by hair, makeup, lash, brows, or spray tan.", url: "https://www.styleseat.com/m/v/nashville-tn" },
+  { name: "Priv Nashville", neighborhood: "Mobile", desc: "On-demand hair, makeup, massage, manicure, fitness. Same-day bookings. Used by bachelorette weekends and bridal parties.", url: "https://www.priv.com/cities/nashville" },
+  { name: "The Beauty Suite Nashville", neighborhood: "Mobile + studio (Berry Hill)", desc: "Bridal and bachelorette focus. Hair styling, airbrush makeup, lash extensions. Group rates for 4+.", url: null },
+  { name: "Bachelorette Beauty Nashville", neighborhood: "Mobile", desc: "Bachelorette-only mobile glam. Themed packages (Disco, Western, Pink Party). Travels to Airbnbs and hotels.", url: null },
+  { name: "Belle Bridal Beauty", neighborhood: "Mobile", desc: "Wedding and bachelorette specialists. Trial available. Books out 4-6 weeks ahead for weekends.", url: null },
+  { name: "Pink Door Mobile Glam", neighborhood: "Mobile", desc: "Hair, makeup, lashes, spray tan in one visit. Small team, hands-on service.", url: null },
+  { name: "Jenny Brown Beauty", neighborhood: "Mobile", desc: "Local Nashville artist with a strong bachelorette following. Books direct via Instagram.", url: "https://www.instagram.com/jennybrownbeauty" },
+  { name: "Sugar Studio Mobile Spray Tan", neighborhood: "Mobile", desc: "Spray tans delivered to your room. Fast, even, and great for photos. Group rates at 4+ tans.", url: null },
+  { name: "Lash Out Lounge (Mobile)", neighborhood: "Mobile", desc: "Mobile lash extensions and lash lifts. Pre-bach prep delivered to your hotel.", url: null },
+  { name: "Glow Mobile IV + Glam", neighborhood: "Mobile", desc: "IV hydration and glam combo packages. Get your drip and your glam in one visit.", url: null },
+  { name: "Beautify Nashville", neighborhood: "Mobile", desc: "Hair and makeup team that specializes in groups. Sends a stylist for every 2-3 people to keep things on schedule.", url: null }
+];
+
 const CURATED_REHYDRATION = [
   { name: "Reset IV Nashville", neighborhood: "Mobile (to your Airbnb)", desc: "Mobile IV therapy team comes to you. Hangover recovery, energy, immunity, and beauty drips. Group rates for bachelorettes.", url: "https://resetiv.com/pages/packages", note: "Most popular for bachelorette groups. Book the night before for next-morning recovery." },
   { name: "Hangover Hospital Nashville", neighborhood: "Mobile (to your Airbnb)", desc: "Specifically designed for hangover recovery. Mobile to hotels, Airbnbs, and event spaces. Group bookings welcome.", url: "https://hangoverhospital.com" },
@@ -2913,6 +2929,13 @@ function showRehydration() {
   showCuratedThenLive(CURATED_REHYDRATION, 'IV therapy hydration wellness', 'health', 'rehydration & IV therapy');
   setTimeout(() => {
     addMessage('<div class="card"><div class="card-title">💡 Bachelorette tip</div><div class="card-desc">Book mobile IV the night before. Most services arrive 9am-noon and treat the whole crew at once. Group rates kick in at 4+ people. Tip your tech 20%.</div></div>', 'bot', true);
+  }, 600);
+}
+function showMobileGlam() {
+  addMessage("Mobile glam in Nashville. Hair, makeup, lashes, spray tans delivered to your Airbnb or hotel.", 'bot');
+  showCuratedThenLive(CURATED_MOBILE_GLAM, 'mobile makeup hair beauty bachelorette', 'beauty_salon', 'mobile glam services');
+  setTimeout(() => {
+    addMessage('<div class="card"><div class="card-title">💡 Booking tip</div><div class="card-desc">Book glam 4-6 weeks ahead for weekend bachelorettes. Spray tans the day before, hair and makeup the morning of, lashes 2-3 days before for fluff time.</div></div>', 'bot', true);
   }, 600);
 }
 function showPhotoSpots() {
@@ -3560,7 +3583,7 @@ function showBachelorette(skipPush) {
       desc: 'Mobile makeup, hair, lash, and nail services come to your Airbnb. Book through GlamSquad or local providers.',
       links: [
         { label: 'GlamSquad Nashville', url: 'https://www.glamsquad.com/locations/nashville', color: '#e91e63' },
-        { label: 'Mobile glam on Maps', url: 'https://www.google.com/maps/search/mobile+makeup+bachelorette+nashville', color: '#34a853' }
+        { label: 'See all mobile glam', url: '#', color: '#34a853', onclick: "navAction(showMobileGlam, 'mobileglam');return false;" }
       ]
     },
     {
