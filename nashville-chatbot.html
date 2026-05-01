@@ -3292,7 +3292,6 @@ function renderGroupMembers(members, expiresAt) {
 }
 
 function shareGroupCode(code) {
-  console.log('shareGroupCode called with', code);
   const text = `Join my Nashville group on Howdy Nash!\nCode: ${code}\n\nTap to open and auto-join:\nhttps://howdynash.com/?join=${code}`;
   const safeCode = String(code).replace(/[<>]/g, '');
   const safeText = text.replace(/</g, '&lt;').replace(/"/g, '&quot;');
@@ -3311,7 +3310,16 @@ function shareGroupCode(code) {
       ${navigator.share ? `<a href="#" onclick="nativeShareGroupCode('${safeCode}');return false;" style="background:#d62828;${linkStyle}">📤 Share to apps</a>` : ''}
     </div>
   </div>`;
-  addMessage(html, 'bot', true);
+  const newCard = addMessage(html, 'bot', true);
+  // Force scroll to the new share card. Default scroll anchor points at the
+  // last user-typed message, which is above this card on the page.
+  setTimeout(() => {
+    if (newCard && typeof newCard.scrollIntoView === 'function') {
+      newCard.scrollIntoView({ block: 'end', behavior: 'smooth' });
+    } else if (typeof messagesEl !== 'undefined' && messagesEl) {
+      messagesEl.scrollTop = messagesEl.scrollHeight;
+    }
+  }, 50);
 }
 
 async function copyGroupShareText(btn, code) {
