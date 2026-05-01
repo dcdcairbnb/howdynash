@@ -1854,6 +1854,11 @@ function routeIntent(text) {
     return;
   }
 
+  if (matches(lower, ['brewery', 'breweries', '🍺 breweries', 'craft beer', 'beer tour', 'taproom', 'yazoo', 'bearded iris', 'jackalope', 'tap room'])) {
+    showBreweries();
+    return;
+  }
+
   if (matches(lower, ['photo spot', 'mural', 'instagram', 'pictures', 'i believe in nashville', 'wings', 'photo op'])) {
     showPhotoSpots();
     return;
@@ -2249,6 +2254,7 @@ function showEatDrinkMenu(skipPush) {
     'Honky tonks',
     'Rooftop bars',
     'Distilleries',
+    '🍺 Breweries',
     '← Main menu'
   ]);
 }
@@ -2506,6 +2512,21 @@ const CURATED_ROOFTOPS = [
   { name: "Twelve Thirty Club", neighborhood: "Lower Broadway", desc: "Justin Timberlake's spot. Three floors topped by a private rooftop. Reservations needed.", url: "https://www.twelvethirtyclub.com" },
   { name: "Ophelia at JW Marriott", neighborhood: "Downtown", desc: "Sleek rooftop on the 34th floor. Premium cocktails.", url: "https://www.marriott.com" },
   { name: "George Jones Rooftop", neighborhood: "Downtown", desc: "On top of the Johnny Cash Museum building. Country music views.", url: "https://www.georgejones.com" }
+];
+
+const CURATED_BREWERIES = [
+  { name: "Yazoo Brewing Company", neighborhood: "Madison", desc: "Nashville's largest craft brewery since 2003. Sue (Brett ale) and Hop Project IPAs are flagships. Taproom with food trucks.", url: "https://yazoobrew.com" },
+  { name: "Bearded Iris Brewing", neighborhood: "Germantown", desc: "Hazy IPA pioneers. Homestyle and Attention Please are local favorites. Taproom with rotating taps and outdoor patio.", url: "https://www.beardediris.com" },
+  { name: "Tennessee Brew Works", neighborhood: "Wedgewood-Houston", desc: "Two-story taproom with kitchen, live music nights. Southern Wit and 1927 IPA are easy entries. Brewery tours weekends.", url: "https://tnbrew.com" },
+  { name: "Jackalope Brewing Company", neighborhood: "Wedgewood-Houston", desc: "Woman-owned, beloved local brewery. Bearwalker Maple Brown Ale and Thunder Ann APA. Taproom with games.", url: "https://jackalopebrew.com" },
+  { name: "Southern Grist Brewing", neighborhood: "East Nashville and 12 South", desc: "Funky and experimental beers. Always-rotating tap list. Strong sour and hazy IPA program.", url: "https://www.southerngristbrewing.com" },
+  { name: "Smith & Lentz Brewing", neighborhood: "East Nashville", desc: "Family-friendly taproom, dog-friendly patio. Lager-focused with creative seasonals.", url: "https://smithandlentz.com" },
+  { name: "Tailgate Brewery", neighborhood: "Nations and multiple", desc: "Approachable craft beer plus Detroit-style pizza. Multiple Nashville locations. Family-friendly.", url: "https://tailgatebeer.com" },
+  { name: "Black Abbey Brewing", neighborhood: "Berry Hill", desc: "Belgian-style ales. The Rose, The Five of Swords. Taproom with table service.", url: "https://blackabbeybrewing.com" },
+  { name: "Diskin Cider", neighborhood: "Wedgewood-Houston", desc: "Tennessee's first urban cidery. Taproom with food and live music.", url: "https://diskincider.com" },
+  { name: "East Nashville Beer Works", neighborhood: "East Nashville", desc: "Neighborhood brewery with rotating taps and pizza kitchen. Family-friendly during the day.", url: "https://eastnashbeerworks.com" },
+  { name: "New Heights Brewing", neighborhood: "Wedgewood-Houston", desc: "Approachable craft beer in a casual taproom. Solid IPAs and lagers.", url: "https://newheightsbrewing.com" },
+  { name: "Czann's Brewing Company", neighborhood: "Downtown", desc: "Small downtown brewery near SoBro. Approachable lineup, walkable from Broadway.", url: "https://www.czanns.com" }
 ];
 
 const CURATED_DISTILLERIES = [
@@ -2799,6 +2820,9 @@ function showRooftopBars() {
 }
 function showDistilleries() {
   showCuratedThenLive(CURATED_DISTILLERIES, 'whiskey distillery tour', 'tourist_attraction', 'distilleries');
+}
+function showBreweries() {
+  showCuratedThenLive(CURATED_BREWERIES, 'brewery taproom craft beer', 'bar', 'breweries');
 }
 function showPhotoSpots() {
   showCuratedThenLive(CURATED_PHOTO_SPOTS, 'instagram mural photo spot landmark', 'tourist_attraction', 'photo spots');

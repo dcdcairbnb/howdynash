@@ -276,6 +276,103 @@ Don't trim the lists. The pin counts should match: hot chicken pin says "10 best
 - Pitch first 5 local hotels for sponsored placement
 
 
+## Newsletter content sources
+
+The weekly newsletter (sent every Friday at 9am Central via Vercel Cron) pulls from three live data sources, merged and deduped:
+
+1. **Curated festivals** (your hardcoded list) - top priority
+2. **Visit [City] scraper** (the city tourism board's events) - secondary
+3. **Ticketmaster + SeatGeek + Eventbrite** (live concert and event data) - fills gaps
+
+Plus a separate "Restaurant Openings" section that scrapes:
+
+4. **Eater [City] ATOM feed** (https://[city].eater.com/rss/index.xml) - filters titles for opening/debut/coming-soon language combined with food keywords
+
+Note: Eater is an ATOM feed (uses `<entry>` tags), not RSS (`<item>`). Parser handles both formats.
+
+If Eater [City] doesn't exist in your target city, swap to:
+- The local alt-weekly's food section RSS (Nashville Scene, Austin Chronicle, etc.) - watch for rate-limit responses (429)
+- Local newspaper food RSS (Tennessean, Statesman)
+- Manual weekly curation (most reliable long-term)
+
+
+## Vercel Cron schedule
+
+In `vercel.json`:
+```json
+"crons": [
+  { "path": "/api/subscribe?cron=newsletter", "schedule": "0 14 * * 5" }
+]
+```
+
+This fires Friday 14:00 UTC = 9:00 AM Central Time (during standard time, 8am during daylight saving).
+
+Authenticated by `CRON_SECRET` env var. Vercel passes `Authorization: Bearer CRON_SECRET` header automatically.
+
+Hobby plan limit: 2 cron jobs/day max. We use 1.
+
+
+## Manual newsletter trigger
+
+Preview without sending:
+```bash
+curl -X POST https://www.howdy[city].com/api/subscribe \
+  -H "Content-Type: application/json" \
+  -d '{"action":"newsletter-preview"}' > preview.html
+open preview.html
+```
+
+Send to all subscribers (requires ADMIN_TOKEN):
+```bash
+curl -X POST https://www.howdy[city].com/api/subscribe \
+  -H "Content-Type: application/json" \
+  -d '{"action":"newsletter-send","token":"YOUR_ADMIN_TOKEN"}'
+```
+
+
+## Group share architecture
+
+User flow:
+1. User taps `👯 Group share` on main menu
+2. Picks duration (6, 12, or 24 hours)
+3. Backend creates group code (4 letters), stores in Vercel KV with TTL
+4. User shares code via SMS/email/clipboard/native share
+5. Friends visit howdy[city].com/group/CODE, share location
+6. Browser polls /api/group every 10 seconds for updates
+7. Live Leaflet map renders all member pins with names
+8. Each member can tap "walk to them" for Google Maps directions
+9. Auto-expires when TTL hits
+
+Storage: Each group is `~1KB` in Vercel KV. Free tier holds 200K simultaneous groups.
+
+Time-based affiliate prompts fire during the session:
+- Hour 1: Uber XL / Lyft for the group
+- Hour 3: Rooftop suggestion + Viator tour link
+- Hour 5: Late-night hot chicken card
+- Hour 8: Pre-book brunch for tomorrow
+- Post-session: Pedal tavern booking on Viator/GetYourGuide
+
+
+## Email signature setup
+
+After deploying logo.jpg to project root:
+
+1. Open `email-signature.html` in browser
+2. Select all inside the signature box
+3. Copy
+4. Gmail Settings → General → Signature
+5. Paste, save
+
+The signature pulls logo from `https://howdy[city].com/logo.jpg` so it loads in every email automatically.
+
+Gmail Send As setup (so replies look professional from howdy@):
+1. Settings → Accounts and Import → Send mail as → Add another email
+2. Email: howdy@howdy[city].com
+3. SMTP: smtp.resend.com, port 587, username `resend`, password = Resend API key
+4. Verify via link sent to howdy@ (forwards via ImprovMX to your Gmail)
+5. Set as default + reply from same address
+
+
 ## Common gotchas
 
 1. **12 function limit on Vercel Hobby**: We're at 11. Adding any new endpoint requires combining with an existing one.
