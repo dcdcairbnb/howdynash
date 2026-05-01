@@ -16,12 +16,30 @@ export default async function handler(req, res) {
   }
   const { q = '', type = 'tourist_attraction', lat, lng } = req.query;
 
+  // Google Places (New) only accepts a fixed list of includedType values.
+  // If we're handed something invalid or empty, drop the type filter rather
+  // than 400ing the whole request.
+  const VALID_TYPES = new Set([
+    'restaurant', 'bar', 'cafe', 'bakery', 'meal_takeaway', 'meal_delivery',
+    'tourist_attraction', 'museum', 'art_gallery', 'park', 'zoo', 'aquarium',
+    'amusement_park', 'stadium', 'movie_theater', 'night_club',
+    'store', 'shopping_mall', 'clothing_store', 'department_store', 'book_store',
+    'hardware_store', 'liquor_store', 'convenience_store', 'supermarket',
+    'beauty_salon', 'hair_care', 'spa',
+    'lodging', 'campground', 'rv_park',
+    'gas_station', 'parking', 'taxi_stand', 'transit_station', 'bus_station',
+    'pharmacy', 'doctor', 'hospital', 'dental_clinic',
+    'church', 'mosque', 'synagogue', 'place_of_worship',
+    'gym', 'bowling_alley'
+  ]);
+  const safeType = VALID_TYPES.has(type) ? type : null;
+
   try {
     const body = {
       textQuery: `${q} in Nashville, TN`,
-      includedType: type,
       maxResultCount: 20
     };
+    if (safeType) body.includedType = safeType;
     if (lat && lng) {
       body.locationBias = {
         circle: {

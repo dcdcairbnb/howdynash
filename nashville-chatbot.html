@@ -2928,14 +2928,16 @@ function showBreweries() {
 }
 function showRehydration() {
   addMessage("Nashville rehydration and IV therapy. Most come to your Airbnb or hotel.", 'bot');
-  showCuratedThenLive(CURATED_REHYDRATION, 'IV therapy hydration wellness', 'health', 'rehydration & IV therapy');
+  // No type filter - Google Places new API rejects "health" and there's no
+  // single valid type that covers IV bars, mobile services, and wellness clinics.
+  showCuratedThenLive(CURATED_REHYDRATION, 'IV therapy hydration wellness', '', 'rehydration & IV therapy');
   setTimeout(() => {
     addMessage('<div class="card"><div class="card-title">💡 Bachelorette tip</div><div class="card-desc">Book mobile IV the night before. Most services arrive 9am-noon and treat the whole crew at once. Group rates kick in at 4+ people. Tip your tech 20%.</div></div>', 'bot', true);
   }, 600);
 }
 function showMobileGlam() {
   addMessage("Mobile glam in Nashville. Hair, makeup, lashes, spray tans delivered to your Airbnb or hotel.", 'bot');
-  showCuratedThenLive(CURATED_MOBILE_GLAM, 'mobile makeup hair beauty bachelorette', 'beauty_salon', 'mobile glam services');
+  showCuratedThenLive(CURATED_MOBILE_GLAM, 'mobile makeup hair beauty bachelorette', '', 'mobile glam services');
   setTimeout(() => {
     addMessage('<div class="card"><div class="card-title">💡 Booking tip</div><div class="card-desc">Book glam 4-6 weeks ahead for weekend bachelorettes. Spray tans the day before, hair and makeup the morning of, lashes 2-3 days before for fluff time.</div></div>', 'bot', true);
   }, 600);
