@@ -789,7 +789,26 @@ const NASHVILLE_DATA = {
     { name: "Steadfast Coffee", cuisine: "Coffee", neighborhood: "Germantown", price: "$", vibe: "all-day cafe with espresso slushies", phone: "(615) 891-3739", booking: { walkin: true } },
     { name: "Honest Coffee Roasters", cuisine: "Coffee", neighborhood: "Germantown", price: "$", vibe: "small-batch roaster inside Five Daughters", booking: { walkin: true } },
     { name: "Dolce Italian", cuisine: "Italian", neighborhood: "Germantown", price: "$$$", vibe: "Roman wood-fired pizza inside Thompson Hotel", phone: "(615) 690-1734", booking: { opentable: "https://www.opentable.com/r/dolce-italian-nashville" } },
-    { name: "Pearl Diver", cuisine: "Tropical bar food", neighborhood: "Germantown", price: "$$", vibe: "tiki cocktails, smash burgers, late night", booking: { walkin: true, yelp: "https://www.yelp.com/biz/pearl-diver-nashville" } }
+    { name: "Pearl Diver", cuisine: "Tropical bar food", neighborhood: "Germantown", price: "$$", vibe: "tiki cocktails, smash burgers, late night", booking: { walkin: true, yelp: "https://www.yelp.com/biz/pearl-diver-nashville" } },
+    // Nashville Farmers' Market food hall (Germantown). Each stall is its own kitchen.
+    { name: "Picnic Tap (Farmers Market)", cuisine: "American", neighborhood: "Germantown", price: "$$", vibe: "craft beer, sandwiches, family-friendly Farmers Market food hall", booking: { walkin: true } },
+    { name: "B'Bop's (Farmers Market)", cuisine: "Burgers", neighborhood: "Germantown", price: "$", vibe: "smash burgers and shakes inside the Farmers Market", booking: { walkin: true } },
+    { name: "Bao Down (Farmers Market)", cuisine: "Asian", neighborhood: "Germantown", price: "$", vibe: "steamed bao buns and Asian street food at the Farmers Market", booking: { walkin: true } },
+    { name: "Jamaicaway (Farmers Market)", cuisine: "Jamaican", neighborhood: "Germantown", price: "$", vibe: "longtime Jamaican stall, jerk chicken and oxtail, Farmers Market", booking: { walkin: true } },
+    { name: "Garden Brunch Cafe", cuisine: "Southern brunch", neighborhood: "Germantown", price: "$$", vibe: "Black-owned brunch favorite, often a wait on weekends", phone: "(615) 891-1217", booking: { walkin: true, yelp: "https://www.yelp.com/biz/garden-brunch-cafe-nashville" } },
+    // Bubble tea / boba near Germantown
+    { name: "Honey Cha", cuisine: "Bubble tea and Asian", neighborhood: "Germantown", price: "$", vibe: "Korean-Vietnamese cafe, full bubble tea menu, banh mi, kimchi pancakes", booking: { walkin: true, yelp: "https://www.yelp.com/biz/honey-cha-nashville" } },
+    { name: "Tien Dat", cuisine: "Vietnamese", neighborhood: "Charlotte Pike (10 min from Germantown)", price: "$", vibe: "pho, banh mi, large boba menu", booking: { walkin: true, yelp: "https://www.yelp.com/biz/tien-dat-nashville" } },
+    { name: "Bubble Love Tea House", cuisine: "Bubble tea", neighborhood: "Belmont (15 min from Germantown)", price: "$", vibe: "boba, fruit teas, snow ice. Closest dedicated bubble tea spot to Germantown", booking: { walkin: true, yelp: "https://www.yelp.com/biz/bubble-love-tea-house-nashville" } },
+    // Midtown additions
+    { name: "Hattie B's Hot Chicken (Midtown)", cuisine: "Hot chicken", neighborhood: "Midtown", price: "$$", vibe: "the original Hattie B's, expect a 30-60 min line", phone: "(615) 678-4794", booking: { walkin: true, yelp: "https://www.yelp.com/biz/hattie-bs-hot-chicken-nashville" } },
+    { name: "Sun & Fork", cuisine: "Mediterranean", neighborhood: "Midtown", price: "$$", vibe: "fast-casual healthy bowls, owned by Maneet Chauhan", phone: "(615) 200-7430", booking: { walkin: true } },
+    { name: "Cafe Coco", cuisine: "Cafe", neighborhood: "Midtown", price: "$", vibe: "24-hour eclectic cafe, students and night owls", phone: "(615) 321-2626", booking: { walkin: true, yelp: "https://www.yelp.com/biz/cafe-coco-nashville" } },
+    { name: "Hot Diggity Dogs", cuisine: "Hot dogs", neighborhood: "Midtown", price: "$", vibe: "late-night Chicago-style dogs and Polish sausage", booking: { walkin: true } },
+    { name: "Gerst Haus", cuisine: "German", neighborhood: "Midtown", price: "$$", vibe: "longtime German biergarten, schnitzel, sauerkraut", phone: "(615) 244-8198", booking: { walkin: true, yelp: "https://www.yelp.com/biz/gerst-haus-nashville" } },
+    { name: "Sportsman's Grille", cuisine: "American", neighborhood: "Midtown", price: "$$", vibe: "Vanderbilt sports bar, burgers and wings", phone: "(615) 320-1633", booking: { walkin: true } },
+    { name: "Tin Roof Midtown", cuisine: "American", neighborhood: "Midtown", price: "$$", vibe: "live music sports bar, burgers, late-night menu", booking: { walkin: true, yelp: "https://www.yelp.com/biz/tin-roof-nashville-midtown" } },
+    { name: "South Street", cuisine: "Cajun and crawfish", neighborhood: "Midtown", price: "$$", vibe: "crawfish boils, ribs, big patio", phone: "(615) 320-5555", booking: { walkin: true, yelp: "https://www.yelp.com/biz/south-street-nashville" } }
   ],
   attractions: [
     { name: "Grand Ole Opry", type: "Live music", desc: "The home of country music. Shows most nights.", url: "https://www.opry.com" },
@@ -806,7 +825,7 @@ const NASHVILLE_DATA = {
     { name: "RCA Studio B", type: "Music history", desc: "Historic studio where Elvis recorded 200+ songs. Tour through Country Music Hall of Fame.", url: "https://studiob.org" },
     { name: "The Hermitage", type: "Historic home", desc: "Andrew Jackson's plantation home and museum. 30 minutes east of downtown.", url: "https://thehermitage.com" },
     { name: "Tennessee State Capitol", type: "Government", desc: "Greek revival statehouse with free guided tours. Andrew Jackson buried out front.", url: "https://www.capitol.tn.gov" },
-    { name: "Tennessee State Museum", type: "Museum", desc: "Free comprehensive museum covering Tennessee history from prehistory to today.", url: "https://tnmuseum.org" },
+    { name: "Tennessee State Museum", type: "Museum", neighborhood: "Germantown", desc: "Free comprehensive museum covering Tennessee history from prehistory to today.", url: "https://tnmuseum.org" },
     { name: "Cheekwood Estate & Gardens", type: "Gardens", desc: "55-acre botanical gardens with mansion, art museum, sculpture trail. Best in spring and during Holiday Lights.", url: "https://cheekwood.org" },
     { name: "Nashville Zoo at Grassmere", type: "Zoo", desc: "200-acre zoo with red pandas, giraffes, kangaroo encounters. Family favorite.", url: "https://nashvillezoo.org" },
     { name: "Adventure Science Center", type: "Family", desc: "Hands-on science museum and planetarium. Great for kids and rainy days.", url: "https://www.adventuresci.org" },
@@ -815,7 +834,16 @@ const NASHVILLE_DATA = {
     { name: "George Jones Museum", type: "Museum", desc: "Tribute to the country legend. Includes a rooftop bar with skyline views.", url: "https://georgejones.com" },
     { name: "Hatch Show Print", type: "Workshop tour", desc: "175-year-old letterpress shop. Tours daily, walls of vintage music posters.", url: "https://hatchshowprint.com" },
     { name: "Third Man Records", type: "Record store", desc: "Jack White's record label and store with live performance space and recording booth.", url: "https://thirdmanrecords.com" },
-    { name: "Nashville Farmers' Market", type: "Market", desc: "Year-round market with produce, prepared food, restaurants, and artisan vendors.", url: "https://nashvillefarmersmarket.org" },
+    { name: "Nashville Farmers' Market", type: "Market", neighborhood: "Germantown", desc: "Year-round market with produce, prepared food, restaurants, and artisan vendors. Right next to Bicentennial Mall.", url: "https://nashvillefarmersmarket.org" },
+    { name: "Nashville Sounds Baseball", type: "Sports", neighborhood: "Germantown", desc: "Triple-A baseball at First Horizon Park. Iconic guitar-shaped scoreboard, family-friendly, $10 lawn seats. Home games April-September.", url: "https://www.milb.com/nashville" },
+    { name: "Bicentennial Capitol Mall State Park", type: "Park", neighborhood: "Germantown", desc: "19-acre park with Tennessee history walk, splash pad, 95-bell carillon. Free.", url: "https://tnstateparks.com/parks/bicentennial-mall" },
+    { name: "Marathon Music Works", type: "Concert venue", neighborhood: "Marathon Village", desc: "Mid-size live music venue inside the old Marathon Motor Works factory. National touring acts.", url: "https://www.marathonmusicworks.com" },
+    { name: "Antique Archaeology", type: "Quirky shop", neighborhood: "Marathon Village", desc: "Mike Wolfe of American Pickers' shop. Curated antiques and Pickers merch.", url: "https://www.antiquearchaeology.com" },
+    { name: "Belmont University", type: "Campus", neighborhood: "Edgehill", desc: "Music industry's go-to school. Beautiful Italianate Belmont Mansion is on campus.", url: "https://www.belmont.edu" },
+    { name: "Vanderbilt University", type: "Campus", neighborhood: "Midtown", desc: "Stunning 330-acre arboretum campus. Free walks, museums, and athletic events.", url: "https://www.vanderbilt.edu" },
+    { name: "Vanderbilt Football at FirstBank Stadium", type: "Sports", neighborhood: "Midtown", desc: "SEC football Saturdays in fall. Cheaper tickets than Titans, walkable from West End bars.", url: "https://vucommodores.com/sports/football/" },
+    { name: "Musica Statue (Music Row Roundabout)", type: "Landmark", neighborhood: "Music Row", desc: "Nine-figure bronze statue at the entrance to Music Row. Often debated, hard to miss.", url: null },
+    { name: "Owen Bradley Park", type: "Park", neighborhood: "Music Row", desc: "Small park honoring the Quonset Hut producer with statue and birthplace plaque.", url: null },
     { name: "Schermerhorn Symphony Center", type: "Performance venue", desc: "Home of the Nashville Symphony. Self-guided tours when not in performance.", url: "https://www.nashvillesymphony.org" },
     { name: "Belmont Mansion", type: "Historic home", desc: "1853 Italianate mansion on Belmont University campus. Free parking, $20 tour.", url: "https://belmontmansion.com" },
     { name: "Travellers Rest Plantation", type: "Historic home", desc: "1799 home of Judge John Overton, mentor to Andrew Jackson. South of downtown.", url: "https://travellersrestplantation.org" },
@@ -3073,29 +3101,26 @@ function showDistilleries() {
 function showBreweries() {
   showCuratedThenLive(CURATED_BREWERIES, 'brewery taproom craft beer', 'bar', 'breweries');
 }
-// Waterfalls within day-trip distance of Nashville. Distance from downtown
-// Nashville (Lower Broadway) used as the baseline since most users are visiting.
+// Tennessee waterfalls within day-trip distance of Nashville. Verified state
+// park or natural area. Drive times approximate from downtown Nashville.
 const CURATED_WATERFALLS = [
-  { name: "Burgess Falls State Park", neighborhood: "Sparta TN (75 min east)", desc: "Four waterfalls along a 1.5-mile trail, including a 136-foot main falls. Overlook is easy, descent to base is moderate.", url: "https://tnstateparks.com/parks/burgess-falls", coords: { lat: 36.0297, lng: -85.5947 } },
-  { name: "Cummins Falls State Park", neighborhood: "Cookeville TN (90 min east)", desc: "75-foot waterfall with a swimmable plunge pool. Day-use permit required Memorial Day to Labor Day.", url: "https://tnstateparks.com/parks/cummins-falls", coords: { lat: 36.2522, lng: -85.5717 } },
-  { name: "Fall Creek Falls State Park", neighborhood: "Spencer TN (2 hours east)", desc: "256-foot waterfall, the tallest free-fall in the eastern US. Multiple falls, swimming, hiking, and cabins.", url: "https://tnstateparks.com/parks/fall-creek-falls", coords: { lat: 35.6611, lng: -85.3631 } },
-  { name: "Rock Island State Park", neighborhood: "Rock Island TN (90 min east)", desc: "Twin Falls and Great Falls along the Caney Fork River. Swimming, kayaking, picnic spots.", url: "https://tnstateparks.com/parks/rock-island", coords: { lat: 35.8203, lng: -85.6342 } },
-  { name: "Greeter Falls", neighborhood: "Altamont TN (90 min southeast)", desc: "Upper and lower falls with a spiral staircase to the base. Good swimming hole at the bottom.", url: "https://tnstateparks.com/parks/savage-gulf", coords: { lat: 35.4144, lng: -85.7164 } },
-  { name: "Foster Falls", neighborhood: "Sequatchie TN (2 hours southeast)", desc: "60-foot waterfall with a deep swimming pool. Popular climbing area.", url: "https://tnstateparks.com/parks/foster-falls", coords: { lat: 35.1822, lng: -85.6783 } },
-  { name: "Old Stone Fort State Archaeological Park", neighborhood: "Manchester TN (75 min south)", desc: "Multiple cascades on the Duck River, walls of an ancient Native American structure. Easy 1.5-mile loop.", url: "https://tnstateparks.com/parks/old-stone-fort", coords: { lat: 35.4828, lng: -86.1011 } },
-  { name: "Machine Falls", neighborhood: "Tullahoma TN (90 min south)", desc: "60-foot horsetail falls inside Short Springs Natural Area. Moderate 1.5-mile hike.", url: null, coords: { lat: 35.4256, lng: -86.1903 } },
-  { name: "Hidden Falls (Natchez Trace)", neighborhood: "Hohenwald TN (90 min southwest)", desc: "Small but scenic waterfall on the Natchez Trace Parkway. Easy 0.4-mile hike.", url: null, coords: { lat: 35.5475, lng: -87.4422 } },
-  { name: "Ozone Falls State Natural Area", neighborhood: "Crab Orchard TN (2 hours east)", desc: "110-foot waterfall featured in Disney's Jungle Book. Easy quarter-mile walk to the overlook.", url: "https://tnstateparks.com/parks/ozone-falls", coords: { lat: 35.8908, lng: -84.7806 } },
-  { name: "Twin Falls (Rock Island)", neighborhood: "Rock Island TN (90 min east)", desc: "Unique waterfall that emerges from the cliff face. Visible from a roadside overlook, no hike required.", url: "https://tnstateparks.com/parks/rock-island", coords: { lat: 35.8194, lng: -85.6356 } },
-  { name: "Falls Mill", neighborhood: "Belvidere TN (90 min south)", desc: "Working 32-foot water wheel at a historic grist mill. Swimming hole and museum.", url: "https://www.fallsmill.com", coords: { lat: 35.1361, lng: -86.2153 } }
+  { name: "Burgess Falls State Park", neighborhood: "Sparta TN (75 min east)", desc: "Four waterfalls along a 1.5-mile trail, including a 136-foot main falls. Overlook trail is easy. Descent to the base is closed to the public after a 2017 collapse, so plan to enjoy from the lookout.", url: "https://tnstateparks.com/parks/burgess-falls", coords: { lat: 36.0297, lng: -85.5947 } },
+  { name: "Cummins Falls State Park", neighborhood: "Cookeville TN (90 min east)", desc: "75-foot waterfall with a swimmable plunge pool at the base. PERMIT REQUIRED to enter the gorge year-round, plus a separate day-use permit in summer. Reserve at tnstateparks.com before you go.", url: "https://tnstateparks.com/parks/cummins-falls", coords: { lat: 36.2522, lng: -85.5717 } },
+  { name: "Fall Creek Falls State Park", neighborhood: "Spencer TN (2 hours east)", desc: "256-foot waterfall, one of the tallest in the eastern US. Multiple falls, swimming holes, hiking, cabins, and a lodge. No permit required for day use.", url: "https://tnstateparks.com/parks/fall-creek-falls", coords: { lat: 35.6611, lng: -85.3631 } },
+  { name: "Rock Island State Park", neighborhood: "Rock Island TN (90 min east)", desc: "Great Falls (a 30-foot horseshoe waterfall) plus the unique Twin Falls that emerges from the cliff face. Swimming, kayaking, picnic spots. No permit required.", url: "https://tnstateparks.com/parks/rock-island", coords: { lat: 35.8203, lng: -85.6342 } },
+  { name: "Greeter Falls", neighborhood: "Altamont TN (90 min southeast)", desc: "Upper and lower falls inside Savage Gulf State Park. Spiral staircase down to the lower falls. Swimming hole at the base. No permit.", url: "https://tnstateparks.com/parks/savage-gulf", coords: { lat: 35.4144, lng: -85.7164 } },
+  { name: "Foster Falls", neighborhood: "Sequatchie TN (2 hours southeast)", desc: "60-foot waterfall with a deep swimming pool. Popular rock-climbing area. Easy 1-mile loop. No permit.", url: "https://tnstateparks.com/parks/foster-falls", coords: { lat: 35.1822, lng: -85.6783 } },
+  { name: "Old Stone Fort State Archaeological Park", neighborhood: "Manchester TN (75 min south)", desc: "Two real waterfalls (Big Falls and Step Falls) on the Duck River alongside the walls of a 2,000-year-old Native American ceremonial structure. Easy 1.5-mile loop. No permit.", url: "https://tnstateparks.com/parks/old-stone-fort", coords: { lat: 35.4828, lng: -86.1011 } },
+  { name: "Machine Falls", neighborhood: "Tullahoma TN (90 min south)", desc: "60-foot horsetail falls inside Short Springs State Natural Area. Moderate 1.5-mile hike with stream crossings. No permit.", url: "https://www.tn.gov/environment/program-areas/na-natural-areas/natural-areas-east-region/east-region/na-na-short-springs.html", coords: { lat: 35.4256, lng: -86.1903 } },
+  { name: "Ozone Falls State Natural Area", neighborhood: "Crab Orchard TN (2 hours east)", desc: "110-foot plunge waterfall featured in Disney's Jungle Book. Easy quarter-mile walk to the overlook. No permit.", url: "https://tnstateparks.com/parks/ozone-falls", coords: { lat: 35.8908, lng: -84.7806 } },
+  { name: "Falls Mill", neighborhood: "Belvidere TN (90 min south)", desc: "Working historic grist mill powered by a 32-foot waterfall and overshot wheel. Museum, B&B, and store. Small admission fee, no permit.", url: "https://www.fallsmill.com", coords: { lat: 35.1361, lng: -86.2153 } }
 ];
 
 function showWaterfalls() {
   addMessage("Tennessee waterfalls within day-trip distance of Nashville. Most are 60 to 120 minutes by car.", 'bot');
-  // Reuse the curated card path so distance via geolocation works automatically
   showCuratedThenLive(CURATED_WATERFALLS, 'Tennessee waterfall state park', '', 'waterfalls');
   setTimeout(() => {
-    addMessage('<div class="card"><div class="card-title">💡 Waterfall tip</div><div class="card-desc">Cummins Falls and Fall Creek Falls require a day-use permit in summer. Reserve online before you go. Pack water shoes for swimming holes and a dry bag for phones.</div></div>', 'bot', true);
+    addMessage('<div class="card"><div class="card-title">💡 Important: permits</div><div class="card-desc">Cummins Falls requires a paid permit year-round to enter the gorge. Reserve online at tnstateparks.com before driving out. Other parks on this list are free to visit. Pack water shoes for swimming holes and a dry bag for phones.</div></div>', 'bot', true);
   }, 600);
 }
 
@@ -5003,9 +5028,9 @@ const NEIGHBORHOOD_GUIDES = [
     aliases: [],
     emoji: '🍴',
     vibe: 'Historic, foodie, walkable',
-    blurb: 'Nashville\'s oldest neighborhood. Brick streets, restored Victorians, and the densest concentration of great restaurants. Quieter than Broadway, easy to walk.',
-    highlights: 'Rolf and Daughters, City House, Henrietta Red, 5th & Taylor, Steadfast Coffee.',
-    sections: ['germantown-eats', 'breweries']
+    blurb: 'Nashville\'s oldest neighborhood. Brick streets, restored Victorians, the densest concentration of great restaurants in town, plus the Nashville Farmers\' Market food hall and First Horizon Park (Sounds baseball). Quieter than Broadway, easy to walk.',
+    highlights: 'Rolf and Daughters, City House, Henrietta Red, 5th & Taylor, Butcher and Bee, Nashville Farmers\' Market, Bicentennial Capitol Mall, Sounds baseball, Honey Cha bubble tea.',
+    sections: ['germantown-eats', 'breweries', 'attractions']
   },
   {
     key: 'midtown',
@@ -5147,6 +5172,7 @@ function showNeighborhoodDetail(key) {
   };
 
   const restaurantsHere = NASHVILLE_DATA.restaurants.filter(r => matchesNeighborhood(r.neighborhood));
+  const attractionsHere = (NASHVILLE_DATA.attractions || []).filter(a => matchesNeighborhood(a.neighborhood));
   const photosHere = (typeof CURATED_PHOTO_SPOTS !== 'undefined') ? CURATED_PHOTO_SPOTS.filter(s => matchesNeighborhood(s.neighborhood)) : [];
   const shoppingHere = (typeof CURATED_SHOPPING !== 'undefined') ? CURATED_SHOPPING.filter(s => matchesNeighborhood(s.neighborhood)) : [];
   const honkyHere = (typeof CURATED_HONKY_TONKS !== 'undefined') ? CURATED_HONKY_TONKS.filter(s => matchesNeighborhood(s.neighborhood)) : [];
@@ -5189,6 +5215,11 @@ function showNeighborhoodDetail(key) {
     buttonsHtml += `<a href="#" onclick="navAction(() => showFilteredCurated(${JSON.stringify(photosHere).replace(/"/g, '&quot;')}, 'Photo spots in ${n.name}:'), '${subMenu('photo')}', '${n.name}');return false;" style="background:#e91e63;color:#fff;">📸 Photo Spots (${photosHere.length})</a>`;
     buttonCount++;
   }
+  if (attractionsHere.length > 0) {
+    const safeAttrs = JSON.stringify(attractionsHere).replace(/"/g, '&quot;');
+    buttonsHtml += `<a href="#" onclick="navAction(() => showFilteredAttractions(${safeAttrs}, 'Attractions in ${n.name}:'), '${subMenu('attr')}', '${n.name}');return false;" style="background:#06b6d4;color:#fff;">🏛️ Attractions (${attractionsHere.length})</a>`;
+    buttonCount++;
+  }
   buttonsHtml += '</div>';
 
   if (buttonCount === 0) {
@@ -5196,6 +5227,28 @@ function showNeighborhoodDetail(key) {
   } else {
     addMessage(buttonsHtml, 'bot', true);
   }
+}
+
+// Generic helper: render a pre-filtered attractions list with simple cards.
+function showFilteredAttractions(items, header) {
+  if (!items || items.length === 0) {
+    addMessage('No attractions curated for this neighborhood yet.', 'bot');
+    return;
+  }
+  addMessage(`${header} (${items.length})`, 'bot');
+  items.forEach(a => {
+    const star = renderSaveStar({ name: a.name, note: a.type || '', address: a.neighborhood || 'Nashville' });
+    const share = renderShareButton({ name: a.name, desc: a.desc || a.type || '', url: a.url || '' });
+    let html = `<div class="card">
+      <div class="card-title">${star}${share}${a.name}</div>`;
+    if (a.type || a.neighborhood) html += `<div class="card-meta">${a.type || ''}${a.type && a.neighborhood ? ' · ' : ''}${a.neighborhood || ''}</div>`;
+    html += `<div class="card-desc">${a.desc || ''}</div>`;
+    if (a.url) html += `<a href="${a.url}" target="_blank" rel="noopener">Website</a>`;
+    const mapsUrl = `https://www.google.com/maps/search/${encodeURIComponent(a.name + ' Nashville TN')}`;
+    html += `<a href="${mapsUrl}" target="_blank" rel="noopener" style="background:#34a853;color:#fff;">Open in Maps</a>`;
+    html += `</div>`;
+    addMessage(html, 'bot', true);
+  });
 }
 
 // Generic helper: render a pre-filtered curated list using the standard card.
