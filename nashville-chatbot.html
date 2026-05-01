@@ -1582,6 +1582,17 @@ function addMessage(text, sender, html = false) {
   return div;
 }
 
+// Use this for any in-app button that navigates to a new section without a
+// user-typed message. It resets the scroll anchor so the new content scrolls
+// into view instead of staying hidden below the previous anchor.
+function navAction(fn) {
+  scrollAnchor = null;
+  try { fn(); } catch (e) { console.error('navAction failed', e); }
+  setTimeout(() => {
+    if (messagesEl) messagesEl.scrollTop = messagesEl.scrollHeight;
+  }, 250);
+}
+
 function scrollToView() {
   if (scrollAnchor && messagesEl.contains(scrollAnchor)) {
     scrollAnchor.scrollIntoView({ block: 'start', behavior: 'smooth' });
@@ -3180,7 +3191,7 @@ function showAffiliateForElapsed(hoursElapsed, isLeader) {
       <div class="card-title">💧 Need IV recovery tomorrow?</div>
       <div class="card-desc">Mobile IV teams come straight to your Airbnb. Most arrive 9am-noon. Book tonight to lock the slot.</div>
       <a href="https://resetiv.com/pages/packages" target="_blank" rel="noopener" style="background:#34a853;color:#fff;">Reset IV packages</a>
-      <a href="#" onclick="showRehydration();return false;" style="background:#0a8754;color:#fff;">See all 20 IV providers</a>
+      <a href="#" onclick="navAction(showRehydration);return false;" style="background:#0a8754;color:#fff;">See all 20 IV providers</a>
     </div>`, 'bot', true);
   }
 
@@ -3429,7 +3440,7 @@ function showBachelorette(skipPush) {
       title: '🥃 Honky Tonks on Broadway',
       desc: 'Tootsie\'s, Robert\'s, Acme, Honky Tonk Central. Free music from 10am. Tip the bands.',
       links: [
-        { label: 'See all honky tonks', url: '#', color: '#34a853', onclick: 'showHonkyTonks();return false;' }
+        { label: 'See all honky tonks', url: '#', color: '#34a853', onclick: 'navAction(showHonkyTonks);return false;' }
       ]
     },
     {
@@ -3437,7 +3448,7 @@ function showBachelorette(skipPush) {
       desc: 'Biscuit Love, Pancake Pantry, Milk and Honey, The Diner, Frothy Monkey. Bottomless mimosas common.',
       links: [
         { label: 'Biscuit Love', url: 'https://biscuitlove.com', color: '#d62828' },
-        { label: 'See all brunch spots', url: '#', color: '#34a853', onclick: "showRestaurants(NASHVILLE_DATA.restaurants.filter(r => /breakfast|brunch|cafe/i.test(r.cuisine)), 'Breakfast and brunch spots:');return false;" }
+        { label: 'See all brunch spots', url: '#', color: '#34a853', onclick: "navAction(() => showRestaurants(NASHVILLE_DATA.restaurants.filter(r => /breakfast|brunch|cafe/i.test(r.cuisine)), 'Breakfast and brunch spots:'));return false;" }
       ]
     },
     {
@@ -3452,7 +3463,7 @@ function showBachelorette(skipPush) {
       title: '📸 Mural Photo Spots',
       desc: 'I Believe in Nashville (12 South), Wings (Gulch), What Lifts You wings (Gulch), Make Music Not War (12 South), Patsy Cline (Berry Hill).',
       links: [
-        { label: 'See all photo spots', url: '#', color: '#34a853', onclick: 'showPhotoSpots();return false;' }
+        { label: 'See all photo spots', url: '#', color: '#34a853', onclick: 'navAction(showPhotoSpots);return false;' }
       ]
     },
     {
@@ -3508,7 +3519,7 @@ function showBachelorette(skipPush) {
       title: '🧖 Spa Days and Massages',
       desc: 'Spa at Hutton Hotel, JW Marriott spa, Belmont Spa, mobile spa parties to your Airbnb.',
       links: [
-        { label: 'See all spas', url: '#', color: '#34a853', onclick: 'showSpas();return false;' }
+        { label: 'See all spas', url: '#', color: '#34a853', onclick: 'navAction(showSpas);return false;' }
       ]
     },
     {
@@ -3530,7 +3541,7 @@ function showBachelorette(skipPush) {
       title: '🤠 Costume and Props',
       desc: 'Cowboy hats, sashes, banners, custom shirts. Boot stores on Broadway, Hatch Show Print custom posters, Etsy bachelorette kits.',
       links: [
-        { label: 'See all shopping', url: '#', color: '#34a853', onclick: 'showShopping();return false;' },
+        { label: 'See all shopping', url: '#', color: '#34a853', onclick: 'navAction(showShopping);return false;' },
         { label: 'Hatch Show Print', url: 'https://hatchshowprint.com', color: '#444' }
       ]
     },
