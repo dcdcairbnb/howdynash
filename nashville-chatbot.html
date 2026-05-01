@@ -1909,9 +1909,9 @@ function routeIntent(text) {
     openSignupModal('cheatsheet');
     return;
   }
-  if (lower.startsWith('🍹 6 hours')) { createGroupWithDuration(6); return; }
-  if (lower.startsWith('🌞 12 hours')) { createGroupWithDuration(12); return; }
-  if (lower.startsWith('🎉 24 hours')) { createGroupWithDuration(24); return; }
+  if (lower.startsWith('🍹 6 hours')) { promptLeaderName(6); return; }
+  if (lower.startsWith('🌞 12 hours')) { promptLeaderName(12); return; }
+  if (lower.startsWith('🎉 24 hours')) { promptLeaderName(24); return; }
   if (lower === '← cancel') { showMainMenu(); return; }
 
   if (matches(lower, ['bachelorette', 'bach party', 'pedal tavern', 'party bus', 'bach weekend'])) {
@@ -2911,23 +2911,32 @@ async function groupApi(payload) {
   return { ok: r.ok, status: r.status, data: await r.json().catch(() => ({})) };
 }
 
-function showFindGroup() {
+async function showFindGroup() {
   const saved = getSavedGroupSession();
   if (saved && saved.code && saved.memberId) {
-    addMessage(`You're already in group ${saved.code}. Resuming the live map.`, 'bot');
-    setTimeout(() => showGroupSession(saved.code, saved.memberId, saved.isLeader, saved.name), 200);
-    return;
+    // Verify the saved group is still active before auto-resuming
+    const check = await groupApi({ action: 'get', code: saved.code });
+    if (check.ok && !check.data.ended) {
+      addMessage(`You're already in group ${saved.code}. Resuming the live map.`, 'bot');
+      setTimeout(() => showGroupSession(saved.code, saved.memberId, saved.isLeader, saved.name), 200);
+      return;
+    }
+    // Saved group expired or ended. Clear it and fall through to fresh menu.
+    saveGroupSession(null);
   }
-  addMessage("Find your group. Two options:", 'bot');
+  addMessage("Stay connected with your group. Two options:", 'bot');
   const html = `<div class="card">
     <div class="card-title">👯 Group Location Sharing</div>
-    <div class="card-desc">Stay connected with the group on Lower Broadway. Each person gets a pin on a live Nashville map. Auto-expires after the duration you pick.</div>
+    <div class="card-desc">Each person gets a live pin on a Nashville map. Auto-expires after the duration you pick.</div>
     <div class="card-desc" style="font-size:12px;color:#666;border-top:1px solid #eee;padding-top:8px;margin-top:8px;">Heads up: only share your group code with people you trust. Locations are deleted when the session ends. Howdy Nash is not responsible for incidents during travel between locations or between members. <a onclick="openDisclaimer();return false;" style="color:#d62828;cursor:pointer;text-decoration:underline;">Full disclaimer</a></div>
     <a href="#" onclick="startGroupFlow();return false;" style="background:#d62828;color:#fff;">Start a new group</a>
     <a href="#" onclick="joinGroupFlow();return false;" style="background:#2563eb;color:#fff;">Join a group with code</a>
   </div>`;
   addMessage(html, 'bot', true);
 }
+
+// Holds the duration chosen by the leader, applied after they enter their name.
+let pendingGroupDuration = null;
 
 function startGroupFlow() {
   addMessage("How long should the group last?", 'bot');
@@ -2937,6 +2946,30 @@ function startGroupFlow() {
     '🎉 24 hours · Full weekend',
     '← Cancel'
   ]);
+}
+
+function promptLeaderName(durationHours) {
+  pendingGroupDuration = durationHours;
+  addMessage(`Got it, ${durationHours}-hour group. What's your name? (visible to the group)`, 'bot');
+  const html = `<div class="card">
+    <div class="card-title">Your name</div>
+    <input id="leaderNameInput" type="text" maxlength="40" placeholder="e.g., Megan" style="width:100%;padding:12px;font-size:16px;border:2px solid #d62828;border-radius:8px;margin:8px 0;">
+    <a href="#" onclick="confirmCreateGroup();return false;" style="background:#d62828;color:#fff;">Create group</a>
+  </div>`;
+  addMessage(html, 'bot', true);
+  setTimeout(() => {
+    const el = document.getElementById('leaderNameInput');
+    if (el) el.focus();
+    if (el) el.addEventListener('keydown', (ev) => { if (ev.key === 'Enter') confirmCreateGroup(); });
+  }, 200);
+}
+
+function confirmCreateGroup() {
+  const name = (document.getElementById('leaderNameInput')?.value || '').trim();
+  if (!name) { alert('Enter your name first.'); return; }
+  if (!pendingGroupDuration) { addMessage('Pick a duration first.', 'bot'); return; }
+  createGroupWithDuration(pendingGroupDuration, name);
+  pendingGroupDuration = null;
 }
 
 function joinGroupFlow() {
@@ -2954,18 +2987,17 @@ function joinGroupFlow() {
   }, 200);
 }
 
-async function createGroupWithDuration(durationHours) {
-  const leaderName = window.prompt('Your name? (visible to the group)', 'Group leader');
-  if (!leaderName) return;
+async function createGroupWithDuration(durationHours, leaderName) {
+  const name = (leaderName || 'Group leader').slice(0, 40);
   addMessage(`Creating a ${durationHours}-hour group...`, 'bot');
   const memberId = `m_${Math.random().toString(36).slice(2, 10)}_${Date.now().toString(36)}`;
-  const r = await groupApi({ action: 'create', durationHours, leaderName, memberId });
+  const r = await groupApi({ action: 'create', durationHours, leaderName: name, memberId });
   if (!r.ok) {
     addMessage(`Could not create group: ${r.data.error || 'unknown error'}`, 'bot');
     return;
   }
-  saveGroupSession({ code: r.data.code, memberId, isLeader: true, name: leaderName });
-  showGroupSession(r.data.code, memberId, true, leaderName);
+  saveGroupSession({ code: r.data.code, memberId, isLeader: true, name });
+  showGroupSession(r.data.code, memberId, true, name);
 }
 
 async function submitJoinGroup() {
@@ -3005,16 +3037,41 @@ function showGroupSession(code, memberId, isLeader, name) {
   // Begin sharing location
   if (navigator.geolocation) {
     if (groupGeoWatchId != null) navigator.geolocation.clearWatch(groupGeoWatchId);
+    // Send one quick getCurrentPosition first so the user appears on the map fast
+    navigator.geolocation.getCurrentPosition((pos) => {
+      groupApi({
+        action: 'update',
+        code, memberId, name,
+        lat: pos.coords.latitude, lng: pos.coords.longitude
+      });
+      const status = document.getElementById('group-status');
+      if (status) status.textContent = `Sharing your location. Pin updates every few seconds.`;
+    }, (err) => {
+      const status = document.getElementById('group-status');
+      if (status) {
+        if (err.code === 1) {
+          status.textContent = `Location blocked. Tap the address bar lock icon and allow Location, then refresh.`;
+        } else if (err.code === 2) {
+          status.textContent = `Could not get location. Move outdoors or check device location services.`;
+        } else if (err.code === 3) {
+          status.textContent = `Location timed out. Try again from outside or near a window.`;
+        } else {
+          status.textContent = `Location not shared. Allow location to appear on the group map.`;
+        }
+      }
+    }, { enableHighAccuracy: true, timeout: 15000 });
+    // Then watch for movement
     groupGeoWatchId = navigator.geolocation.watchPosition(async (pos) => {
       await groupApi({
         action: 'update',
         code, memberId, name,
         lat: pos.coords.latitude, lng: pos.coords.longitude
       });
-    }, (err) => {
-      const status = document.getElementById('group-status');
-      if (status) status.textContent = `Location not shared. Allow location to appear on the group map.`;
-    }, { enableHighAccuracy: true, maximumAge: 15000 });
+    }, (err) => { /* watch errors handled by getCurrentPosition above */ },
+    { enableHighAccuracy: true, maximumAge: 15000 });
+  } else {
+    const status = document.getElementById('group-status');
+    if (status) status.textContent = `This browser does not support live location.`;
   }
 
   // Poll every 10 seconds
@@ -3025,6 +3082,7 @@ function showGroupSession(code, memberId, isLeader, name) {
       const status = document.getElementById('group-status');
       if (status) status.textContent = `Group ended or expired.`;
       stopGroupSession();
+      saveGroupSession(null);
       return;
     }
     if (r.data.ended) {
