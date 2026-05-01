@@ -1540,6 +1540,15 @@ function goBack() {
       showNeighborhoodsExplorer();
     }
   }
+  else if (target && target.startsWith('nbsub-')) {
+    // Sub-view (eat/bars/etc) inside a neighborhood. Restore the parent neighborhood detail.
+    const m = target.match(/^nbsub-(\d+)-/);
+    if (m && NEIGHBORHOOD_GUIDES[Number(m[1])]) {
+      showNeighborhoodDetail(NEIGHBORHOOD_GUIDES[Number(m[1])].key);
+    } else {
+      showNeighborhoodsExplorer();
+    }
+  }
   else showMainMenu();
   saveMenuState();
   updateBackBtn();
@@ -5027,7 +5036,8 @@ function showNeighborhoodDetailByIndex(idx) {
 }
 
 function showNeighborhoodDetail(key) {
-  const n = NEIGHBORHOOD_GUIDES.find(g => g.key === key);
+  const idx = NEIGHBORHOOD_GUIDES.findIndex(g => g.key === key);
+  const n = idx >= 0 ? NEIGHBORHOOD_GUIDES[idx] : null;
   if (!n) {
     addMessage("Neighborhood not found.", 'bot');
     return;
@@ -5069,35 +5079,38 @@ function showNeighborhoodDetail(key) {
   const cocktailsHere = (typeof CURATED_COCKTAIL_BARS !== 'undefined') ? CURATED_COCKTAIL_BARS.filter(s => matchesNeighborhood(s.neighborhood)) : [];
   const rooftopsHere = (typeof CURATED_ROOFTOPS !== 'undefined') ? CURATED_ROOFTOPS.filter(s => matchesNeighborhood(s.neighborhood)) : [];
 
+  // All sub-views from a neighborhood detail use the same menu name format
+  // 'nbsub-N-TYPE' so goBack can pop them back to the neighborhood detail.
+  const subMenu = (type) => `nbsub-${idx}-${type}`;
   let buttonsHtml = '<div class="card"><div class="card-title">What to do in ' + n.name + '</div>';
   let buttonCount = 0;
   if (restaurantsHere.length > 0) {
-    buttonsHtml += `<a href="#" onclick="navAction(() => showRestaurants(${JSON.stringify(restaurantsHere).replace(/"/g, '&quot;')}, 'Eat in ${n.name}:'), 'eat-${n.key.replace(/[^a-z0-9]/gi, '')}', '${n.name}');return false;" style="background:#d62828;color:#fff;">🍽️ Eat (${restaurantsHere.length})</a>`;
+    buttonsHtml += `<a href="#" onclick="navAction(() => showRestaurants(${JSON.stringify(restaurantsHere).replace(/"/g, '&quot;')}, 'Eat in ${n.name}:'), '${subMenu('eat')}', '${n.name}');return false;" style="background:#d62828;color:#fff;">🍽️ Eat (${restaurantsHere.length})</a>`;
     buttonCount++;
   }
   if (cocktailsHere.length > 0 || rooftopsHere.length > 0) {
     const allBars = [...cocktailsHere, ...rooftopsHere];
-    buttonsHtml += `<a href="#" onclick="navAction(() => showFilteredCurated(${JSON.stringify(allBars).replace(/"/g, '&quot;')}, 'Bars and rooftops in ${n.name}:'), 'bars-${n.key.replace(/[^a-z0-9]/gi, '')}', '${n.name}');return false;" style="background:#7c3aed;color:#fff;">🍸 Bars & Rooftops (${allBars.length})</a>`;
+    buttonsHtml += `<a href="#" onclick="navAction(() => showFilteredCurated(${JSON.stringify(allBars).replace(/"/g, '&quot;')}, 'Bars and rooftops in ${n.name}:'), '${subMenu('bars')}', '${n.name}');return false;" style="background:#7c3aed;color:#fff;">🍸 Bars & Rooftops (${allBars.length})</a>`;
     buttonCount++;
   }
   if (honkyHere.length > 0) {
-    buttonsHtml += `<a href="#" onclick="navAction(() => showFilteredCurated(${JSON.stringify(honkyHere).replace(/"/g, '&quot;')}, 'Honky tonks in ${n.name}:'), 'honky-${n.key.replace(/[^a-z0-9]/gi, '')}', '${n.name}');return false;" style="background:#a01c1c;color:#fff;">🥃 Honky Tonks (${honkyHere.length})</a>`;
+    buttonsHtml += `<a href="#" onclick="navAction(() => showFilteredCurated(${JSON.stringify(honkyHere).replace(/"/g, '&quot;')}, 'Honky tonks in ${n.name}:'), '${subMenu('honky')}', '${n.name}');return false;" style="background:#a01c1c;color:#fff;">🥃 Honky Tonks (${honkyHere.length})</a>`;
     buttonCount++;
   }
   if (breweriesHere.length > 0) {
-    buttonsHtml += `<a href="#" onclick="navAction(() => showFilteredCurated(${JSON.stringify(breweriesHere).replace(/"/g, '&quot;')}, 'Breweries in ${n.name}:'), 'brew-${n.key.replace(/[^a-z0-9]/gi, '')}', '${n.name}');return false;" style="background:#b45309;color:#fff;">🍺 Breweries (${breweriesHere.length})</a>`;
+    buttonsHtml += `<a href="#" onclick="navAction(() => showFilteredCurated(${JSON.stringify(breweriesHere).replace(/"/g, '&quot;')}, 'Breweries in ${n.name}:'), '${subMenu('brew')}', '${n.name}');return false;" style="background:#b45309;color:#fff;">🍺 Breweries (${breweriesHere.length})</a>`;
     buttonCount++;
   }
   if (distilleriesHere.length > 0) {
-    buttonsHtml += `<a href="#" onclick="navAction(() => showFilteredCurated(${JSON.stringify(distilleriesHere).replace(/"/g, '&quot;')}, 'Distilleries in ${n.name}:'), 'distill-${n.key.replace(/[^a-z0-9]/gi, '')}', '${n.name}');return false;" style="background:#92400e;color:#fff;">🥃 Distilleries (${distilleriesHere.length})</a>`;
+    buttonsHtml += `<a href="#" onclick="navAction(() => showFilteredCurated(${JSON.stringify(distilleriesHere).replace(/"/g, '&quot;')}, 'Distilleries in ${n.name}:'), '${subMenu('distill')}', '${n.name}');return false;" style="background:#92400e;color:#fff;">🥃 Distilleries (${distilleriesHere.length})</a>`;
     buttonCount++;
   }
   if (shoppingHere.length > 0) {
-    buttonsHtml += `<a href="#" onclick="navAction(() => showFilteredCurated(${JSON.stringify(shoppingHere).replace(/"/g, '&quot;')}, 'Shopping in ${n.name}:'), 'shop-${n.key.replace(/[^a-z0-9]/gi, '')}', '${n.name}');return false;" style="background:#0a8754;color:#fff;">🛍️ Shopping (${shoppingHere.length})</a>`;
+    buttonsHtml += `<a href="#" onclick="navAction(() => showFilteredCurated(${JSON.stringify(shoppingHere).replace(/"/g, '&quot;')}, 'Shopping in ${n.name}:'), '${subMenu('shop')}', '${n.name}');return false;" style="background:#0a8754;color:#fff;">🛍️ Shopping (${shoppingHere.length})</a>`;
     buttonCount++;
   }
   if (photosHere.length > 0) {
-    buttonsHtml += `<a href="#" onclick="navAction(() => showFilteredCurated(${JSON.stringify(photosHere).replace(/"/g, '&quot;')}, 'Photo spots in ${n.name}:'), 'photo-${n.key.replace(/[^a-z0-9]/gi, '')}', '${n.name}');return false;" style="background:#e91e63;color:#fff;">📸 Photo Spots (${photosHere.length})</a>`;
+    buttonsHtml += `<a href="#" onclick="navAction(() => showFilteredCurated(${JSON.stringify(photosHere).replace(/"/g, '&quot;')}, 'Photo spots in ${n.name}:'), '${subMenu('photo')}', '${n.name}');return false;" style="background:#e91e63;color:#fff;">📸 Photo Spots (${photosHere.length})</a>`;
     buttonCount++;
   }
   buttonsHtml += '</div>';
