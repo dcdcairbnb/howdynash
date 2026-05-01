@@ -1616,16 +1616,18 @@ function navAction(fn, menuName, fromLabel) {
   // needed. Behaves like the back button does.
   if (messagesEl) messagesEl.innerHTML = '';
   scrollAnchor = null;
-  suppressAutoScroll = false;
+  // Suppress auto-scroll-to-bottom while the new section is being added.
+  // Otherwise each new card pulls the user down and they land at the bottom.
+  suppressAutoScroll = true;
   if (fromLabel) {
     const backHtml = `<div class="card" style="background:#fafafa;padding:10px 14px;border-left:3px solid #d62828;"><a href="#" onclick="goBack();return false;" style="color:#d62828;font-weight:600;text-decoration:none;font-size:14px;">← Back to ${fromLabel}</a></div>`;
     addMessage(backHtml, 'bot', true);
   }
   try { fn(); } catch (e) { console.error('[navAction] fn threw:', e); addMessage('Error loading section: ' + e.message, 'bot'); }
-  // Hop scroll to top of chat
-  setTimeout(() => {
-    if (messagesEl) messagesEl.scrollTop = 0;
-  }, 50);
+  // Snap to top of chat after content is added
+  setTimeout(() => { if (messagesEl) messagesEl.scrollTop = 0; }, 50);
+  // Resume normal auto-scroll after async content has had time to land
+  setTimeout(() => { suppressAutoScroll = false; }, 2500);
 }
 
 function scrollToView() {
