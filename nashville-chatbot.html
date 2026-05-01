@@ -1520,6 +1520,9 @@ function goBack() {
   else if (target === 'do') showThingsToDoMenu(true);
   else if (target === 'around') showGetAroundMenu(true);
   else if (target === 'essentials') showEssentialsMenu(true);
+  else if (target === 'bachelorette') showBachelorette(true);
+  else if (target === 'family') showFamilyFriendly();
+  else if (target === 'saved') showSavedSpots();
   else showMainMenu();
   saveMenuState();
   updateBackBtn();
@@ -1583,14 +1586,21 @@ function addMessage(text, sender, html = false) {
 }
 
 // Use this for any in-app button that navigates to a new section without a
-// user-typed message. It resets the scroll anchor so the new content scrolls
-// into view instead of staying hidden below the previous anchor.
+// user-typed message. It resets the scroll anchor and scrolls to the FIRST
+// new message added by the function (e.g. the section header), not the bottom.
 function navAction(fn) {
   scrollAnchor = null;
+  const beforeCount = messagesEl ? messagesEl.children.length : 0;
   try { fn(); } catch (e) { console.error('navAction failed', e); }
   setTimeout(() => {
-    if (messagesEl) messagesEl.scrollTop = messagesEl.scrollHeight;
-  }, 250);
+    if (!messagesEl) return;
+    const firstNew = messagesEl.children[beforeCount];
+    if (firstNew && typeof firstNew.scrollIntoView === 'function') {
+      firstNew.scrollIntoView({ block: 'start', behavior: 'smooth' });
+    } else {
+      messagesEl.scrollTop = messagesEl.scrollHeight;
+    }
+  }, 300);
 }
 
 function scrollToView() {
@@ -3415,7 +3425,7 @@ function showBachelorette(skipPush) {
       desc: 'Book mobile IV the night before. Most services come to your Airbnb at 9am-noon and treat the whole crew. Group rates at 4+ people.',
       links: [
         { label: '💧 Reset IV packages', url: 'https://resetiv.com/pages/packages', color: '#34a853' },
-        { label: '💧 See all 20 IV providers', url: '#', color: '#0a8754', onclick: 'showRehydration();return false;' }
+        { label: '💧 See all 20 IV providers', url: '#', color: '#0a8754', onclick: 'navAction(showRehydration);return false;' }
       ]
     },
     {
