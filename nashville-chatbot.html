@@ -1533,8 +1533,12 @@ function goBack() {
   else if (target === 'brunch') showRestaurants(NASHVILLE_DATA.restaurants.filter(r => /breakfast|brunch|cafe/i.test(r.cuisine)), 'Breakfast and brunch spots:');
   else if (target === 'neighborhoods') showNeighborhoodsExplorer();
   else if (target && target.startsWith('neighborhood-')) {
-    const key = target.replace(/^neighborhood-/, '').replace(/-/g, ' ');
-    showNeighborhoodDetail(key);
+    const idx = Number(target.replace(/^neighborhood-/, ''));
+    if (!isNaN(idx) && NEIGHBORHOOD_GUIDES[idx]) {
+      showNeighborhoodDetail(NEIGHBORHOOD_GUIDES[idx].key);
+    } else {
+      showNeighborhoodsExplorer();
+    }
   }
   else showMainMenu();
   saveMenuState();
@@ -4993,7 +4997,7 @@ const NEIGHBORHOOD_GUIDES = [
 function showNeighborhoodsExplorer() {
   pushMenu('neighborhoods');
   addMessage("Nashville neighborhoods. Tap one to see what to eat, drink, shop, and see there.", 'bot');
-  NEIGHBORHOOD_GUIDES.forEach(n => {
+  NEIGHBORHOOD_GUIDES.forEach((n, idx) => {
     let dist = '';
     if (userLocation) {
       const nb = neighborhoodCoords(n.key) || neighborhoodCoords(n.name);
@@ -5002,15 +5006,24 @@ function showNeighborhoodsExplorer() {
         if (miles != null) dist = ` · 📍 ${miles} mi`;
       }
     }
-    const safeKey = n.key.replace(/'/g, "\\'");
+    // Use index-based menu name to dodge keys with spaces or hyphens
     const html = `<div class="card">
       <div class="card-title">${n.emoji} ${n.name}</div>
       <div class="card-meta">${n.vibe}${dist}</div>
       <div class="card-desc">${n.blurb}</div>
-      <a href="#" onclick="navAction(() => showNeighborhoodDetail('${safeKey}'), 'neighborhood-${safeKey.replace(/[^a-z0-9]/gi, '')}', 'Neighborhoods');return false;" style="background:#d62828;color:#fff;">Explore ${n.name}</a>
+      <a href="#" onclick="navAction(() => showNeighborhoodDetailByIndex(${idx}), 'neighborhood-${idx}', 'Neighborhoods');return false;" style="background:#d62828;color:#fff;">Explore ${n.name}</a>
     </div>`;
     addMessage(html, 'bot', true);
   });
+}
+
+function showNeighborhoodDetailByIndex(idx) {
+  const n = NEIGHBORHOOD_GUIDES[idx];
+  if (!n) {
+    addMessage("Neighborhood not found.", 'bot');
+    return;
+  }
+  showNeighborhoodDetail(n.key);
 }
 
 function showNeighborhoodDetail(key) {
