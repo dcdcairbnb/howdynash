@@ -4966,64 +4966,64 @@ async function showAllRestaurants() {
   showRestaurantsPaged(NASHVILLE_DATA.restaurants, 0);
 }
 
-// Render a single page of restaurants. headerMsg is the DOM element of the
-// "X found" header — everything after it gets cleared and replaced when the
-// user clicks Previous 5 or Show next 5, so each page is the only thing visible.
-function showRestaurantsPaged(list, startIdx, headerMsg) {
+// Render restaurants paged 5 at a time. Each page is rendered into a single
+// container div so changing pages is just clearing that container and re-rendering.
+// pageContainer is the div the cards live in. If null, a new one is created.
+function showRestaurantsPaged(list, startIdx, pageContainer) {
   const pageSize = 5;
-
-  // Clear all messages added after the header so each page replaces the previous
-  if (headerMsg) {
-    let next = headerMsg.nextSibling;
-    while (next) {
-      const toRemove = next;
-      next = next.nextSibling;
-      toRemove.remove();
-    }
-  }
-
   const totalPages = Math.ceil(list.length / pageSize);
   const currentPage = Math.floor(startIdx / pageSize) + 1;
   const slice = list.slice(startIdx, startIdx + pageSize);
-
-  // Add a small page indicator
-  if (totalPages > 1) {
-    addMessage(`Page ${currentPage} of ${totalPages}`, 'bot');
-  }
-
-  slice.forEach(r => addMessage(renderRestaurantCard(r), 'bot', true));
-
   const remaining = list.length - (startIdx + pageSize);
   const hasNext = remaining > 0;
   const hasPrev = startIdx > 0;
 
-  if (hasPrev || hasNext) {
-    setTimeout(() => {
-      const wrap = document.createElement('div');
-      wrap.className = 'quick-replies';
-      if (hasPrev) {
-        const prevBtn = document.createElement('button');
-        prevBtn.className = 'quick-reply';
-        prevBtn.textContent = `← Previous 5`;
-        prevBtn.onclick = () => showRestaurantsPaged(list, Math.max(0, startIdx - pageSize), headerMsg);
-        wrap.appendChild(prevBtn);
-      }
-      if (hasNext) {
-        const nextBtn = document.createElement('button');
-        nextBtn.className = 'quick-reply';
-        nextBtn.textContent = `Show next ${Math.min(pageSize, remaining)} →`;
-        nextBtn.onclick = () => showRestaurantsPaged(list, startIdx + pageSize, headerMsg);
-        wrap.appendChild(nextBtn);
-      }
-      messagesEl.appendChild(wrap);
-      // Scroll to the header so user sees the new page from the top
-      if (headerMsg && typeof headerMsg.scrollIntoView === 'function') {
-        headerMsg.scrollIntoView({ block: 'start', behavior: 'smooth' });
-      }
-    }, 80);
-  } else if (totalPages > 1) {
-    setTimeout(() => addMessage("That's everything.", 'bot'), 100);
+  // Build the new page HTML
+  let html = '';
+  if (totalPages > 1) {
+    html += `<div class="message bot" style="font-size:13px;color:#666;text-align:center;background:transparent;padding:6px 0;">Page ${currentPage} of ${totalPages}</div>`;
   }
+  slice.forEach(r => {
+    html += `<div class="message bot">${renderRestaurantCard(r)}</div>`;
+  });
+
+  // Pagination controls
+  if (hasPrev || hasNext) {
+    html += `<div class="quick-replies" id="restPageNav">`;
+    if (hasPrev) {
+      html += `<button class="quick-reply" data-paged-action="prev">← Previous 5</button>`;
+    }
+    if (hasNext) {
+      html += `<button class="quick-reply" data-paged-action="next">Show next ${Math.min(pageSize, remaining)} →</button>`;
+    }
+    html += `</div>`;
+  } else if (totalPages > 1) {
+    html += `<div class="message bot" style="text-align:center;color:#666;">That's everything.</div>`;
+  }
+
+  // Create the container if first render, otherwise reuse and replace contents
+  if (!pageContainer) {
+    pageContainer = document.createElement('div');
+    pageContainer.className = 'restaurant-page-container';
+    messagesEl.appendChild(pageContainer);
+  }
+  pageContainer.innerHTML = html;
+
+  // Wire up the prev/next buttons (can't use inline onclick because of closure)
+  pageContainer.querySelectorAll('[data-paged-action]').forEach(btn => {
+    const action = btn.getAttribute('data-paged-action');
+    btn.addEventListener('click', () => {
+      const newIdx = action === 'prev' ? Math.max(0, startIdx - pageSize) : startIdx + pageSize;
+      showRestaurantsPaged(list, newIdx, pageContainer);
+    });
+  });
+
+  // Scroll to the top of the page container so the new page is visible from the start
+  setTimeout(() => {
+    if (pageContainer && typeof pageContainer.scrollIntoView === 'function') {
+      pageContainer.scrollIntoView({ block: 'start', behavior: 'smooth' });
+    }
+  }, 60);
 }
 
 async function showRestaurants(list, header) {
@@ -5032,15 +5032,14 @@ async function showRestaurants(list, header) {
     showRestaurantOptions();
     return;
   }
-  // Capture the header message DOM element so pagination can clear everything
-  // after it on each page change
-  const headerMsg = addMessage(`${header} (${list.length} found)`, 'bot');
+  addMessage(`${header} (${list.length} found)`, 'bot');
   // Enrich with live distance when location is available.
   const enriched = await enrichCuratedWithLive(list, 'restaurant', 'restaurant');
   if (userLocation && enriched.some(r => r.distanceMiles != null)) {
     enriched.sort((a, b) => (a.distanceMiles ?? 9999) - (b.distanceMiles ?? 9999));
   }
-  showRestaurantsPaged(enriched, 0, headerMsg);
+  // Render first page in a fresh container; pagination replaces this container's contents on next/prev
+  showRestaurantsPaged(enriched, 0);
 }
 
 async function showLiveMusic() {
