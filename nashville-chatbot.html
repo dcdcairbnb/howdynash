@@ -3009,8 +3009,18 @@ async function submitJoinGroup() {
   if (code.length < 3) { alert('Enter the 4-letter code from the group leader.'); return; }
   const memberId = `m_${Math.random().toString(36).slice(2, 10)}_${Date.now().toString(36)}`;
   const check = await groupApi({ action: 'get', code });
+  // Group exists but the leader already ended it
+  if (check.ok && check.data && check.data.ended) {
+    addMessage(`The group leader ended group ${code}. Ask them to start a new one and send you the new code.`, 'bot');
+    return;
+  }
+  // Code was typed wrong, the group expired, or it was ended more than 60s ago
   if (!check.ok) {
-    addMessage(`That code isn't active. Either the group ended or the code was typed wrong.`, 'bot');
+    if (check.status === 404) {
+      addMessage(`Group ${code} is no longer active. The leader ended it or it expired. Ask them to start a fresh group.`, 'bot');
+    } else {
+      addMessage(`Could not reach the group. Check your connection and try again.`, 'bot');
+    }
     return;
   }
   saveGroupSession({ code, memberId, isLeader: false, name });
