@@ -2431,13 +2431,76 @@ function haversineMiles(a, b) {
   return Number((R * 2 * Math.atan2(Math.sqrt(x), Math.sqrt(1 - x))).toFixed(1));
 }
 
+// Approximate center coordinates for Nashville neighborhoods. Used as a
+// fallback when a curated entry has no exact coords and no API match.
+const NASHVILLE_NEIGHBORHOODS = {
+  'lower broadway': { lat: 36.1604, lng: -86.7780 },
+  'broadway': { lat: 36.1604, lng: -86.7780 },
+  'downtown': { lat: 36.1627, lng: -86.7816 },
+  'sobro': { lat: 36.1561, lng: -86.7771 },
+  'the gulch': { lat: 36.1517, lng: -86.7867 },
+  'gulch': { lat: 36.1517, lng: -86.7867 },
+  'germantown': { lat: 36.1769, lng: -86.7864 },
+  'east nashville': { lat: 36.1822, lng: -86.7461 },
+  '12 south': { lat: 36.1239, lng: -86.7900 },
+  'twelve south': { lat: 36.1239, lng: -86.7900 },
+  'midtown': { lat: 36.1517, lng: -86.7989 },
+  'music row': { lat: 36.1502, lng: -86.7942 },
+  'wedgewood-houston': { lat: 36.1339, lng: -86.7706 },
+  'wedgewood houston': { lat: 36.1339, lng: -86.7706 },
+  'wehoo': { lat: 36.1339, lng: -86.7706 },
+  'berry hill': { lat: 36.1106, lng: -86.7669 },
+  'green hills': { lat: 36.1031, lng: -86.8161 },
+  'belle meade': { lat: 36.1056, lng: -86.8617 },
+  'west end': { lat: 36.1497, lng: -86.8133 },
+  'hillsboro village': { lat: 36.1339, lng: -86.7986 },
+  'edgehill': { lat: 36.1442, lng: -86.7917 },
+  'marathon village': { lat: 36.1597, lng: -86.7975 },
+  'nations': { lat: 36.1606, lng: -86.8447 },
+  'sylvan park': { lat: 36.1525, lng: -86.8281 },
+  'donelson': { lat: 36.1717, lng: -86.6786 },
+  'cool springs': { lat: 35.9786, lng: -86.8217 },
+  'brentwood': { lat: 36.0331, lng: -86.7828 },
+  'franklin': { lat: 35.9251, lng: -86.8689 },
+  'bellevue': { lat: 36.0817, lng: -86.9417 },
+  'antioch': { lat: 36.0578, lng: -86.6717 },
+  'madison': { lat: 36.2575, lng: -86.7186 },
+  'opry mills': { lat: 36.2050, lng: -86.6925 },
+  'south nashville': { lat: 36.1156, lng: -86.7489 },
+  'printers alley': { lat: 36.1622, lng: -86.7775 },
+  'first horizon park': { lat: 36.1707, lng: -86.7866 }
+};
+function neighborhoodCoords(neighborhood) {
+  if (!neighborhood) return null;
+  const key = String(neighborhood).toLowerCase().trim();
+  // Direct match first
+  if (NASHVILLE_NEIGHBORHOODS[key]) return NASHVILLE_NEIGHBORHOODS[key];
+  // Try matching the first segment before any "/" or " and " or comma
+  const first = key.split(/[\/,]| and /)[0].trim();
+  if (NASHVILLE_NEIGHBORHOODS[first]) return NASHVILLE_NEIGHBORHOODS[first];
+  // Substring match against known neighborhoods
+  for (const k in NASHVILLE_NEIGHBORHOODS) {
+    if (key.includes(k)) return NASHVILLE_NEIGHBORHOODS[k];
+  }
+  return null;
+}
+
 function renderCuratedCard(s, label, liveMatch) {
-  // Compute distance: use live match first, fall back to hardcoded coords + user location.
+  // Compute distance: use live match first, then hardcoded coords on the
+  // curated entry, then fall back to the neighborhood center.
   let dist = liveMatch && liveMatch.distanceMiles != null ? liveMatch.distanceMiles : null;
+  let approx = false;
   if (dist == null && s.coords && userLocation) {
     dist = haversineMiles(userLocation, s.coords);
   }
-  const distStr = dist != null ? ` · 📍 ${dist} mi` : '';
+  if (dist == null && userLocation && s.neighborhood) {
+    const nbCoords = neighborhoodCoords(s.neighborhood);
+    if (nbCoords) {
+      dist = haversineMiles(userLocation, nbCoords);
+      approx = true;
+    }
+  }
+  const distStr = dist != null ? ` · 📍 ${dist} mi${approx ? ' (approx)' : ''}` : '';
   const ratingStr = liveMatch && liveMatch.rating ? `★ ${liveMatch.rating}` : '';
   const reviewStr = liveMatch && liveMatch.reviewCount ? ` (${liveMatch.reviewCount})` : '';
   const meta = [s.neighborhood || '', s.note ? '· ' + s.note : '', ratingStr + reviewStr + distStr].filter(x => x).join(' ');
@@ -2469,13 +2532,17 @@ async function showCuratedThenLive(curatedList, query, type, label) {
   }
 
   // Sort curated items by distance when we have user location.
-  // Use live match distance first, fall back to hardcoded coords.
+  // Use live match distance first, then hardcoded coords, then neighborhood center.
   let items = curatedList.map(c => ({ item: c, match: findLiveMatch(c, live) }));
   if (userLocation) {
     items = items.map(x => {
       let dist = x.match?.distanceMiles ?? null;
       if (dist == null && x.item.coords) {
         dist = haversineMiles(userLocation, x.item.coords);
+      }
+      if (dist == null && x.item.neighborhood) {
+        const nb = neighborhoodCoords(x.item.neighborhood);
+        if (nb) dist = haversineMiles(userLocation, nb);
       }
       return { ...x, dist };
     });
@@ -3680,6 +3747,14 @@ const VIATOR_PID = 'U00808374';
 const GETYOURGUIDE_PID = 'ACQGDWW';
 const AWIN_AIRBNB_MERCHANT_ID = '';
 const VRBO_AFFILIATE_TAG = '';
+// Amazon Associates tracking tag. Sign up at https://affiliate-program.amazon.com
+// to get yours, then paste here. Format: yourname-20. Buttons stay hidden
+// until this is set so we don't ship inactive links.
+const AMAZON_TAG = '';
+function amazonSearch(query) {
+  const base = `https://www.amazon.com/s?k=${encodeURIComponent(query)}`;
+  return AMAZON_TAG ? `${base}&tag=${AMAZON_TAG}` : base;
+}
 
 function buildAirbnbUrl() {
   const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
