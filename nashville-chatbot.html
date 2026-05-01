@@ -3429,7 +3429,7 @@ function showBachelorette(skipPush) {
       title: '🥃 Honky Tonks on Broadway',
       desc: 'Tootsie\'s, Robert\'s, Acme, Honky Tonk Central. Free music from 10am. Tip the bands.',
       links: [
-        { label: 'Honky tonks on map', url: 'https://www.google.com/maps/search/honky+tonks+broadway+nashville', color: '#34a853' }
+        { label: 'See all honky tonks', url: '#', color: '#34a853', onclick: 'showHonkyTonks();return false;' }
       ]
     },
     {
@@ -3437,7 +3437,7 @@ function showBachelorette(skipPush) {
       desc: 'Biscuit Love, Pancake Pantry, Milk and Honey, The Diner, Frothy Monkey. Bottomless mimosas common.',
       links: [
         { label: 'Biscuit Love', url: 'https://biscuitlove.com', color: '#d62828' },
-        { label: 'Brunch spots on Maps', url: 'https://www.google.com/maps/search/best+bachelorette+brunch+nashville', color: '#34a853' }
+        { label: 'See all brunch spots', url: '#', color: '#34a853', onclick: "showRestaurants(NASHVILLE_DATA.restaurants.filter(r => /breakfast|brunch|cafe/i.test(r.cuisine)), 'Breakfast and brunch spots:');return false;" }
       ]
     },
     {
@@ -3452,7 +3452,7 @@ function showBachelorette(skipPush) {
       title: '📸 Mural Photo Spots',
       desc: 'I Believe in Nashville (12 South), Wings (Gulch), What Lifts You wings (Gulch), Make Music Not War (12 South), Patsy Cline (Berry Hill).',
       links: [
-        { label: 'Mural map', url: 'https://www.google.com/maps/search/nashville+murals+12+south', color: '#34a853' }
+        { label: 'See all photo spots', url: '#', color: '#34a853', onclick: 'showPhotoSpots();return false;' }
       ]
     },
     {
@@ -3508,7 +3508,7 @@ function showBachelorette(skipPush) {
       title: '🧖 Spa Days and Massages',
       desc: 'Spa at Hutton Hotel, JW Marriott spa, Belmont Spa, mobile spa parties to your Airbnb.',
       links: [
-        { label: 'Spas on Maps', url: 'https://www.google.com/maps/search/best+spa+bachelorette+nashville', color: '#34a853' }
+        { label: 'See all spas', url: '#', color: '#34a853', onclick: 'showSpas();return false;' }
       ]
     },
     {
@@ -3530,7 +3530,7 @@ function showBachelorette(skipPush) {
       title: '🤠 Costume and Props',
       desc: 'Cowboy hats, sashes, banners, custom shirts. Boot stores on Broadway, Hatch Show Print custom posters, Etsy bachelorette kits.',
       links: [
-        { label: 'Boot stores on Maps', url: 'https://www.google.com/maps/search/boot+barn+nashville', color: '#34a853' },
+        { label: 'See all shopping', url: '#', color: '#34a853', onclick: 'showShopping();return false;' },
         { label: 'Hatch Show Print', url: 'https://hatchshowprint.com', color: '#444' }
       ]
     },
