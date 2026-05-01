@@ -1608,23 +1608,20 @@ function navAction(fn, menuName, fromLabel) {
     return;
   }
   if (menuName) pushMenu(menuName);
+  // Clear the chat so the new section is what the user sees, no scrolling
+  // needed. Behaves like the back button does.
+  if (messagesEl) messagesEl.innerHTML = '';
   scrollAnchor = null;
-  suppressAutoScroll = true;
-  const beforeCount = messagesEl ? messagesEl.children.length : 0;
+  suppressAutoScroll = false;
   if (fromLabel) {
     const backHtml = `<div class="card" style="background:#fafafa;padding:10px 14px;border-left:3px solid #d62828;"><a href="#" onclick="goBack();return false;" style="color:#d62828;font-weight:600;text-decoration:none;font-size:14px;">← Back to ${fromLabel}</a></div>`;
     addMessage(backHtml, 'bot', true);
   }
   try { fn(); } catch (e) { console.error('[navAction] fn threw:', e); addMessage('Error loading section: ' + e.message, 'bot'); }
-  // Scroll once to the first new message (the back link or section header)
+  // Hop scroll to top of chat
   setTimeout(() => {
-    if (messagesEl && messagesEl.children[beforeCount]) {
-      messagesEl.children[beforeCount].scrollIntoView({ block: 'start', behavior: 'smooth' });
-    }
-  }, 80);
-  // Resume normal auto-scroll after async content has had time to load.
-  // The user can scroll freely the entire time.
-  setTimeout(() => { suppressAutoScroll = false; }, 2500);
+    if (messagesEl) messagesEl.scrollTop = 0;
+  }, 50);
 }
 
 function scrollToView() {
