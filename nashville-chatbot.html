@@ -4117,12 +4117,14 @@ function buildVrboUrl() {
 }
 
 function showLuggageStorage() {
-  addMessage("Need to ditch your bags between checkout and your flight? Two trusted services partner with shops, hotels, and cafes around Nashville.", 'bot');
+  addMessage("Need to ditch your bags between checkout and your flight? Three trusted options around Nashville.", 'bot');
 
   const lat = userLocation ? userLocation.lat : 36.1627;
   const lng = userLocation ? userLocation.lng : -86.7816;
   const locationNote = userLocation ? "Showing options near your current spot." : "Search starts in Nashville. Share your location for nearby filters.";
 
+  // Nashville Luggage Storage - local Nashville-specific service
+  const nashvilleLuggageUrl = `https://nashvilleluggagestorage.com`;
   // Bounce - homepage works in all locations, deep links and city pages 404
   const bounceUrl = `https://bounce.com`;
   // LuggageHero - homepage works in all locations, city deep links 404
@@ -4135,6 +4137,7 @@ function showLuggageStorage() {
   const html = `<div class="card">
     <div class="card-title">Where to stash your bags</div>
     <div class="card-desc">${locationNote}</div>
+    <a href="${nashvilleLuggageUrl}" target="_blank" rel="noopener" style="background:#d62828;color:#fff;">Nashville Luggage Storage (local)</a>
     <a href="${bounceUrl}" target="_blank" rel="noopener" style="background:#ff5b3a;color:#fff;">Bounce ($6/bag/day)</a>
     <a href="${luggageheroUrl}" target="_blank" rel="noopener" style="background:#1f3a93;color:#fff;">LuggageHero ($1/hour)</a>
     <a href="${mapsUrl}" target="_blank" rel="noopener" style="background:#34a853;color:#fff;">See nearby on Google Maps</a>
