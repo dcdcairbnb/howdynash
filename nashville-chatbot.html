@@ -2535,6 +2535,10 @@ const CURATED_REHYDRATION = [
   { name: "Reset IV Nashville", neighborhood: "Mobile (to your Airbnb)", desc: "Mobile IV therapy team comes to you. Hangover recovery, energy, immunity, and beauty drips. Group rates for bachelorettes.", url: "https://resetiv.com/pages/packages", note: "Most popular for bachelorette groups. Book the night before for next-morning recovery." },
   { name: "Hangover Hospital Nashville", neighborhood: "Mobile (to your Airbnb)", desc: "Specifically designed for hangover recovery. Mobile to hotels, Airbnbs, and event spaces. Group bookings welcome.", url: "https://hangoverhospital.com" },
   { name: "The IV Doc Nashville", neighborhood: "Mobile", desc: "Physician-led mobile IV therapy. Saline, vitamins, anti-nausea, headache relief. Premium service.", url: "https://www.theivdoc.com/nashville" },
+  { name: "Drip Hydration Nashville", neighborhood: "Mobile", desc: "Concierge mobile IV with same-day appointments. Myers Cocktail, NAD+, hangover, beauty, and immunity drips. Available 8am-8pm.", url: "https://driphydration.com/locations/tennessee/nashville/" },
+  { name: "Onus IV Hydration", neighborhood: "Brentwood + mobile", desc: "Nashville-based clinic plus in-home service. Bachelorette packages and bridal-prep drips. Walk-ins welcome.", url: "https://onusiv.com" },
+  { name: "Hydreight Nashville", neighborhood: "Mobile", desc: "On-demand IV and vitamin shots delivered by registered nurses. Book in app, arrives within an hour.", url: "https://hydreight.com" },
+  { name: "Mobile IV Medics Nashville", neighborhood: "Mobile", desc: "Nurse-led mobile IV with hangover, athletic, food poisoning, and migraine drips. Same-day service.", url: "https://mobileivmedics.com/locations/nashville-iv-therapy/" },
   { name: "The Drip Bar Nashville", neighborhood: "Multiple locations + mobile", desc: "Walk-in clinic plus mobile service. Custom IV cocktails, NAD+, vitamin shots.", url: "https://thedripbar.com" },
   { name: "Restore Hyper Wellness", neighborhood: "Green Hills, Cool Springs, multiple", desc: "IV drips plus cryotherapy, red light, IV vitamin shots. Membership and walk-ins.", url: "https://www.restore.com/locations/tn-nashville" },
   { name: "Liquivida Nashville", neighborhood: "Brentwood and Cool Springs", desc: "Wellness clinic with IV therapy, peptides, hormone optimization. Walk-in and mobile available.", url: "https://www.liquivida.com" },
@@ -2543,7 +2547,11 @@ const CURATED_REHYDRATION = [
   { name: "Element 5 Wellness", neighborhood: "The Gulch / Downtown", desc: "Walk-in IV bar in The Gulch. Convenient for downtown bachelorette groups.", url: null },
   { name: "Hangover IV Nashville", neighborhood: "Mobile", desc: "Mobile-only service, often available same-day. Bachelorette group package deals.", url: null },
   { name: "Brentwood Hydration Center", neighborhood: "Brentwood", desc: "Clinic-based hydration with medical staff. Reservations recommended.", url: null },
-  { name: "The Hydration Room Nashville", neighborhood: "Multiple", desc: "Boutique IV lounge with bachelorette party packages. Charcuterie and mimosas while you drip.", url: null }
+  { name: "The Hydration Room Nashville", neighborhood: "Multiple", desc: "Boutique IV lounge with bachelorette party packages. Charcuterie and mimosas while you drip.", url: null },
+  { name: "Music City IV", neighborhood: "Mobile", desc: "Local mobile IV team focused on bachelorette weekends and concert-goers. Group rates at 4+.", url: null },
+  { name: "iCRYO Brentwood", neighborhood: "Brentwood", desc: "IV hydration plus cryotherapy and compression. Walk-ins and memberships.", url: "https://icryo.com" },
+  { name: "Vitality Float Spa & IV", neighborhood: "Berry Hill", desc: "Float tank plus IV therapy combos. Pair recovery with sensory deprivation.", url: null },
+  { name: "Tennessee Hydration & Wellness", neighborhood: "Franklin", desc: "Clinic south of downtown. Saline, vitamins, NAD+, and weight-loss IV options.", url: null }
 ];
 
 const CURATED_BREWERIES = [
@@ -3172,7 +3180,7 @@ function showAffiliateForElapsed(hoursElapsed, isLeader) {
       <div class="card-title">💧 Need IV recovery tomorrow?</div>
       <div class="card-desc">Mobile IV teams come straight to your Airbnb. Most arrive 9am-noon. Book tonight to lock the slot.</div>
       <a href="https://resetiv.com/pages/packages" target="_blank" rel="noopener" style="background:#34a853;color:#fff;">Reset IV packages</a>
-      <a href="https://www.google.com/maps/search/mobile+IV+therapy+nashville" target="_blank" rel="noopener" style="background:#0a8754;color:#fff;">More IV options</a>
+      <a href="#" onclick="showRehydration();return false;" style="background:#0a8754;color:#fff;">See all 20 IV providers</a>
     </div>`, 'bot', true);
   }
 
@@ -3396,7 +3404,7 @@ function showBachelorette(skipPush) {
       desc: 'Book mobile IV the night before. Most services come to your Airbnb at 9am-noon and treat the whole crew. Group rates at 4+ people.',
       links: [
         { label: '💧 Reset IV packages', url: 'https://resetiv.com/pages/packages', color: '#34a853' },
-        { label: 'More IV options on Maps', url: 'https://www.google.com/maps/search/mobile+IV+therapy+nashville', color: '#0a8754' }
+        { label: '💧 See all 20 IV providers', url: '#', color: '#0a8754', onclick: 'showRehydration();return false;' }
       ]
     },
     {
