@@ -1467,26 +1467,6 @@ function startVoiceInput() {
   recognition.start();
 }
 
-// Calendar export for events
-function buildIcsEvent(name, date, time, venue, address, url) {
-  const start = date && time ? `${date.replace(/-/g, '')}T${time.replace(':', '')}00` : `${(date || '').replace(/-/g, '')}T200000`;
-  const lines = [
-    'BEGIN:VCALENDAR',
-    'VERSION:2.0',
-    'PRODID:-//Howdy Nash//EN',
-    'BEGIN:VEVENT',
-    `UID:${Date.now()}@howdy-nashville.app`,
-    `DTSTAMP:${new Date().toISOString().replace(/[-:]|\.\d{3}/g, '')}`,
-    `DTSTART:${start}`,
-    `SUMMARY:${(name || 'Event').replace(/,/g, '\\,')}`,
-    venue ? `LOCATION:${venue}${address ? ', ' + address : ''}` : '',
-    url ? `URL:${url}` : '',
-    'END:VEVENT',
-    'END:VCALENDAR'
-  ].filter(Boolean).join('\r\n');
-  return 'data:text/calendar;charset=utf-8,' + encodeURIComponent(lines);
-}
-
 // Menu-based back navigation
 let menuStack = ['main'];
 const MENU_STATE_KEY = 'howdy-nash-menu-state';
@@ -4460,10 +4440,6 @@ async function showLiveMusic() {
             <div class="card-meta">${dateStr}${timeStr} · ${e.venue || ''}${distStr}</div>
             ${e.priceMin ? `<div class="card-desc" style="font-size:12px;">From $${e.priceMin}</div>` : ''}`;
           if (e.url) html += `<a href="${e.url}" target="_blank" rel="noopener">Get tickets</a>`;
-          if (e.date) {
-            const icsUrl = buildIcsEvent(e.name, e.date, e.time, e.venue, '', e.url);
-            html += `<a href="${icsUrl}" download="howdy-nash-show.ics" style="background:#2563eb;color:#fff;">📅 Add to calendar</a>`;
-          }
           html += `</div>`;
           addMessage(html, 'bot', true);
         });
@@ -4538,10 +4514,6 @@ async function showEvents() {
           <div class="card-meta">${dateStr} · ${e.venue || ''}${distStr}</div>
           <div class="card-desc">${e.genre || e.classification || ''}${e.priceMin ? ' · From $' + e.priceMin : ''}</div>`;
         if (e.url) html += `<a href="${e.url}" target="_blank">Get tickets</a>`;
-        if (e.date) {
-          const icsUrl = buildIcsEvent(e.name, e.date, e.time, e.venue, '', e.url);
-          html += `<a href="${icsUrl}" download="howdy-nashville-event.ics" style="background:#2563eb;color:#fff;">📅 Add to calendar</a>`;
-        }
         html += `</div>`;
         addMessage(html, 'bot', true);
       });
