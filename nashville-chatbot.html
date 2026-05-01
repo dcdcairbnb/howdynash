@@ -1578,10 +1578,9 @@ inputEl.addEventListener('keypress', e => {
 });
 
 let scrollAnchor = null;
-// Index in messagesEl.children of the first message added during a navAction
-// call. While set, every new addMessage re-pins this message to the top of the
-// viewport instead of scrolling to the bottom.
-let pendingNavTargetIndex = null;
+// While true, addMessage will not auto-scroll. navAction sets this so the user
+// can freely scroll through API-loaded content without being snapped.
+let suppressAutoScroll = false;
 
 function addMessage(text, sender, html = false) {
   const div = document.createElement('div');
@@ -1591,48 +1590,40 @@ function addMessage(text, sender, html = false) {
   messagesEl.appendChild(div);
   if (sender === 'user') {
     scrollAnchor = div;
-    pendingNavTargetIndex = null; // user typed something, drop nav pin
+    suppressAutoScroll = false; // user typed something, resume normal scroll
   }
   scrollToView();
   return div;
 }
 
 // Use this for any in-app button that navigates to a new section without a
-// user-typed message. Pins the first new message to the top of the viewport
-// so async content (API-loaded cards) doesn't push it out of view, and
-// optionally pushes a menu name onto the stack so back nav returns properly.
-// If fromLabel is provided, prepends a "← Back to X" link.
+// user-typed message. Suppresses auto-scroll (so async card loads don't yank
+// the page around), scrolls once to the top of the new section, and lets the
+// user scroll freely after that.
 function navAction(fn, menuName, fromLabel) {
   if (menuName) pushMenu(menuName);
   scrollAnchor = null;
-  pendingNavTargetIndex = messagesEl ? messagesEl.children.length : 0;
+  suppressAutoScroll = true;
+  const beforeCount = messagesEl ? messagesEl.children.length : 0;
   if (fromLabel) {
     const backHtml = `<div class="card" style="background:#fafafa;padding:10px 14px;border-left:3px solid #d62828;"><a href="#" onclick="goBack();return false;" style="color:#d62828;font-weight:600;text-decoration:none;font-size:14px;">← Back to ${fromLabel}</a></div>`;
     addMessage(backHtml, 'bot', true);
   }
   try { fn(); } catch (e) { console.error('navAction failed', e); }
-  // Release the pin after async content has had time to load (1.5s covers
-  // the slowest Google Places call). After release, normal scroll resumes.
+  // Scroll once to the first new message (the back link or section header)
   setTimeout(() => {
-    if (pendingNavTargetIndex != null && messagesEl) {
-      const target = messagesEl.children[pendingNavTargetIndex];
-      if (target && typeof target.scrollIntoView === 'function') {
-        target.scrollIntoView({ block: 'start', behavior: 'smooth' });
-      }
+    if (messagesEl && messagesEl.children[beforeCount]) {
+      messagesEl.children[beforeCount].scrollIntoView({ block: 'start', behavior: 'smooth' });
     }
-    pendingNavTargetIndex = null;
-  }, 1500);
+  }, 80);
+  // Resume normal auto-scroll after async content has had time to load.
+  // The user can scroll freely the entire time.
+  setTimeout(() => { suppressAutoScroll = false; }, 2500);
 }
 
 function scrollToView() {
-  // While a navAction is pinning the target, keep the first new message at top
-  if (pendingNavTargetIndex != null && messagesEl) {
-    const target = messagesEl.children[pendingNavTargetIndex];
-    if (target && typeof target.scrollIntoView === 'function') {
-      target.scrollIntoView({ block: 'start', behavior: 'auto' });
-      return;
-    }
-  }
+  // navAction handles its own scroll positioning, don't interfere
+  if (suppressAutoScroll) return;
   if (scrollAnchor && messagesEl.contains(scrollAnchor)) {
     scrollAnchor.scrollIntoView({ block: 'start', behavior: 'smooth' });
   } else {
