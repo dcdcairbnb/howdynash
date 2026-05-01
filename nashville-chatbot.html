@@ -1601,6 +1601,12 @@ function addMessage(text, sender, html = false) {
 // the page around), scrolls once to the top of the new section, and lets the
 // user scroll freely after that.
 function navAction(fn, menuName, fromLabel) {
+  console.log('[navAction]', { menuName, fromLabel, fnType: typeof fn });
+  if (typeof fn !== 'function') {
+    console.error('[navAction] fn is not a function:', fn);
+    addMessage('Internal error: nav target missing.', 'bot');
+    return;
+  }
   if (menuName) pushMenu(menuName);
   scrollAnchor = null;
   suppressAutoScroll = true;
@@ -1609,7 +1615,7 @@ function navAction(fn, menuName, fromLabel) {
     const backHtml = `<div class="card" style="background:#fafafa;padding:10px 14px;border-left:3px solid #d62828;"><a href="#" onclick="goBack();return false;" style="color:#d62828;font-weight:600;text-decoration:none;font-size:14px;">← Back to ${fromLabel}</a></div>`;
     addMessage(backHtml, 'bot', true);
   }
-  try { fn(); } catch (e) { console.error('navAction failed', e); }
+  try { fn(); } catch (e) { console.error('[navAction] fn threw:', e); addMessage('Error loading section: ' + e.message, 'bot'); }
   // Scroll once to the first new message (the back link or section header)
   setTimeout(() => {
     if (messagesEl && messagesEl.children[beforeCount]) {
