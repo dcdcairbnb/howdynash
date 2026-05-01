@@ -1531,6 +1531,11 @@ function goBack() {
   else if (target === 'shopping') showShopping();
   else if (target === 'mobileglam') showMobileGlam();
   else if (target === 'brunch') showRestaurants(NASHVILLE_DATA.restaurants.filter(r => /breakfast|brunch|cafe/i.test(r.cuisine)), 'Breakfast and brunch spots:');
+  else if (target === 'neighborhoods') showNeighborhoodsExplorer();
+  else if (target && target.startsWith('neighborhood-')) {
+    const key = target.replace(/^neighborhood-/, '').replace(/-/g, ' ');
+    showNeighborhoodDetail(key);
+  }
   else showMainMenu();
   saveMenuState();
   updateBackBtn();
@@ -2014,6 +2019,10 @@ function routeIntent(text) {
     return;
   }
 
+  if (matches(lower, ['🏘️ neighborhoods', 'neighborhoods', 'nash neighborhoods'])) {
+    showNeighborhoodsExplorer();
+    return;
+  }
   if (matches(lower, ['neighborhood', 'area', 'where to stay', 'gulch', 'east nashville', '12 south', 'germantown', 'midtown', 'downtown'])) {
     showNeighborhoods(lower);
     return;
@@ -2284,6 +2293,7 @@ function showMainMenu() {
   addQuickReplies([
     '🍽️ Eat & Drink',
     '🎵 Things to Do',
+    '🏘️ Neighborhoods',
     '🏨 Stay & Get Around',
     '👶 Family friendly',
     '👰 Bachelorette',
@@ -4845,18 +4855,271 @@ async function showAttractions() {
 }
 
 function showNeighborhoods(text) {
-  const found = Object.keys(NASHVILLE_DATA.neighborhoods).find(n => text.includes(n));
+  // Legacy text-match handler. If the text matches a known neighborhood,
+  // jump straight to its detail page. Otherwise show the explorer.
+  const found = NEIGHBORHOOD_GUIDES.find(n =>
+    text.includes(n.key) || (n.aliases || []).some(a => text.includes(a))
+  );
   if (found) {
-    addMessage(`${found.charAt(0).toUpperCase() + found.slice(1)}: ${NASHVILLE_DATA.neighborhoods[found]}`, 'bot');
+    showNeighborhoodDetail(found.key);
     return;
   }
-  addMessage("Nashville's main neighborhoods:", 'bot');
-  Object.entries(NASHVILLE_DATA.neighborhoods).forEach(([name, desc]) => {
+  showNeighborhoodsExplorer();
+}
+
+const NEIGHBORHOOD_GUIDES = [
+  {
+    key: 'lower broadway',
+    name: 'Lower Broadway',
+    aliases: ['broadway'],
+    emoji: '🥃',
+    vibe: 'Touristy, loud, free music',
+    blurb: 'The strip with the honky tonks. Free live country music from 10am to 3am, neon signs, celebrity-owned bars stacked four floors high. Walk it once for the experience, then leave for better neighborhoods.',
+    highlights: 'Tootsie\'s, Robert\'s Western World, Acme Feed & Seed rooftop, Honky Tonk Central, Luke\'s 32 Bridge.',
+    sections: ['honkytonks', 'rooftops', 'broadway-eats']
+  },
+  {
+    key: 'the gulch',
+    name: 'The Gulch',
+    aliases: ['gulch'],
+    emoji: '🌃',
+    vibe: 'Upscale, trendy, walkable',
+    blurb: 'Polished neighborhood next to downtown. Rooftop bars, the famous What Lifts You wings mural, condos, and the best brunch in town at Biscuit Love.',
+    highlights: 'Biscuit Love, Station Inn (bluegrass), L.A. Jackson rooftop, What Lifts You wings mural.',
+    sections: ['gulch-eats', 'rooftops', 'photospots']
+  },
+  {
+    key: 'east nashville',
+    name: 'East Nashville',
+    aliases: ['east nash'],
+    emoji: '🎨',
+    vibe: 'Indie, creative, where locals go',
+    blurb: 'Across the river. Vintage shops, dive bars, indie restaurants, hipster coffee. Five Points is the main hub. This is where Nashvillians actually hang out.',
+    highlights: 'Five Points, Prince\'s Hot Chicken (original), Margot Cafe, The 5 Spot, Eastside Bowl.',
+    sections: ['east-eats', 'east-bars', 'breweries']
+  },
+  {
+    key: '12 south',
+    name: '12 South',
+    aliases: ['twelve south'],
+    emoji: '🛍️',
+    vibe: 'Boutique shopping, photo walks',
+    blurb: 'A walkable mile of boutiques, brunch spots, and the most photographed murals in Nashville. Reese Witherspoon\'s Draper James store is here.',
+    highlights: 'I Believe in Nashville mural, Draper James, Imogene + Willie, Burger Up, Las Paletas.',
+    sections: ['12s-eats', 'shopping', 'photospots']
+  },
+  {
+    key: 'germantown',
+    name: 'Germantown',
+    aliases: [],
+    emoji: '🍴',
+    vibe: 'Historic, foodie, walkable',
+    blurb: 'Nashville\'s oldest neighborhood. Brick streets, restored Victorians, and the densest concentration of great restaurants. Quieter than Broadway, easy to walk.',
+    highlights: 'Rolf and Daughters, City House, Henrietta Red, 5th & Taylor, Steadfast Coffee.',
+    sections: ['germantown-eats', 'breweries']
+  },
+  {
+    key: 'midtown',
+    name: 'Midtown',
+    aliases: [],
+    emoji: '🎓',
+    vibe: 'College area, late-night',
+    blurb: 'Between downtown and Vanderbilt University. Mix of restaurants, college bars on Elliston Place, and the famous Pancake Pantry. Buzzing on game days.',
+    highlights: 'Pancake Pantry, Exit/In, White Limozeen pink rooftop, Elliston Place rock clubs.',
+    sections: ['midtown-eats', 'midtown-bars']
+  },
+  {
+    key: 'sobro',
+    name: 'SoBro',
+    aliases: ['south of broadway'],
+    emoji: '🎸',
+    vibe: 'Music attractions, walkable',
+    blurb: 'Just south of Broadway. Country Music Hall of Fame, Music City Center, Bridgestone Arena. Walking distance from the honky tonks but quieter.',
+    highlights: 'Country Music Hall of Fame, Listening Room Cafe, Husk, Pinewood Social.',
+    sections: ['sobro-eats', 'attractions']
+  },
+  {
+    key: 'wedgewood-houston',
+    name: 'Wedgewood-Houston (WeHo)',
+    aliases: ['weho', 'wedgewood houston'],
+    emoji: '🍺',
+    vibe: 'Up-and-coming, breweries, art',
+    blurb: 'Industrial-turned-cool. Breweries, art galleries, the Nashville Fairgrounds. First Saturday of each month is gallery crawl night.',
+    highlights: 'Tennessee Brew Works, Jackalope Brewing, 3rd & Lindsley, Diskin Cider.',
+    sections: ['breweries', 'weho-eats']
+  },
+  {
+    key: 'marathon village',
+    name: 'Marathon Village',
+    aliases: [],
+    emoji: '🥃',
+    vibe: 'Distillery district, restored factory',
+    blurb: 'Old Marathon Motor Works factory, now home to distilleries, shops, and a music venue. Nelson\'s Green Brier whiskey tour is the highlight.',
+    highlights: 'Nelson\'s Green Brier Distillery, Corsair Distillery, Marathon Music Works, Antique Archaeology.',
+    sections: ['distilleries', 'marathon-shops']
+  },
+  {
+    key: 'green hills',
+    name: 'Green Hills',
+    aliases: [],
+    emoji: '🎤',
+    vibe: 'Suburban, songwriter rounds, mall',
+    blurb: 'Upscale residential area south of downtown. Bluebird Cafe is here. Mall, mostly chain restaurants, but worth the trip for songwriter rounds.',
+    highlights: 'Bluebird Cafe (book early), The Mall at Green Hills, Edley\'s BBQ.',
+    sections: ['livemusic']
+  },
+  {
+    key: 'berry hill',
+    name: 'Berry Hill',
+    aliases: [],
+    emoji: '🎙️',
+    vibe: 'Quirky bungalows, recording studios',
+    blurb: 'Tiny neighborhood of converted bungalows full of recording studios where Nashville hits are written. Patsy Cline mural and a few hidden food gems.',
+    highlights: 'Patsy Cline mural, Sky Blue Cafe, Edley\'s BBQ, recording studio row.',
+    sections: ['photospots', 'berry-eats']
+  },
+  {
+    key: 'hillsboro village',
+    name: 'Hillsboro Village',
+    aliases: [],
+    emoji: '☕',
+    vibe: 'Vanderbilt-adjacent, cafes',
+    blurb: 'Walkable strip near Vanderbilt. Coffee shops, the historic Belcourt Theatre (indie movies), Pancake Pantry, Fido cafe. Student vibes.',
+    highlights: 'Belcourt Theatre, Fido, Pancake Pantry, Hillsboro Village Mural, Bookman/Bookwoman.',
+    sections: ['hv-eats']
+  }
+];
+
+function showNeighborhoodsExplorer() {
+  pushMenu('neighborhoods');
+  addMessage("Nashville neighborhoods. Tap one to see what to eat, drink, shop, and see there.", 'bot');
+  NEIGHBORHOOD_GUIDES.forEach(n => {
+    let dist = '';
+    if (userLocation) {
+      const nb = neighborhoodCoords(n.key) || neighborhoodCoords(n.name);
+      if (nb) {
+        const miles = haversineMiles(userLocation, nb);
+        if (miles != null) dist = ` · 📍 ${miles} mi`;
+      }
+    }
+    const safeKey = n.key.replace(/'/g, "\\'");
     const html = `<div class="card">
-      <div class="card-title">${name.charAt(0).toUpperCase() + name.slice(1)}</div>
-      <div class="card-desc">${desc}</div>
+      <div class="card-title">${n.emoji} ${n.name}</div>
+      <div class="card-meta">${n.vibe}${dist}</div>
+      <div class="card-desc">${n.blurb}</div>
+      <a href="#" onclick="navAction(() => showNeighborhoodDetail('${safeKey}'), 'neighborhood-${safeKey.replace(/[^a-z0-9]/gi, '')}', 'Neighborhoods');return false;" style="background:#d62828;color:#fff;">Explore ${n.name}</a>
     </div>`;
     addMessage(html, 'bot', true);
+  });
+}
+
+function showNeighborhoodDetail(key) {
+  const n = NEIGHBORHOOD_GUIDES.find(g => g.key === key);
+  if (!n) {
+    addMessage("Neighborhood not found.", 'bot');
+    return;
+  }
+  addMessage(`${n.emoji} ${n.name}`, 'bot');
+  let dist = '';
+  if (userLocation) {
+    const nb = neighborhoodCoords(n.key) || neighborhoodCoords(n.name);
+    if (nb) {
+      const miles = haversineMiles(userLocation, nb);
+      if (miles != null) dist = ` · 📍 ${miles} mi from you`;
+    }
+  }
+  let html = `<div class="card">
+    <div class="card-title">${n.emoji} ${n.name}</div>
+    <div class="card-meta">${n.vibe}${dist}</div>
+    <div class="card-desc">${n.blurb}</div>
+    <div class="card-desc" style="margin-top:8px;"><strong>Highlights:</strong> ${n.highlights}</div>
+  </div>`;
+  addMessage(html, 'bot', true);
+
+  // Filter helpers for this neighborhood
+  const matchesNeighborhood = (placeNeighborhood) => {
+    if (!placeNeighborhood) return false;
+    const p = String(placeNeighborhood).toLowerCase();
+    if (p.includes(n.key)) return true;
+    if (n.aliases) {
+      for (const alias of n.aliases) if (p.includes(alias)) return true;
+    }
+    return false;
+  };
+
+  const restaurantsHere = NASHVILLE_DATA.restaurants.filter(r => matchesNeighborhood(r.neighborhood));
+  const photosHere = (typeof CURATED_PHOTO_SPOTS !== 'undefined') ? CURATED_PHOTO_SPOTS.filter(s => matchesNeighborhood(s.neighborhood)) : [];
+  const shoppingHere = (typeof CURATED_SHOPPING !== 'undefined') ? CURATED_SHOPPING.filter(s => matchesNeighborhood(s.neighborhood)) : [];
+  const honkyHere = (typeof CURATED_HONKY_TONKS !== 'undefined') ? CURATED_HONKY_TONKS.filter(s => matchesNeighborhood(s.neighborhood)) : [];
+  const breweriesHere = (typeof CURATED_BREWERIES !== 'undefined') ? CURATED_BREWERIES.filter(s => matchesNeighborhood(s.neighborhood)) : [];
+  const distilleriesHere = (typeof CURATED_DISTILLERIES !== 'undefined') ? CURATED_DISTILLERIES.filter(s => matchesNeighborhood(s.neighborhood)) : [];
+  const cocktailsHere = (typeof CURATED_COCKTAIL_BARS !== 'undefined') ? CURATED_COCKTAIL_BARS.filter(s => matchesNeighborhood(s.neighborhood)) : [];
+  const rooftopsHere = (typeof CURATED_ROOFTOPS !== 'undefined') ? CURATED_ROOFTOPS.filter(s => matchesNeighborhood(s.neighborhood)) : [];
+
+  let buttonsHtml = '<div class="card"><div class="card-title">What to do in ' + n.name + '</div>';
+  let buttonCount = 0;
+  if (restaurantsHere.length > 0) {
+    buttonsHtml += `<a href="#" onclick="navAction(() => showRestaurants(${JSON.stringify(restaurantsHere).replace(/"/g, '&quot;')}, 'Eat in ${n.name}:'), 'eat-${n.key.replace(/[^a-z0-9]/gi, '')}', '${n.name}');return false;" style="background:#d62828;color:#fff;">🍽️ Eat (${restaurantsHere.length})</a>`;
+    buttonCount++;
+  }
+  if (cocktailsHere.length > 0 || rooftopsHere.length > 0) {
+    const allBars = [...cocktailsHere, ...rooftopsHere];
+    buttonsHtml += `<a href="#" onclick="navAction(() => showFilteredCurated(${JSON.stringify(allBars).replace(/"/g, '&quot;')}, 'Bars and rooftops in ${n.name}:'), 'bars-${n.key.replace(/[^a-z0-9]/gi, '')}', '${n.name}');return false;" style="background:#7c3aed;color:#fff;">🍸 Bars & Rooftops (${allBars.length})</a>`;
+    buttonCount++;
+  }
+  if (honkyHere.length > 0) {
+    buttonsHtml += `<a href="#" onclick="navAction(() => showFilteredCurated(${JSON.stringify(honkyHere).replace(/"/g, '&quot;')}, 'Honky tonks in ${n.name}:'), 'honky-${n.key.replace(/[^a-z0-9]/gi, '')}', '${n.name}');return false;" style="background:#a01c1c;color:#fff;">🥃 Honky Tonks (${honkyHere.length})</a>`;
+    buttonCount++;
+  }
+  if (breweriesHere.length > 0) {
+    buttonsHtml += `<a href="#" onclick="navAction(() => showFilteredCurated(${JSON.stringify(breweriesHere).replace(/"/g, '&quot;')}, 'Breweries in ${n.name}:'), 'brew-${n.key.replace(/[^a-z0-9]/gi, '')}', '${n.name}');return false;" style="background:#b45309;color:#fff;">🍺 Breweries (${breweriesHere.length})</a>`;
+    buttonCount++;
+  }
+  if (distilleriesHere.length > 0) {
+    buttonsHtml += `<a href="#" onclick="navAction(() => showFilteredCurated(${JSON.stringify(distilleriesHere).replace(/"/g, '&quot;')}, 'Distilleries in ${n.name}:'), 'distill-${n.key.replace(/[^a-z0-9]/gi, '')}', '${n.name}');return false;" style="background:#92400e;color:#fff;">🥃 Distilleries (${distilleriesHere.length})</a>`;
+    buttonCount++;
+  }
+  if (shoppingHere.length > 0) {
+    buttonsHtml += `<a href="#" onclick="navAction(() => showFilteredCurated(${JSON.stringify(shoppingHere).replace(/"/g, '&quot;')}, 'Shopping in ${n.name}:'), 'shop-${n.key.replace(/[^a-z0-9]/gi, '')}', '${n.name}');return false;" style="background:#0a8754;color:#fff;">🛍️ Shopping (${shoppingHere.length})</a>`;
+    buttonCount++;
+  }
+  if (photosHere.length > 0) {
+    buttonsHtml += `<a href="#" onclick="navAction(() => showFilteredCurated(${JSON.stringify(photosHere).replace(/"/g, '&quot;')}, 'Photo spots in ${n.name}:'), 'photo-${n.key.replace(/[^a-z0-9]/gi, '')}', '${n.name}');return false;" style="background:#e91e63;color:#fff;">📸 Photo Spots (${photosHere.length})</a>`;
+    buttonCount++;
+  }
+  buttonsHtml += '</div>';
+
+  if (buttonCount === 0) {
+    addMessage("No curated lists for this neighborhood yet. Use the search bar to ask me anything specific.", 'bot');
+  } else {
+    addMessage(buttonsHtml, 'bot', true);
+  }
+}
+
+// Generic helper: render a pre-filtered curated list using the standard card.
+function showFilteredCurated(items, header) {
+  if (!items || items.length === 0) {
+    addMessage('Nothing curated for this filter yet.', 'bot');
+    return;
+  }
+  addMessage(`${header} (${items.length})`, 'bot');
+  // Compute distance via neighborhood fallback
+  let withDist = items.map(item => {
+    let dist = null;
+    if (userLocation) {
+      if (item.coords) dist = haversineMiles(userLocation, item.coords);
+      if (dist == null && item.neighborhood) {
+        const nb = neighborhoodCoords(item.neighborhood);
+        if (nb) dist = haversineMiles(userLocation, nb);
+      }
+    }
+    return { item, dist };
+  });
+  if (userLocation) {
+    withDist.sort((a, b) => (a.dist ?? 9999) - (b.dist ?? 9999));
+  }
+  withDist.forEach(({ item }) => {
+    addMessage(renderCuratedCard(item, header), 'bot', true);
   });
 }
 
