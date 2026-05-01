@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#d62828">
+<title>Nashville 3-Day Cheat Sheet | Howdy Nash</title>
+<meta name="description" content="The free 3-day Nashville cheat sheet. Hot chicken, honky tonks, photo spots, and where locals eat.">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Nashville Cheat Sheet">
+<link rel="apple-touch-icon" href="/logo.jpg">
+<style>
+  :root {
+    --red: #d62828;
+    --red-dark: #a01c1c;
+    --cream: #fff5f0;
+    --ink: #1a1a1a;
+    --gray: #666;
+    --gold: #c8a263;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    color: var(--ink);
+    background: var(--cream);
+    line-height: 1.55;
+    font-size: 16px;
+    padding: 0;
+    margin: 0;
+  }
+  .header {
+    background: var(--red);
+    color: #fff;
+    padding: 32px 20px 28px;
+    text-align: center;
+    border-bottom: 4px solid var(--gold);
+  }
+  .header h1 {
+    font-family: Georgia, 'Didot', serif;
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+  }
+  .header .sub {
+    font-size: 13px;
+    opacity: 0.92;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+  .container {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 24px 18px 80px;
+  }
+  .day {
+    background: #fff;
+    border-radius: 14px;
+    padding: 22px 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.04);
+  }
+  .day-label {
+    display: inline-block;
+    background: var(--red);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    padding: 4px 10px;
+    border-radius: 4px;
+    margin-bottom: 8px;
+  }
+  .day h2 {
+    font-family: Georgia, 'Didot', serif;
+    font-size: 22px;
+    color: var(--red);
+    margin-bottom: 14px;
+    line-height: 1.3;
+  }
+  .timeslot {
+    margin: 18px 0;
+    padding-left: 12px;
+    border-left: 3px solid var(--red);
+  }
+  .timeslot h3 {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--ink);
+    margin-bottom: 6px;
+  }
+  .timeslot p {
+    font-size: 15px;
+    color: #333;
+    margin-bottom: 6px;
+  }
+  .intro {
+    background: #fff;
+    border-radius: 14px;
+    padding: 22px 20px;
+    margin-bottom: 20px;
+    border: 2px solid var(--red);
+  }
+  .intro h2 {
+    font-family: Georgia, 'Didot', serif;
+    font-size: 20px;
+    color: var(--red);
+    margin-bottom: 10px;
+  }
+  .intro ul {
+    list-style: none;
+    padding: 0;
+  }
+  .intro li {
+    padding: 10px 0;
+    border-bottom: 1px solid #eee;
+    font-size: 15px;
+  }
+  .intro li:last-child { border-bottom: none; }
+  .intro li strong {
+    display: block;
+    color: var(--red);
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 2px;
+  }
+  .cta {
+    background: linear-gradient(135deg, var(--red) 0%, var(--red-dark) 100%);
+    color: #fff;
+    border-radius: 14px;
+    padding: 28px 20px;
+    text-align: center;
+    margin: 24px 0;
+  }
+  .cta h2 {
+    font-family: Georgia, 'Didot', serif;
+    font-size: 22px;
+    margin-bottom: 8px;
+  }
+  .cta p {
+    font-size: 15px;
+    opacity: 0.95;
+    margin-bottom: 16px;
+  }
+  .cta a {
+    display: inline-block;
+    background: #fff;
+    color: var(--red);
+    padding: 12px 28px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 700;
+    font-size: 16px;
+  }
+  .footer {
+    text-align: center;
+    color: var(--gray);
+    font-size: 13px;
+    padding: 24px 20px;
+  }
+  .footer a {
+    color: var(--red);
+    text-decoration: none;
+    font-weight: 600;
+  }
+  .gold-rule {
+    height: 2px;
+    background: var(--gold);
+    margin: 16px 0;
+    border-radius: 1px;
+  }
+  @media (max-width: 480px) {
+    .header h1 { font-size: 24px; }
+    .day { padding: 18px 16px; }
+    .day h2 { font-size: 19px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>Nashville 3-Day Cheat Sheet</h1>
+  <div class="sub">Howdy Nash · Your Free Nashville Guide</div>
+</div>
+
+<div class="container">
+
+  <div class="intro">
+    <h2>Read this on the plane.</h2>
+    <ul>
+      <li><strong>Broadway</strong>The strip with the honky tonks. Touristy and loud. Walk it once, then leave for better neighborhoods.</li>
+      <li><strong>Neighborhoods</strong>The Gulch is upscale. East Nashville is indie. 12 South is shopping. Germantown is food. Midtown is between downtown and Vanderbilt.</li>
+      <li><strong>BYOB Tennessee</strong>You bring your own drinks on pedal taverns and party buses.</li>
+      <li><strong>Hot Chicken</strong>A local thing, not a chain thing. Eat it here, not at home.</li>
+      <li><strong>Rides</strong>Uber, Lyft, and Waymo all run downtown. Waymo is cheapest at peak hours.</li>
+    </ul>
+  </div>
+
+  <div class="day">
+    <span class="day-label">Day 1</span>
+    <h2>Arrival and Broadway</h2>
+
+    <div class="timeslot">
+      <h3>Morning: Biscuits</h3>
+      <p>Biscuit Love (The Gulch) for the famous bonuts. Get there before 10am.</p>
+      <p>Or Loveless Cafe (Bellevue) if you have a car. Iconic biscuits and country ham.</p>
+    </div>
+
+    <div class="timeslot">
+      <h3>Lunch: Hot Chicken</h3>
+      <p>Hattie B's on Charlotte Pike. Mild is hotter than you think. Try medium.</p>
+      <p>Or Prince's Hot Chicken (East Nashville). The original. Walk-in.</p>
+    </div>
+
+    <div class="timeslot">
+      <h3>Afternoon: Museum or Music Row</h3>
+      <p>Country Music Hall of Fame for the legend stuff.</p>
+      <p>Or RCA Studio B tour for where Elvis and Dolly recorded.</p>
+    </div>
+
+    <div class="timeslot">
+      <h3>Dinner: Broadway</h3>
+      <p>Husk for upscale Southern in a historic mansion.</p>
+      <p>Or Pinewood Social if you want food plus bowling.</p>
+    </div>
+
+    <div class="timeslot">
+      <h3>Night: Honky Tonk Crawl</h3>
+      <p>Tootsie's, Robert's Western World, Legends Corner. All on Lower Broadway, all free music.</p>
+      <p>End at Acme Feed and Seed rooftop for skyline views.</p>
+    </div>
+  </div>
+
+  <div class="day">
+    <span class="day-label">Day 2</span>
+    <h2>Local Nashville</h2>
+
+    <div class="timeslot">
+      <h3>Morning: Brunch in 12 South</h3>
+      <p>Burger Up, Frothy Monkey, or Edley's BBQ for breakfast tacos.</p>
+      <p>Walk 12 South: Draper James, Imogene + Willie, the I Believe in Nashville mural.</p>
+    </div>
+
+    <div class="timeslot">
+      <h3>Afternoon: Distillery Tour</h3>
+      <p>Nelson's Green Brier (downtown). Whiskey tour and tasting.</p>
+      <p>Or Corsair Distillery (Marathon Village). Smaller, weirder spirits.</p>
+    </div>
+
+    <div class="timeslot">
+      <h3>Evening: Dinner in East Nashville</h3>
+      <p>Folk for wood-fired pizza. Margot Cafe for refined French. Two Ten Jack for ramen.</p>
+    </div>
+
+    <div class="timeslot">
+      <h3>Night: Live Music Outside Broadway</h3>
+      <p>Bluebird Cafe (Green Hills) for songwriter rounds. Reservations required, book ahead.</p>
+      <p>The Ryman Auditorium for whoever is touring. The Mother Church.</p>
+      <p>Station Inn (The Gulch) for bluegrass. Cash only, tiny, magical.</p>
+    </div>
+  </div>
+
+  <div class="day">
+    <span class="day-label">Day 3</span>
+    <h2>Deep Cuts and Departure</h2>
+
+    <div class="timeslot">
+      <h3>Morning: Photo Spots</h3>
+      <p>I Believe in Nashville mural (12 South).</p>
+      <p>The What Lifts You wings mural (The Gulch).</p>
+      <p>Pedestrian Bridge over the Cumberland for skyline shots.</p>
+    </div>
+
+    <div class="timeslot">
+      <h3>Lunch: Meat-and-Three</h3>
+      <p>Arnold's Country Kitchen (Mon-Fri lunch only). Cafeteria-style Southern classic.</p>
+      <p>Or Monell's (Germantown) for shared-table family-style.</p>
+    </div>
+
+    <div class="timeslot">
+      <h3>Afternoon: Depending on Time</h3>
+      <p>Belle Meade Plantation tour. Or Andrew Jackson's Hermitage.</p>
+      <p>Short on time? Rooftop drink at L.A. Jackson (The Gulch) or White Limozeen (Midtown, pink Dolly bar).</p>
+    </div>
+
+    <div class="timeslot">
+      <h3>BNA Flight Tips</h3>
+      <p>Allow 90 minutes for security on weekends.</p>
+      <p>Live music inside the airport. Multiple stages.</p>
+      <p>Uber and Lyft pickup is on the second floor, not curbside.</p>
+    </div>
+  </div>
+
+  <div class="cta">
+    <h2>Need More?</h2>
+    <p>Live music tonight, hot chicken near you, group location sharing, AI concierge.</p>
+    <a href="https://howdynash.com">Open Howdy Nash</a>
+  </div>
+
+  <div class="footer">
+    <a href="https://howdynash.com">howdynash.com</a> · Your free Nashville guide
+  </div>
+
+</div>
+
+</body>
+</html>

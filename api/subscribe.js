@@ -9,7 +9,7 @@ const { Pool } = pg;
 
 const FROM_EMAIL = 'Howdy Nash <howdy@howdynash.com>';
 const SITE_URL = 'https://howdynash.com';
-const CHEATSHEET_URL = 'https://howdynash.com/cheatsheet.pdf';
+const CHEATSHEET_URL = 'https://howdynash.com/cheatsheet.html';
 
 let pool;
 function getPool() {
