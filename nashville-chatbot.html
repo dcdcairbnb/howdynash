@@ -4187,6 +4187,14 @@ function showVacationRentals() {
   </div>`;
   addMessage(bigGroup, 'bot', true);
 
+  const coloradoTrip = `<div class="card" style="border:2px solid #c8a263;">
+    <div class="card-title">🏔️ Heading to Colorado next?</div>
+    <div class="card-desc"><strong>Same host · Mountain condo getaway</strong></div>
+    <div class="card-desc">Your Howdy Nash host also runs a Colorado mountain condo. Great for skiing, hiking, or a post-Nashville reset.</div>
+    <a href="https://www.airbnb.com/rooms/920827114586721400" target="_blank" rel="noopener" style="background:#FF5A5F;">View Colorado condo on Airbnb</a>
+  </div>`;
+  addMessage(coloradoTrip, 'bot', true);
+
   const airbnbUrl = buildAirbnbUrl();
   const vrboUrl = buildVrboUrl();
   const locationNote = userLocation ? "Centered on your current location." : "Search starts in Nashville. Share your location for nearby filters.";
