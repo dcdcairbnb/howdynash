@@ -3846,6 +3846,7 @@ function showBachelorette(skipPush) {
   const cards = [
     {
       title: '💧 Mobile IV & Hangover Recovery',
+      mobile: true,
       desc: 'Book mobile IV the night before. Most services come to your Airbnb at 9am-noon and treat the whole crew. Group rates at 4+ people.',
       links: [
         { label: '💧 Reset IV packages', url: 'https://resetiv.com/pages/packages', color: '#34a853' },
@@ -3854,7 +3855,8 @@ function showBachelorette(skipPush) {
     },
     {
       title: '🎉 Pedal Taverns and Party Buses',
-      desc: 'The signature Nashville bachelorette ride. Bring your own drinks (BYOB Tennessee).',
+      neighborhood: 'Lower Broadway',
+      desc: 'The signature Nashville bachelorette ride. Bring your own drinks (BYOB Tennessee). Most routes start downtown.',
       links: [
         { label: 'Book on Viator', url: viatorSearch('Nashville pedal tavern party bus'), color: '#328e3a' },
         { label: 'Book on GetYourGuide', url: gygSearch('nashville pedal tavern'), color: '#ff5533' },
@@ -3863,6 +3865,7 @@ function showBachelorette(skipPush) {
     },
     {
       title: '🍻 Pub Crawl Tours',
+      neighborhood: 'Lower Broadway',
       desc: 'Guided crawls through Broadway honky tonks. Skip-the-line perks at top spots.',
       links: [
         { label: 'Pub crawls on Viator', url: viatorSearch('Nashville pub crawl bachelorette'), color: '#328e3a' },
@@ -3872,6 +3875,7 @@ function showBachelorette(skipPush) {
     },
     {
       title: '🥃 Honky Tonks on Broadway',
+      neighborhood: 'Lower Broadway',
       desc: 'Tootsie\'s, Robert\'s, Acme, Honky Tonk Central. Free music from 10am. Tip the bands.',
       links: [
         { label: 'See all honky tonks', url: '#', color: '#34a853', onclick: "navAction(showHonkyTonks, 'honkytonks', 'Bachelorette mode');return false;" }
@@ -3887,6 +3891,7 @@ function showBachelorette(skipPush) {
     },
     {
       title: '🌈 Drag Brunches',
+      neighborhood: 'East Nashville',
       desc: 'Lipstick Lounge Sunday brunch, Play Dance Bar drag brunch, Trash Bachelorette at TC Restaurant.',
       links: [
         { label: 'Lipstick Lounge', url: 'https://www.thelipsticklounge.com', color: '#e91e63' },
@@ -3895,6 +3900,7 @@ function showBachelorette(skipPush) {
     },
     {
       title: '📸 Mural Photo Spots',
+      neighborhood: '12 South',
       desc: 'I Believe in Nashville (12 South), Wings (Gulch), What Lifts You wings (Gulch), Make Music Not War (12 South), Patsy Cline (Berry Hill).',
       links: [
         { label: 'See all photo spots', url: '#', color: '#34a853', onclick: "navAction(showPhotoSpots, 'photospots', 'Bachelorette mode');return false;" }
@@ -3902,6 +3908,7 @@ function showBachelorette(skipPush) {
     },
     {
       title: '🎤 Live Music for the Group',
+      neighborhood: 'Green Hills',
       desc: 'Bluebird Cafe (book early), Listening Room Cafe, Nudie\'s Honky Tonk three floors.',
       links: [
         { label: 'Bluebird Cafe', url: 'https://bluebirdcafe.com', color: '#d62828' },
@@ -3910,13 +3917,14 @@ function showBachelorette(skipPush) {
     },
     {
       title: '🍷 Painting and Sip Classes',
-      desc: 'Paint Nail Bar (paint and manicure combo), Pinot\'s Palette, Painting with a Twist, Wine and Design.',
+      desc: 'Paint Nail Bar (paint and manicure combo), Pinot\'s Palette, Painting with a Twist, Wine and Design. Multiple locations.',
       links: [
         { label: 'Paint classes on Maps', url: 'https://www.google.com/maps/search/paint+and+sip+nashville', color: '#34a853' }
       ]
     },
     {
       title: '💃 Group Dance Classes',
+      neighborhood: 'Lower Broadway',
       desc: 'Line dancing at Wildhorse Saloon, twerk classes by Bachelorette Party Nashville, AcroYoga group sessions.',
       links: [
         { label: 'Wildhorse Saloon', url: 'https://www.wildhorsesaloon.com', color: '#d62828' },
@@ -3925,6 +3933,7 @@ function showBachelorette(skipPush) {
     },
     {
       title: '🥃 Whiskey Tastings and Distillery Tours',
+      neighborhood: 'Marathon Village',
       desc: 'Nelson\'s Green Brier (Marathon Village), Corsair tastings, Big Machine Distillery, Jack Daniel\'s day trip.',
       links: [
         { label: 'Distillery tours on Viator', url: viatorSearch('Nashville bachelorette distillery'), color: '#328e3a' },
@@ -3934,7 +3943,8 @@ function showBachelorette(skipPush) {
     },
     {
       title: '🚁 Helicopter Tours',
-      desc: 'Aerial views over downtown, Cumberland River, Broadway. 15 to 30 minute flights. Group rates.',
+      neighborhood: 'Downtown',
+      desc: 'Aerial views over downtown, Cumberland River, Broadway. 15 to 30 minute flights. Most launch from Cornelia Fort or John C. Tune airfields.',
       links: [
         { label: 'Helicopter tours on Viator', url: viatorSearch('Nashville helicopter bachelorette'), color: '#328e3a' },
         { label: 'Helicopter tours on Expedia', url: expediaSearch('Nashville helicopter tour'), color: '#fbcc09', textColor: '#1a1a1a' }
@@ -3942,7 +3952,8 @@ function showBachelorette(skipPush) {
     },
     {
       title: '⛵ Cumberland River Boat Parties',
-      desc: 'General Jackson Showboat dinner cruise, party yacht charters, BYOB pontoon rentals.',
+      neighborhood: 'Downtown',
+      desc: 'General Jackson Showboat dinner cruise, party yacht charters, BYOB pontoon rentals. Boards at Riverfront Park.',
       links: [
         { label: 'General Jackson', url: 'https://generaljackson.com', color: '#d62828' },
         { label: 'Boat parties on Viator', url: viatorSearch('Nashville boat tour bachelorette'), color: '#328e3a' },
@@ -3958,6 +3969,7 @@ function showBachelorette(skipPush) {
     },
     {
       title: '💄 Glam Services to Your Hotel',
+      mobile: true,
       desc: 'Mobile makeup, hair, lash, and nail services come to your Airbnb. Book through GlamSquad or local providers.',
       links: [
         { label: 'GlamSquad Nashville', url: 'https://www.glamsquad.com/locations/nashville', color: '#e91e63' },
@@ -3966,6 +3978,7 @@ function showBachelorette(skipPush) {
     },
     {
       title: '🍪 Cookie and Cake Decorating',
+      neighborhood: 'Downtown',
       desc: 'Goo Goo Cluster making class downtown, Sweet Cravings cookie decorating, custom cookies from local bakers.',
       links: [
         { label: 'Goo Goo Cluster Shop', url: 'https://googoo.com', color: '#d62828' }
@@ -3973,6 +3986,7 @@ function showBachelorette(skipPush) {
     },
     {
       title: '🤠 Costume and Props',
+      neighborhood: 'Lower Broadway',
       desc: 'Cowboy hats, sashes, banners, custom shirts. Boot stores on Broadway, Hatch Show Print custom posters, Etsy bachelorette kits.',
       links: [
         { label: 'See all shopping', url: '#', color: '#34a853', onclick: "navAction(showShopping, 'shopping', 'Bachelorette mode');return false;" },
@@ -3981,7 +3995,7 @@ function showBachelorette(skipPush) {
     },
     {
       title: '🎁 Welcome Bag Suppliers',
-      desc: 'Local Etsy sellers ship custom Nashville bachelorette welcome bags with snacks, hangover kits, and themed goodies.',
+      desc: 'Local Etsy sellers ship custom Nashville bachelorette welcome bags with snacks, hangover kits, and themed goodies. Online ordering.',
       links: [
         { label: 'Nashville welcome bags', url: 'https://www.etsy.com/search?q=nashville+bachelorette+welcome+bag', color: '#444' }
       ]
@@ -3996,6 +4010,7 @@ function showBachelorette(skipPush) {
     },
     {
       title: '🐎 Mechanical Bull and Group Activities',
+      neighborhood: 'Lower Broadway',
       desc: 'Whiskey Row mechanical bull, Coyote Joe\'s, Tin Roof. Most Broadway bars host bull-riding nights.',
       links: [
         { label: 'Whiskey Row', url: 'https://www.dierkswhiskeyrow.com', color: '#d62828' }
@@ -4003,6 +4018,7 @@ function showBachelorette(skipPush) {
     },
     {
       title: '🚐 Group Transportation',
+      mobile: true,
       desc: 'For 6+ book a party bus or limo. For 2 to 5, Uber XL is cheaper. Pre-book airport transfers for big groups.',
       links: [
         { label: 'Party buses on Viator', url: viatorSearch('Nashville party bus bachelorette'), color: '#328e3a' },
@@ -4012,9 +4028,25 @@ function showBachelorette(skipPush) {
   ];
 
   cards.forEach(c => {
+    // Compute distance from user to the card's neighborhood center, if any
+    let metaLine = '';
+    if (c.mobile) {
+      metaLine = '🚗 Comes to your Airbnb or hotel';
+    } else if (c.neighborhood) {
+      let metaParts = [c.neighborhood];
+      if (userLocation) {
+        const nb = neighborhoodCoords(c.neighborhood);
+        if (nb) {
+          const miles = haversineMiles(userLocation, nb);
+          if (miles != null) metaParts.push(`📍 ${miles} mi`);
+        }
+      }
+      metaLine = metaParts.join(' · ');
+    }
     let html = `<div class="card">
-      <div class="card-title">${c.title}</div>
-      <div class="card-desc">${c.desc}</div>`;
+      <div class="card-title">${c.title}</div>`;
+    if (metaLine) html += `<div class="card-meta">${metaLine}</div>`;
+    html += `<div class="card-desc">${c.desc}</div>`;
     c.links.forEach(l => {
       const textColor = l.textColor || '#fff';
       if (l.onclick) {
@@ -4091,12 +4123,10 @@ function showLuggageStorage() {
   const lng = userLocation ? userLocation.lng : -86.7816;
   const locationNote = userLocation ? "Showing options near your current spot." : "Search starts in Nashville. Share your location for nearby filters.";
 
-  // Bounce
-  const bounceUrl = userLocation
-    ? `https://bounce.com/luggage-storage?lat=${lat}&lng=${lng}`
-    : `https://bounce.com/luggage-storage-nashville`;
-  // LuggageHero
-  const luggageheroUrl = `https://luggagehero.com/locations/usa/nashville/`;
+  // Bounce - homepage works in all locations, deep links and city pages 404
+  const bounceUrl = `https://bounce.com`;
+  // LuggageHero - homepage works in all locations, city deep links 404
+  const luggageheroUrl = `https://luggagehero.com`;
   // Vertoe
   const vertoeUrl = `https://www.vertoe.com/luggage-storage-nashville`;
   // Google Maps fallback
