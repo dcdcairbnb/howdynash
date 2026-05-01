@@ -1,5 +1,19 @@
+# Howdy Nash robots.txt
+# Free Nashville visitor guide with AI concierge
+# https://howdynash.com
+
+# Allow all search engines (Google, Bing, DuckDuckGo, etc.) to crawl everything
 User-agent: *
 Allow: /
+
+# Block API endpoints (server functions, not user-facing pages)
 Disallow: /api/
 
+# Block service worker (no SEO value, only used by the PWA)
+Disallow: /sw.js
+
+# Block uploads and temp folders if any
+Disallow: /uploads/
+
+# Sitemap location for fast discovery
 Sitemap: https://howdynash.com/sitemap.xml
