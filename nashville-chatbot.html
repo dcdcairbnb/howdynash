@@ -3226,7 +3226,7 @@ function renderGroupMembers(members, expiresAt) {
 
 function shareGroupCode(code) {
   console.log('shareGroupCode called with', code);
-  const text = `Join my Nashville group on Howdy Nash! Code: ${code}\nhttps://howdynash.com (tap Find My Group, then Join)`;
+  const text = `Join my Nashville group on Howdy Nash!\nCode: ${code}\n\nTap to open and auto-join:\nhttps://howdynash.com/?join=${code}`;
   const safeCode = String(code).replace(/[<>]/g, '');
   const safeText = text.replace(/</g, '&lt;').replace(/"/g, '&quot;');
   const btnStyle = 'border:none;padding:10px 16px;border-radius:8px;font-weight:600;cursor:pointer;font-size:14px;margin:4px;color:#fff;';
@@ -3247,7 +3247,7 @@ function shareGroupCode(code) {
 }
 
 async function copyGroupShareText(btn, code) {
-  const text = `Join my Nashville group on Howdy Nash! Code: ${code}\nhttps://howdynash.com (tap Find My Group, then Join)`;
+  const text = `Join my Nashville group on Howdy Nash!\nCode: ${code}\n\nTap to open and auto-join:\nhttps://howdynash.com/?join=${code}`;
   try {
     await navigator.clipboard.writeText(text);
     if (btn) { const orig = btn.textContent; btn.textContent = '✓ Copied'; setTimeout(() => { btn.textContent = orig; }, 2000); }
@@ -3260,7 +3260,7 @@ async function copyGroupShareText(btn, code) {
 }
 
 async function nativeShareGroupCode(code) {
-  const text = `Join my Nashville group on Howdy Nash! Code: ${code}\nhttps://howdynash.com (tap Find My Group, then Join)`;
+  const text = `Join my Nashville group on Howdy Nash!\nCode: ${code}\n\nTap to open and auto-join:\nhttps://howdynash.com/?join=${code}`;
   try {
     await navigator.share({ title: 'Howdy Nash group', text });
   } catch (e) { /* user cancelled */ }
@@ -4710,9 +4710,29 @@ setTimeout(() => {
 }, 300);
 
 async function maybeResumeGroupSession() {
+  // 1) If URL has ?join=CODE, auto-open the join flow with code pre-filled
+  try {
+    const params = new URLSearchParams(window.location.search);
+    const joinCode = (params.get('join') || '').toUpperCase().slice(0, 6);
+    if (joinCode && joinCode.length >= 3) {
+      // Strip the param from URL so refreshes don't re-trigger
+      const cleanUrl = window.location.pathname + window.location.hash;
+      window.history.replaceState({}, '', cleanUrl);
+      addMessage(`Group invite detected. Joining ${joinCode}...`, 'bot');
+      setTimeout(() => {
+        joinGroupFlow();
+        setTimeout(() => {
+          const codeInput = document.getElementById('groupCodeInput');
+          if (codeInput) codeInput.value = joinCode;
+        }, 300);
+      }, 400);
+      return;
+    }
+  } catch (e) { /* fall through */ }
+
+  // 2) Resume saved session if active
   const saved = getSavedGroupSession();
   if (!saved || !saved.code || !saved.memberId) return;
-  // Verify the group is still active
   const r = await groupApi({ action: 'get', code: saved.code });
   if (!r.ok || r.data.expired || r.data.ended) {
     saveGroupSession(null);
