@@ -1859,6 +1859,11 @@ function routeIntent(text) {
     return;
   }
 
+  if (matches(lower, ['rehydration', 'iv therapy', 'iv drip', 'hangover', 'hangover recovery', '💧 rehydration', 'iv bar', 'mobile iv', 'iv treatment', 'rehydrate', 'banana bag'])) {
+    showRehydration();
+    return;
+  }
+
   if (matches(lower, ['photo spot', 'mural', 'instagram', 'pictures', 'i believe in nashville', 'wings', 'photo op'])) {
     showPhotoSpots();
     return;
@@ -2275,6 +2280,7 @@ function showThingsToDoMenu(skipPush) {
     'Book a tour',
     'Photo spots',
     'Bachelorette',
+    '💧 Rehydration & IV',
     'Shopping',
     'Spas',
     'Nail salons',
@@ -2512,6 +2518,21 @@ const CURATED_ROOFTOPS = [
   { name: "Twelve Thirty Club", neighborhood: "Lower Broadway", desc: "Justin Timberlake's spot. Three floors topped by a private rooftop. Reservations needed.", url: "https://www.twelvethirtyclub.com" },
   { name: "Ophelia at JW Marriott", neighborhood: "Downtown", desc: "Sleek rooftop on the 34th floor. Premium cocktails.", url: "https://www.marriott.com" },
   { name: "George Jones Rooftop", neighborhood: "Downtown", desc: "On top of the Johnny Cash Museum building. Country music views.", url: "https://www.georgejones.com" }
+];
+
+const CURATED_REHYDRATION = [
+  { name: "Reset IV Nashville", neighborhood: "Mobile (to your Airbnb)", desc: "Mobile IV therapy team comes to you. Hangover recovery, energy, immunity, and beauty drips. Group rates for bachelorettes.", url: "https://www.resetiv.com/locations/nashville-tn", note: "Most popular for bachelorette groups. Book the night before for next-morning recovery." },
+  { name: "Hangover Hospital Nashville", neighborhood: "Mobile (to your Airbnb)", desc: "Specifically designed for hangover recovery. Mobile to hotels, Airbnbs, and event spaces. Group bookings welcome.", url: "https://hangoverhospital.com" },
+  { name: "The IV Doc Nashville", neighborhood: "Mobile", desc: "Physician-led mobile IV therapy. Saline, vitamins, anti-nausea, headache relief. Premium service.", url: "https://www.theivdoc.com/nashville" },
+  { name: "The Drip Bar Nashville", neighborhood: "Multiple locations + mobile", desc: "Walk-in clinic plus mobile service. Custom IV cocktails, NAD+, vitamin shots.", url: "https://thedripbar.com" },
+  { name: "Restore Hyper Wellness", neighborhood: "Green Hills, Cool Springs, multiple", desc: "IV drips plus cryotherapy, red light, IV vitamin shots. Membership and walk-ins.", url: "https://www.restore.com/locations/tn-nashville" },
+  { name: "Liquivida Nashville", neighborhood: "Brentwood and Cool Springs", desc: "Wellness clinic with IV therapy, peptides, hormone optimization. Walk-in and mobile available.", url: "https://www.liquivida.com" },
+  { name: "NV Drips Nashville", neighborhood: "Mobile", desc: "Mobile IV team specializing in event recovery. Bachelorette and concert weekend regulars.", url: null },
+  { name: "Quench Wellness", neighborhood: "Brentwood (south of Nashville)", desc: "Boutique IV bar with private rooms. Group reservations available.", url: null },
+  { name: "Element 5 Wellness", neighborhood: "The Gulch / Downtown", desc: "Walk-in IV bar in The Gulch. Convenient for downtown bachelorette groups.", url: null },
+  { name: "Hangover IV Nashville", neighborhood: "Mobile", desc: "Mobile-only service, often available same-day. Bachelorette group package deals.", url: null },
+  { name: "Brentwood Hydration Center", neighborhood: "Brentwood", desc: "Clinic-based hydration with medical staff. Reservations recommended.", url: null },
+  { name: "The Hydration Room Nashville", neighborhood: "Multiple", desc: "Boutique IV lounge with bachelorette party packages. Charcuterie and mimosas while you drip.", url: null }
 ];
 
 const CURATED_BREWERIES = [
@@ -2824,6 +2845,13 @@ function showDistilleries() {
 function showBreweries() {
   showCuratedThenLive(CURATED_BREWERIES, 'brewery taproom craft beer', 'bar', 'breweries');
 }
+function showRehydration() {
+  addMessage("Nashville rehydration and IV therapy. Most come to your Airbnb or hotel.", 'bot');
+  showCuratedThenLive(CURATED_REHYDRATION, 'IV therapy hydration wellness', 'health', 'rehydration & IV therapy');
+  setTimeout(() => {
+    addMessage('<div class="card"><div class="card-title">💡 Bachelorette tip</div><div class="card-desc">Book mobile IV the night before. Most services arrive 9am-noon and treat the whole crew at once. Group rates kick in at 4+ people. Tip your tech 20%.</div></div>', 'bot', true);
+  }, 600);
+}
 function showPhotoSpots() {
   showCuratedThenLive(CURATED_PHOTO_SPOTS, 'instagram mural photo spot landmark', 'tourist_attraction', 'photo spots');
 }
@@ -3049,7 +3077,7 @@ function showAffiliateForElapsed(hoursElapsed, isLeader) {
     </div>`, 'bot', true);
   }
 
-  // Hour 8: hangover brunch for tomorrow
+  // Hour 8: hangover brunch + IV recovery for tomorrow
   if (hoursElapsed >= 8 && !shownGroupMilestones.has('h8')) {
     shownGroupMilestones.add('h8');
     addMessage(`<div class="card" style="border:2px dashed #0a8754;">
@@ -3057,6 +3085,11 @@ function showAffiliateForElapsed(hoursElapsed, isLeader) {
       <div class="card-desc">Big groups need reservations. Biscuit Love, Pancake Pantry, Frothy Monkey, Marche.</div>
       <a href="https://www.opentable.com/r/biscuit-love-the-gulch-nashville" target="_blank" rel="noopener" style="background:#da3743;color:#fff;">Reserve Biscuit Love</a>
       <a href="https://resy.com/cities/nashville-tn" target="_blank" rel="noopener" style="background:#000;color:#fff;">Browse Resy</a>
+    </div>`, 'bot', true);
+    addMessage(`<div class="card" style="border:2px dashed #34a853;">
+      <div class="card-title">💧 Need IV recovery tomorrow?</div>
+      <div class="card-desc">Mobile IV teams come straight to your Airbnb. Most arrive 9am-noon. Book tonight to lock the slot.</div>
+      <button type="button" onclick="showRehydration()" style="background:#34a853;color:#fff;border:none;padding:10px 16px;border-radius:8px;font-weight:600;cursor:pointer;font-size:14px;">See IV options</button>
     </div>`, 'bot', true);
   }
 
@@ -3266,6 +3299,13 @@ function showBachelorette() {
 
   const cards = [
     {
+      title: '💧 Mobile IV & Hangover Recovery',
+      desc: 'Book mobile IV the night before. Most services come to your Airbnb at 9am-noon and treat the whole crew. Group rates at 4+ people.',
+      links: [
+        { label: '💧 See rehydration spots', onclick: 'showRehydration()', color: '#34a853' }
+      ]
+    },
+    {
       title: '🎉 Pedal Taverns and Party Buses',
       desc: 'The signature Nashville bachelorette ride. Bring your own drinks (BYOB Tennessee).',
       links: [
@@ -3429,7 +3469,12 @@ function showBachelorette() {
       <div class="card-title">${c.title}</div>
       <div class="card-desc">${c.desc}</div>`;
     c.links.forEach(l => {
-      html += `<a href="${l.url}" target="_blank" rel="noopener" style="background:${l.color};color:#fff;">${l.label}</a>`;
+      const textColor = l.textColor || '#fff';
+      if (l.onclick) {
+        html += `<button type="button" onclick="${l.onclick}" style="background:${l.color};color:${textColor};border:none;padding:10px 16px;border-radius:8px;font-weight:600;cursor:pointer;font-size:14px;margin:4px;">${l.label}</button>`;
+      } else {
+        html += `<a href="${l.url}" target="_blank" rel="noopener" style="background:${l.color};color:${textColor};">${l.label}</a>`;
+      }
     });
     html += `</div>`;
     addMessage(html, 'bot', true);
