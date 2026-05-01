@@ -1524,6 +1524,8 @@ function navigateToSavedMenu(menuName) {
   else if (menuName === 'around') showGetAroundMenu(true);
   else if (menuName === 'essentials') showEssentialsMenu(true);
   else if (menuName === 'saved') showSavedSpots();
+  else if (menuName === 'bachelorette') showBachelorette(true);
+  else if (menuName === 'family') showFamilyFriendly();
   else showMainMenu();
 }
 
@@ -3089,7 +3091,8 @@ function showAffiliateForElapsed(hoursElapsed, isLeader) {
     addMessage(`<div class="card" style="border:2px dashed #34a853;">
       <div class="card-title">💧 Need IV recovery tomorrow?</div>
       <div class="card-desc">Mobile IV teams come straight to your Airbnb. Most arrive 9am-noon. Book tonight to lock the slot.</div>
-      <button type="button" onclick="showRehydration()" style="background:#34a853;color:#fff;border:none;padding:10px 16px;border-radius:8px;font-weight:600;cursor:pointer;font-size:14px;">See IV options</button>
+      <a href="https://www.resetiv.com/locations/nashville-tn" target="_blank" rel="noopener" style="background:#34a853;color:#fff;">Reset IV</a>
+      <a href="https://hangoverhospital.com" target="_blank" rel="noopener" style="background:#0a8754;color:#fff;">Hangover Hospital</a>
     </div>`, 'bot', true);
   }
 
@@ -3281,7 +3284,8 @@ async function endGroup() {
   saveGroupSession(null);
   addMessage('Group ended. Everyone is off the live map.', 'bot');
 }
-function showBachelorette() {
+function showBachelorette(skipPush) {
+  if (!skipPush) pushMenu('bachelorette');
   addMessage("Bachelorette mode activated. Nashville is the bachelorette capital. Here is everything you need.", 'bot');
 
   const viatorSearch = (q) => `https://www.viator.com/searchResults/all?text=${encodeURIComponent(q)}&pid=${VIATOR_PID}`;
@@ -3302,7 +3306,9 @@ function showBachelorette() {
       title: '💧 Mobile IV & Hangover Recovery',
       desc: 'Book mobile IV the night before. Most services come to your Airbnb at 9am-noon and treat the whole crew. Group rates at 4+ people.',
       links: [
-        { label: '💧 See rehydration spots', onclick: 'showRehydration()', color: '#34a853' }
+        { label: '💧 Reset IV (Mobile)', url: 'https://www.resetiv.com/locations/nashville-tn', color: '#34a853' },
+        { label: '💧 The Drip Bar', url: 'https://thedripbar.com', color: '#0a8754' },
+        { label: 'See more IV spots on Maps', url: 'https://www.google.com/maps/search/IV+therapy+nashville', color: '#34a853' }
       ]
     },
     {
