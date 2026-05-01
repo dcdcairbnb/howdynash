@@ -1514,6 +1514,7 @@ function goBack() {
   const target = menuStack[menuStack.length - 1];
   messagesEl.innerHTML = '';
   scrollAnchor = null;
+  suppressAutoScroll = true; // don't let addMessage auto-scroll to bottom while restoring
   const hdr = document.getElementById('appHeader');
   if (hdr) hdr.classList.add('slim');
   if (target === 'eat') showEatDrinkMenu(true);
@@ -1533,6 +1534,9 @@ function goBack() {
   else showMainMenu();
   saveMenuState();
   updateBackBtn();
+  // Force scroll to top so user lands at the start of the restored section.
+  setTimeout(() => { if (messagesEl) messagesEl.scrollTop = 0; }, 50);
+  setTimeout(() => { suppressAutoScroll = false; }, 2000);
 }
 
 function navigateToSavedMenu(menuName) {
