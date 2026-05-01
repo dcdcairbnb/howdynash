@@ -4392,11 +4392,20 @@ async function showSports() {
   addMessage("Nashville pro sports. Pulling upcoming games...", 'bot');
 
   const teams = [
-    { name: 'Nashville Predators', league: 'NHL', venue: 'Bridgestone Arena', keyword: 'Nashville Predators', emoji: '🏒', color: '#FFB81C', tickets: 'https://www.nhl.com/predators/tickets' },
-    { name: 'Tennessee Titans', league: 'NFL', venue: 'Nissan Stadium', keyword: 'Tennessee Titans', emoji: '🏈', color: '#0C2340', tickets: 'https://www.tennesseetitans.com/tickets/' },
-    { name: 'Nashville SC', league: 'MLS', venue: 'GEODIS Park', keyword: 'Nashville SC', emoji: '⚽', color: '#FFCC00', tickets: 'https://www.nashvillesc.com/tickets/' },
-    { name: 'Nashville Sounds', league: 'AAA Baseball', venue: 'First Horizon Park', keyword: 'Nashville Sounds', emoji: '⚾', color: '#000000', tickets: 'https://www.milb.com/nashville/tickets' }
+    { name: 'Nashville Predators', league: 'NHL', venue: 'Bridgestone Arena', neighborhood: 'Lower Broadway', coords: { lat: 36.1592, lng: -86.7785 }, keyword: 'Nashville Predators', emoji: '🏒', color: '#FFB81C', tickets: 'https://www.nhl.com/predators/tickets' },
+    { name: 'Tennessee Titans', league: 'NFL', venue: 'Nissan Stadium', neighborhood: 'East Nashville (riverfront)', coords: { lat: 36.1665, lng: -86.7713 }, keyword: 'Tennessee Titans', emoji: '🏈', color: '#0C2340', tickets: 'https://www.tennesseetitans.com/tickets/' },
+    { name: 'Nashville SC', league: 'MLS', venue: 'GEODIS Park', neighborhood: 'Wedgewood-Houston', coords: { lat: 36.1297, lng: -86.7656 }, keyword: 'Nashville SC', emoji: '⚽', color: '#FFCC00', tickets: 'https://www.nashvillesc.com/tickets/' },
+    { name: 'Nashville Sounds', league: 'AAA Baseball', venue: 'First Horizon Park', neighborhood: 'Germantown', coords: { lat: 36.1707, lng: -86.7866 }, keyword: 'Nashville Sounds', emoji: '⚾', color: '#000000', tickets: 'https://www.milb.com/nashville/tickets' }
   ];
+
+  // Sort by distance if location is available
+  if (userLocation) {
+    teams.sort((a, b) => {
+      const da = haversineMiles(userLocation, a.coords) ?? 9999;
+      const db = haversineMiles(userLocation, b.coords) ?? 9999;
+      return da - db;
+    });
+  }
 
   for (const team of teams) {
     let nextGame = null;
@@ -4408,11 +4417,13 @@ async function showSports() {
       }
     } catch (e) {}
 
+    const dist = userLocation ? haversineMiles(userLocation, team.coords) : null;
+    const distStr = dist != null ? ` · 📍 ${dist} mi` : '';
     const star = renderSaveStar({ name: team.name, note: `${team.league} · ${team.venue}`, address: team.venue });
     const share = renderShareButton({ name: team.name, desc: `${team.league} at ${team.venue}`, url: team.tickets });
     let html = `<div class="card">
       <div class="card-title">${star}${share}${team.emoji} ${team.name}</div>
-      <div class="card-desc"><strong>${team.league}</strong> · ${team.venue}</div>`;
+      <div class="card-meta">${team.league} · ${team.venue} · ${team.neighborhood}${distStr}</div>`;
     if (nextGame) {
       const dateStr = nextGame.date ? new Date(nextGame.date + 'T' + (nextGame.time || '19:00')).toLocaleString([], { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : 'TBD';
       html += `<div class="card-desc" style="font-size:12px;color:#666;margin-top:4px;">Next game: ${nextGame.name}</div>
@@ -4421,8 +4432,11 @@ async function showSports() {
     } else {
       html += `<div class="card-desc" style="font-size:12px;color:#666;margin-top:4px;">No upcoming home games found in feed. Check team site directly.</div>`;
     }
+    const safeName = team.venue.replace(/'/g, "\\'");
     html += `<a href="${team.tickets}" target="_blank" rel="noopener" style="background:#444;color:#fff;">Official team tickets</a>
       <a href="https://www.google.com/maps/search/${encodeURIComponent(team.venue)}+Nashville" target="_blank" rel="noopener" style="background:#34a853;color:#fff;">Venue on Maps</a>
+      <a href="#" onclick="return rideClick('uber','${safeName}',event)" style="background:#000;">Uber to venue</a>
+      <a href="#" onclick="return rideClick('lyft','${safeName}',event)" style="background:#ff00bf;">Lyft to venue</a>
     </div>`;
     addMessage(html, 'bot', true);
   }
@@ -5093,28 +5107,40 @@ async function showAttractions() {
     }
   }
 
-  let attractions = NASHVILLE_DATA.attractions.map(a => ({ item: a, match: findLiveMatch(a, live) }));
-  if (userLocation && attractions.some(x => x.match && x.match.distanceMiles != null)) {
-    attractions.sort((a, b) => {
-      const da = a.match?.distanceMiles ?? 9999;
-      const db = b.match?.distanceMiles ?? 9999;
-      return da - db;
-    });
+  // Compute distance with three-tier fallback: API match → entry coords → neighborhood center
+  let attractions = NASHVILLE_DATA.attractions.map(a => {
+    const match = findLiveMatch(a, live);
+    let dist = match?.distanceMiles ?? null;
+    let approx = false;
+    if (dist == null && userLocation && a.coords) {
+      dist = haversineMiles(userLocation, a.coords);
+    }
+    if (dist == null && userLocation && a.neighborhood) {
+      const nb = neighborhoodCoords(a.neighborhood);
+      if (nb) { dist = haversineMiles(userLocation, nb); approx = true; }
+    }
+    return { item: a, match, dist, approx };
+  });
+  if (userLocation) {
+    attractions.sort((a, b) => (a.dist ?? 9999) - (b.dist ?? 9999));
   }
 
   addMessage("Top Nashville attractions:", 'bot');
-  attractions.forEach(({ item: a, match }) => {
-    const distStr = match && match.distanceMiles != null ? ` · 📍 ${match.distanceMiles} mi` : '';
+  attractions.forEach(({ item: a, match, dist, approx }) => {
+    const distStr = dist != null ? ` · 📍 ${dist} mi${approx ? ' (approx)' : ''}` : '';
     const ratingStr = match && match.rating ? ` · ★ ${match.rating}` : '';
-    const star = renderSaveStar({ name: a.name, note: a.type, address: match?.address || 'Nashville' });
+    const star = renderSaveStar({ name: a.name, note: a.type, address: match?.address || a.neighborhood || 'Nashville' });
     const share = renderShareButton({ name: a.name, desc: a.desc || a.type, url: a.url || '' });
+    const safeName = (a.name || '').replace(/'/g, "\\'");
     let html = `<div class="card">
       <div class="card-title">${star}${share}${a.name}</div>
-      <div class="card-meta">${a.type}${ratingStr}${distStr}</div>
+      <div class="card-meta">${a.type}${a.neighborhood ? ' · ' + a.neighborhood : ''}${ratingStr}${distStr}</div>
       <div class="card-desc">${a.desc}</div>`;
     if (a.url) html += `<a href="${a.url}" target="_blank">Learn more</a>`;
     const mapsUrl = match?.mapsUrl || `https://www.google.com/maps/search/${encodeURIComponent(a.name + ' Nashville TN')}`;
     html += `<a href="${mapsUrl}" target="_blank" rel="noopener" style="background:#34a853;color:#fff;">Open in Maps</a>`;
+    html += `<a href="#" onclick="return rideClick('uber','${safeName}',event)" style="background:#000;">Uber here</a>`;
+    html += `<a href="#" onclick="return rideClick('lyft','${safeName}',event)" style="background:#ff00bf;">Lyft here</a>`;
     html += `</div>`;
     addMessage(html, 'bot', true);
   });
