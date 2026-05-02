@@ -4530,28 +4530,41 @@ function filterFlightCards(query) {
   });
 }
 
+function renderBnaInfoCard() {
+  return `<div class="card" style="border-left:4px solid #d62828;">
+    <div class="card-title">✈️ Nashville International Airport (BNA)</div>
+    <div class="card-meta">Donelson · 9 mi from downtown</div>
+    <div class="card-desc">For real-time arrivals, departures, gates, baggage carousels, and parking info, check the official BNA board.</div>
+    <a href="https://flynashville.com/flightinfo" target="_blank" rel="noopener" style="background:#d62828;color:#fff;">BNA Flight Board (official)</a>
+    <a href="https://flynashville.com" target="_blank" rel="noopener" style="background:#444;color:#fff;">flynashville.com</a>
+    <a href="https://www.google.com/maps/dir/?api=1&destination=Nashville+International+Airport+BNA" target="_blank" rel="noopener" style="background:#34a853;color:#fff;">Directions to BNA</a>
+    <div class="card-desc" style="font-size:12px;color:#666;margin-top:8px;">Tip: Allow 90 minutes for security on weekends. Uber/Lyft pickup is on the second floor of the parking garage, not curbside.</div>
+  </div>`;
+}
+
 async function showFlights() {
-  addMessage("Pulling live BNA arrivals...", 'bot');
+  // Always show the BNA info card first so the user has something useful immediately
+  addMessage(renderBnaInfoCard(), 'bot', true);
+  addMessage("Trying live BNA arrivals...", 'bot');
   try {
     const r = await fetch(`${API_BASE}/api/flights?airport=BNA&direction=arrivals&limit=50`);
     if (!r.ok) {
       const errData = await r.json().catch(() => ({}));
       if (errData.error === 'AVIATIONSTACK_KEY not configured') {
-        addMessage("Flight tracking is not set up yet. Check the FAA BNA arrival board at flynashville.com.", 'bot');
+        addMessage("Live flight tracking isn't set up. Use the official BNA board above for arrivals and gates.", 'bot');
       } else {
-        addMessage("Couldn't reach the flight service. Try the BNA website at flynashville.com.", 'bot');
+        addMessage("Live flight feed is down right now (API limit or outage). Use the official BNA board above.", 'bot');
       }
       return;
     }
     const data = await r.json();
     const flights = data.flights || [];
     if (flights.length === 0) {
-      addMessage("No active flight data right now. Try flynashville.com for the official board.", 'bot');
+      addMessage("No live flight data right now. The official BNA board above is your best bet.", 'bot');
       return;
     }
     _flightsCache = flights;
 
-    // Search input card
     const searchHtml = `<div class="card">
       <div class="card-title">Search BNA arrivals</div>
       <div class="card-desc" style="font-size:12px;color:#666;">Type a flight number, airline name, or origin city.</div>
@@ -4561,9 +4574,8 @@ async function showFlights() {
 
     addMessage(`Showing ${Math.min(flights.length, 30)} recent BNA arrivals:`, 'bot');
     flights.slice(0, 30).forEach(f => addMessage(renderFlightCard(f), 'bot', true));
-    addMessage("For the official board, visit flynashville.com.", 'bot');
   } catch (e) {
-    addMessage("Flight service error. Try flynashville.com.", 'bot');
+    addMessage("Live flight feed error. Use the official BNA board above.", 'bot');
   }
 }
 const AWIN_PUBLISHER_ID = '2873227';
