@@ -2523,19 +2523,8 @@ function matches(text, keywords) {
 function showWelcome() {
   addMessage("Howdy. Welcome to Nashville. I can help you find restaurants, discover live music, and plan your visit. What sounds good?", 'bot');
   showMainMenu();
-  // Cheat sheet capture. Skip if user already signed up (persistent) or already shown this session.
-  const alreadySignedUp = (() => { try { return !!localStorage.getItem('howdy-nash-email-signed-up'); } catch (e) { return false; } })();
-  if (!alreadySignedUp && !sessionStorage.getItem('cheatsheet-shown')) {
-    sessionStorage.setItem('cheatsheet-shown', '1');
-    setTimeout(() => {
-      const card = `<div class="card" style="background:#fff5f5;border-left:3px solid #d62828;">
-        <div class="card-title">📧 Free 3-Day Nashville Cheat Sheet</div>
-        <div class="card-desc">Restaurants, music, neighborhoods, all in one PDF. Emailed to you, free.</div>
-        <button onclick="openSignupModal('cheatsheet'); return false;" style="background:#d62828;color:#fff;border:none;padding:10px 16px;border-radius:8px;cursor:pointer;font-weight:600;margin-top:8px;">Email me the cheat sheet</button>
-      </div>`;
-      addMessage(card, 'bot', true);
-    }, 1500);
-  }
+  // Cheat sheet capture is now handled as a 30-second popup modal in the page-load
+  // flow below. No more in-chat card here.
 }
 
 function showMainMenu() {
@@ -5667,18 +5656,18 @@ setTimeout(() => {
     })();
     if (!joiningGroup) {
       setTimeout(() => showMainMenu(), 400);
-      // Show the cheat sheet card once per session, but never if the user already signed up.
+      // Cheat sheet modal: show as a popup 30 seconds after page load so users
+      // engage with the chat first. Skip if already signed up or already shown this session.
       const alreadySignedUp = (() => { try { return !!localStorage.getItem('howdy-nash-email-signed-up'); } catch (e) { return false; } })();
       if (!alreadySignedUp && !sessionStorage.getItem('cheatsheet-shown')) {
-        sessionStorage.setItem('cheatsheet-shown', '1');
         setTimeout(() => {
-          const card = `<div class="card" style="background:#fff5f5;border-left:3px solid #d62828;">
-            <div class="card-title">📧 Free 3-Day Nashville Cheat Sheet</div>
-            <div class="card-desc">Restaurants, music, neighborhoods, all in one PDF. Emailed to you, free.</div>
-            <button onclick="openSignupModal('cheatsheet'); return false;" style="background:#d62828;color:#fff;border:none;padding:10px 16px;border-radius:8px;cursor:pointer;font-weight:600;margin-top:8px;">Email me the cheat sheet</button>
-          </div>`;
-          addMessage(card, 'bot', true);
-        }, 1800);
+          // Final check before opening - user may have signed up via another path in the last 30s
+          const justSignedUp = (() => { try { return !!localStorage.getItem('howdy-nash-email-signed-up'); } catch (e) { return false; } })();
+          if (justSignedUp) return;
+          if (sessionStorage.getItem('cheatsheet-shown')) return;
+          sessionStorage.setItem('cheatsheet-shown', '1');
+          openSignupModal('cheatsheet');
+        }, 30000);
       }
     }
   }
