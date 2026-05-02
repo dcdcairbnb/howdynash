@@ -5656,18 +5656,17 @@ setTimeout(() => {
     })();
     if (!joiningGroup) {
       setTimeout(() => showMainMenu(), 400);
-      // Cheat sheet modal: show as a popup 30 seconds after page load so users
-      // engage with the chat first. Skip if already signed up or already shown this session.
+      // Cheat sheet modal: 20 seconds after page load. Long enough for the user
+      // to engage with the chat, short enough to catch them before they bounce.
       const alreadySignedUp = (() => { try { return !!localStorage.getItem('howdy-nash-email-signed-up'); } catch (e) { return false; } })();
-      if (!alreadySignedUp && !sessionStorage.getItem('cheatsheet-shown')) {
+      if (!alreadySignedUp && !sessionStorage.getItem('cheatsheet-modal-shown')) {
         setTimeout(() => {
-          // Final check before opening - user may have signed up via another path in the last 30s
           const justSignedUp = (() => { try { return !!localStorage.getItem('howdy-nash-email-signed-up'); } catch (e) { return false; } })();
           if (justSignedUp) return;
-          if (sessionStorage.getItem('cheatsheet-shown')) return;
-          sessionStorage.setItem('cheatsheet-shown', '1');
+          if (sessionStorage.getItem('cheatsheet-modal-shown')) return;
+          sessionStorage.setItem('cheatsheet-modal-shown', '1');
           openSignupModal('cheatsheet');
-        }, 30000);
+        }, 20000);
       }
     }
   }
