@@ -1,25 +1,61 @@
 {
-  "name": "Howdy Nashville",
-  "short_name": "Howdy Nashville",
-  "description": "Your Nashville tourist guide. Restaurants, live music, events, ride-share, and AI chat. Free, no signup.",
+  "name": "Howdy Nash - Your Nashville Guide",
+  "short_name": "Howdy Nash",
+  "description": "Free Nashville tourist guide with AI concierge. Hot chicken, honky tonks, live music, festivals, neighborhoods, bachelorette planning, and group location sharing. No signup.",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#ffffff",
+  "background_color": "#d62828",
   "theme_color": "#d62828",
+  "lang": "en-US",
+  "dir": "ltr",
   "icons": [
     {
-      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Crect width='192' height='192' rx='40' fill='%23d62828'/%3E%3Ctext y='140' font-size='130' x='96' text-anchor='middle'%3E%F0%9F%8E%B8%3C/text%3E%3C/svg%3E",
+      "src": "/logo.jpg",
       "sizes": "192x192",
-      "type": "image/svg+xml",
-      "purpose": "any maskable"
+      "type": "image/jpeg",
+      "purpose": "any"
     },
     {
-      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='100' fill='%23d62828'/%3E%3Ctext y='370' font-size='340' x='256' text-anchor='middle'%3E%F0%9F%8E%B8%3C/text%3E%3C/svg%3E",
+      "src": "/logo.jpg",
       "sizes": "512x512",
-      "type": "image/svg+xml",
-      "purpose": "any maskable"
+      "type": "image/jpeg",
+      "purpose": "any"
+    },
+    {
+      "src": "/logo.jpg",
+      "sizes": "192x192",
+      "type": "image/jpeg",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/logo.jpg",
+      "sizes": "512x512",
+      "type": "image/jpeg",
+      "purpose": "maskable"
     }
   ],
-  "categories": ["travel", "lifestyle", "food"]
+  "shortcuts": [
+    {
+      "name": "Hot chicken near me",
+      "short_name": "Hot chicken",
+      "url": "/?q=hot+chicken",
+      "icons": [{ "src": "/logo.jpg", "sizes": "192x192" }]
+    },
+    {
+      "name": "Live music tonight",
+      "short_name": "Live music",
+      "url": "/?q=live+music+tonight",
+      "icons": [{ "src": "/logo.jpg", "sizes": "192x192" }]
+    },
+    {
+      "name": "Bachelorette planner",
+      "short_name": "Bachelorette",
+      "url": "/?q=bachelorette",
+      "icons": [{ "src": "/logo.jpg", "sizes": "192x192" }]
+    }
+  ],
+  "categories": ["travel", "lifestyle", "food"],
+  "prefer_related_applications": false
 }

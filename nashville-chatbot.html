@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Howdy Nash">
 <meta name="theme-color" content="#d62828">
 
 <title>Howdy Nash - Your Nashville Tourist Guide + AI Concierge</title>
@@ -15,8 +17,10 @@
 <meta name="p:domain_verify" content="f0376c956ce6170a7cd05f4004cdb1b6"/>
 <link rel="canonical" href="https://howdynash.com/">
 
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%23d62828'/%3E%3Ctext y='75' font-size='70' x='50' text-anchor='middle'%3E%F0%9F%8E%B8%3C/text%3E%3C/svg%3E">
-<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%23d62828'/%3E%3Ctext y='75' font-size='70' x='50' text-anchor='middle'%3E%F0%9F%8E%B8%3C/text%3E%3C/svg%3E">
+<link rel="icon" href="/logo.jpg" type="image/jpeg">
+<link rel="apple-touch-icon" href="/logo.jpg">
+<link rel="apple-touch-icon" sizes="152x152" href="/logo.jpg">
+<link rel="apple-touch-icon" sizes="180x180" href="/logo.jpg">
 <link rel="manifest" href="/manifest.json">
 
 <meta property="og:type" content="website">
@@ -5615,16 +5619,65 @@ window.addEventListener('appinstalled', () => {
   deferredInstallPrompt = null;
 });
 
-// Show iOS users a hint about Add to Home Screen since iOS does not fire beforeinstallprompt.
+// Visual iOS Add-to-Home-Screen modal. iOS Safari doesn't fire beforeinstallprompt
+// so we have to ask manually. Shows once per device until installed or dismissed.
 function maybeShowIosInstallHint() {
   const isIos = /iPhone|iPad|iPod/i.test(navigator.userAgent) && !/CriOS|FxiOS|EdgiOS/i.test(navigator.userAgent);
   const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
   if (!isIos || isStandalone) return;
+  if (localStorage.getItem('iosInstallDismissed')) return;
   if (sessionStorage.getItem('iosHintShown')) return;
+  sessionStorage.setItem('iosHintShown', '1');
   setTimeout(() => {
-    addMessage('💡 Tip: tap the Share icon in Safari, then "Add to Home Screen" to install Howdy Nash like an app.', 'bot');
-    sessionStorage.setItem('iosHintShown', '1');
+    if (document.getElementById('iosInstallModal')) return;
+    const modal = document.createElement('div');
+    modal.id = 'iosInstallModal';
+    modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:9998;display:flex;align-items:flex-end;justify-content:center;padding:0;animation:fadeIn 0.3s ease-out;';
+    modal.innerHTML = `
+      <style>
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+        @keyframes bounceArrow { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(8px); } }
+      </style>
+      <div style="background:#fff;border-radius:24px 24px 0 0;padding:28px 24px 32px;max-width:480px;width:100%;box-shadow:0 -12px 40px rgba(0,0,0,0.25);animation:slideUp 0.35s ease-out;">
+        <div style="display:flex;align-items:center;gap:14px;margin-bottom:18px;">
+          <img src="/logo.jpg" alt="Howdy Nash" style="width:64px;height:64px;border-radius:14px;flex-shrink:0;">
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:17px;font-weight:700;color:#1a1a1a;line-height:1.2;">Add Howdy Nash to your Home Screen</div>
+            <div style="font-size:13px;color:#666;margin-top:2px;">Free. No App Store. One tap to open like an app.</div>
+          </div>
+          <button onclick="dismissIosInstall(false)" aria-label="Close" style="background:none;border:none;font-size:28px;color:#999;line-height:1;padding:0;cursor:pointer;flex-shrink:0;">&times;</button>
+        </div>
+        <div style="background:#fff5f0;border-radius:12px;padding:14px 16px;margin-bottom:14px;">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+            <div style="background:#d62828;color:#fff;width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0;">1</div>
+            <div style="font-size:14px;color:#333;">Tap the <svg width="18" height="18" viewBox="0 0 24 24" style="vertical-align:middle;display:inline-block;" fill="#007AFF"><path d="M12 2L8 6h3v9h2V6h3l-4-4zm9 11v6c0 1.1-.9 2-2 2H5c-1.1 0-2-.9-2-2v-6h2v6h14v-6h2z"/></svg> Share button</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+            <div style="background:#d62828;color:#fff;width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0;">2</div>
+            <div style="font-size:14px;color:#333;">Scroll down, tap <strong>Add to Home Screen</strong></div>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;">
+            <div style="background:#d62828;color:#fff;width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0;">3</div>
+            <div style="font-size:14px;color:#333;">Tap <strong>Add</strong> in the top right</div>
+          </div>
+        </div>
+        <div style="text-align:center;font-size:12px;color:#888;margin-bottom:12px;animation:bounceArrow 1.5s infinite;">
+          ↓ Look for the Share button at the bottom of Safari ↓
+        </div>
+        <button onclick="dismissIosInstall(true)" style="width:100%;background:#fff;color:#666;border:1px solid #ddd;padding:10px;border-radius:8px;font-size:13px;cursor:pointer;">Don't show again</button>
+      </div>
+    `;
+    document.body.appendChild(modal);
   }, 8000);
+}
+
+function dismissIosInstall(forever) {
+  const m = document.getElementById('iosInstallModal');
+  if (m) m.remove();
+  if (forever) {
+    try { localStorage.setItem('iosInstallDismissed', '1'); } catch (e) {}
+  }
 }
 
 checkApiHealth();
