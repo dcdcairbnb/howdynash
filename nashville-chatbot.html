@@ -3860,13 +3860,37 @@ function renderGroupMembers(members, expiresAt) {
   renderGroupLiveMap(members);
 }
 
-async function promoteToLeader(newLeaderId, newLeaderName) {
+function promoteToLeader(newLeaderId, newLeaderName) {
   const saved = getSavedGroupSession();
   if (!saved || !saved.isLeader) {
     addMessage('Only the current leader can transfer leadership.', 'bot');
     return;
   }
-  if (!confirm(`Make ${newLeaderName} the new group leader? You'll stay in the group as a regular member.`)) return;
+  // In-app confirmation card. Avoids iOS WebView quirks with native confirm().
+  const safeId = String(newLeaderId).replace(/'/g, "\\'");
+  const safeName = String(newLeaderName).replace(/[<>]/g, '').replace(/'/g, "\\'");
+  const html = `<div class="card">
+    <div class="card-title">Transfer leadership?</div>
+    <div class="card-desc">Make <strong>${safeName.replace(/\\'/g, "'")}</strong> the new group leader. You'll stay in the group as a regular member.</div>
+    <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
+      <button type="button" onclick="confirmPromoteToLeader('${safeId}','${safeName}')" style="background:#d62828;color:#fff;border:none;padding:10px 16px;border-radius:8px;font-weight:600;cursor:pointer;font-size:14px;">👑 Yes, transfer</button>
+      <button type="button" onclick="cancelPromoteToLeader(this)" style="background:#666;color:#fff;border:none;padding:10px 16px;border-radius:8px;font-weight:600;cursor:pointer;font-size:14px;">Cancel</button>
+    </div>
+  </div>`;
+  addMessage(html, 'bot', true);
+}
+
+function cancelPromoteToLeader(btn) {
+  const card = btn.closest('.message') || btn.closest('.card');
+  if (card) card.remove();
+}
+
+async function confirmPromoteToLeader(newLeaderId, newLeaderName) {
+  const saved = getSavedGroupSession();
+  if (!saved || !saved.isLeader) {
+    addMessage('Only the current leader can transfer leadership.', 'bot');
+    return;
+  }
   const r = await groupApi({
     action: 'transferLeader',
     code: saved.code,
