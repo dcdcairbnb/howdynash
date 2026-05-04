@@ -5704,6 +5704,9 @@ if (userLocation) {
   }, 50);
 }
 setTimeout(() => {
+  // Suppress auto-scroll during initial page render so the welcome message
+  // and main menu land at the top of the chat container, not pushed off-screen.
+  suppressAutoScroll = true;
   const ctx = getTimeContext();
   const savedStack = restoreMenuState();
   if (savedStack && savedStack.length > 1) {
@@ -5737,6 +5740,13 @@ setTimeout(() => {
       }
     }
   }
+  // After the welcome flow renders, snap to the top of the chat so the user
+  // lands at the greeting, then re-enable auto-scroll for everything else.
+  setTimeout(() => {
+    if (messagesEl) messagesEl.scrollTop = 0;
+    window.scrollTo(0, 0);
+  }, 800);
+  setTimeout(() => { suppressAutoScroll = false; }, 2000);
   setTimeout(() => snapshot('initial'), 500);
   setTimeout(() => maybeShowIosInstallHint(), 1000);
   maybeShowWelcomeTour();
