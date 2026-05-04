@@ -2470,6 +2470,7 @@ function buildAffiliatePanel(venues) {
     let buttons = `<a href="${mapsUrl}" target="_blank" rel="noopener" style="background:#34a853;color:#fff;font-size:12px;padding:6px 10px;">Maps</a>`;
     buttons += `<a href="#" onclick="return rideClick('uber','${safeName}',event)" style="background:#000;color:#fff;font-size:12px;padding:6px 10px;">Uber</a>`;
     buttons += `<a href="#" onclick="return rideClick('lyft','${safeName}',event)" style="background:#ff00bf;color:#fff;font-size:12px;padding:6px 10px;">Lyft</a>`;
+    buttons += `<a href="#" onclick="return rideClick('waymo','${safeName}',event)" style="background:#5f6df1;color:#fff;font-size:12px;padding:6px 10px;">Waymo</a>`;
     if (v.type === 'hotel') {
       const expediaParams = new URLSearchParams();
       expediaParams.set('destination', v.name + ' Nashville TN');
@@ -2793,6 +2794,7 @@ function renderCuratedCard(s, label, liveMatch) {
   const safeName = s.name.replace(/'/g, "\\'");
   html += `<a href="#" onclick="return rideClick('uber','${safeName}',event)" style="background:#000;">Uber here</a>`;
   html += `<a href="#" onclick="return rideClick('lyft','${safeName}',event)" style="background:#ff00bf;">Lyft here</a>`;
+  html += `<a href="#" onclick="return rideClick('waymo','${safeName}',event)" style="background:#5f6df1;">Waymo here</a>`;
   html += `</div>`;
   return html;
 }
@@ -2853,6 +2855,7 @@ async function showCuratedThenLive(curatedList, query, type, label) {
     if (s.website) html += `<a href="${s.website}" target="_blank">Website</a>`;
     html += `<a href="#" onclick="return rideClick('uber','${safeName}',event)" style="background:#000;">Uber here</a>`;
     html += `<a href="#" onclick="return rideClick('lyft','${safeName}',event)" style="background:#ff00bf;">Lyft here</a>`;
+    html += `<a href="#" onclick="return rideClick('waymo','${safeName}',event)" style="background:#5f6df1;">Waymo here</a>`;
     html += `</div>`;
     addMessage(html, 'bot', true);
   });
@@ -3123,6 +3126,7 @@ function showBroadwayBars() {
     const safeName = s.name.replace(/'/g, "\\'");
     html += `<a href="#" onclick="return rideClick('uber','${safeName}',event)" style="background:#000;">Uber here</a>`;
     html += `<a href="#" onclick="return rideClick('lyft','${safeName}',event)" style="background:#ff00bf;">Lyft here</a>`;
+    html += `<a href="#" onclick="return rideClick('waymo','${safeName}',event)" style="background:#5f6df1;">Waymo here</a>`;
     html += `</div>`;
     addMessage(html, 'bot', true);
   });
@@ -4512,6 +4516,7 @@ async function showSports() {
       <a href="https://www.google.com/maps/search/${encodeURIComponent(team.venue)}+Nashville" target="_blank" rel="noopener" style="background:#34a853;color:#fff;">Venue on Maps</a>
       <a href="#" onclick="return rideClick('uber','${safeName}',event)" style="background:#000;">Uber to venue</a>
       <a href="#" onclick="return rideClick('lyft','${safeName}',event)" style="background:#ff00bf;">Lyft to venue</a>
+      <a href="#" onclick="return rideClick('waymo','${safeName}',event)" style="background:#5f6df1;">Waymo to venue</a>
     </div>`;
     addMessage(html, 'bot', true);
   }
@@ -4672,6 +4677,7 @@ async function showHotels() {
           html += `<a href="${bookingAwin}" target="_blank" rel="noopener" style="background:#003580;color:#fff;">Check Booking.com rates</a>`;
           html += `<a href="#" onclick="return rideClick('uber','${safeName}',event)" style="background:#000;">Uber here</a>`;
           html += `<a href="#" onclick="return rideClick('lyft','${safeName}',event)" style="background:#ff00bf;">Lyft here</a>`;
+          html += `<a href="#" onclick="return rideClick('waymo','${safeName}',event)" style="background:#5f6df1;">Waymo here</a>`;
           html += `</div>`;
           addMessage(html, 'bot', true);
         });
@@ -4746,6 +4752,7 @@ async function showStoreType(query, type, label) {
     if (s.website) html += `<a href="${s.website}" target="_blank">Website</a>`;
     html += `<a href="#" onclick="return rideClick('uber','${safeName}',event)" style="background:#000;">Uber here</a>`;
     html += `<a href="#" onclick="return rideClick('lyft','${safeName}',event)" style="background:#ff00bf;">Lyft here</a>`;
+    html += `<a href="#" onclick="return rideClick('waymo','${safeName}',event)" style="background:#5f6df1;">Waymo here</a>`;
     html += `</div>`;
     addMessage(html, 'bot', true);
   });
@@ -5258,6 +5265,7 @@ async function showAttractions() {
     html += `<a href="${mapsUrl}" target="_blank" rel="noopener" style="background:#34a853;color:#fff;">Open in Maps</a>`;
     html += `<a href="#" onclick="return rideClick('uber','${safeName}',event)" style="background:#000;">Uber here</a>`;
     html += `<a href="#" onclick="return rideClick('lyft','${safeName}',event)" style="background:#ff00bf;">Lyft here</a>`;
+    html += `<a href="#" onclick="return rideClick('waymo','${safeName}',event)" style="background:#5f6df1;">Waymo here</a>`;
     html += `</div>`;
     addMessage(html, 'bot', true);
   });
