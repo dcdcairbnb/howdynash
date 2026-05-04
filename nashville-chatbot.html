@@ -3802,6 +3802,9 @@ function renderGroupMembers(members, expiresAt) {
   if (!members.length) { el.innerHTML = '<div class="card-desc">No members yet.</div>'; renderGroupLiveMap([]); return; }
   // Only render the member list here. The map div is persistent in showGroupSession.
   const withCoords = members.filter(m => m.lat != null && m.lng != null);
+  // Determine if the current user is the leader, so we can show "Make leader" buttons.
+  const saved = getSavedGroupSession();
+  const iAmLeader = !!(saved && saved.isLeader);
   let h = '<ul style="list-style:none;padding:0;margin:0;">';
   members.forEach(m => {
     const ageMin = Math.round((Date.now() - m.updatedAt) / 60000);
@@ -3817,12 +3820,47 @@ function renderGroupMembers(members, expiresAt) {
         <a href="${driveUrl}" target="_blank" rel="noopener" style="background:#2563eb;color:#fff;padding:6px 10px;border-radius:6px;text-decoration:none;font-size:12px;font-weight:600;">🚗 Drive (Google Maps)</a>
       </div>`;
     }
-    h += `<li style="padding:8px 0;border-bottom:1px solid #eee;">${dot} <strong>${(m.name || 'Friend').replace(/</g,'')}</strong>${star} <span style="color:#888;font-size:12px;">· ${ageStr}</span>${actions}</li>`;
+    // Leader-only: button to promote this member to leader.
+    let promote = '';
+    if (iAmLeader && !m.isLeader && m.id && saved && m.id !== saved.memberId) {
+      const safeId = String(m.id).replace(/'/g, "\\'");
+      const safeMemberName = (m.name || 'Friend').replace(/'/g, "\\'");
+      promote = `<div style="margin-top:6px;">
+        <button type="button" onclick="promoteToLeader('${safeId}','${safeMemberName}')" style="background:#d62828;color:#fff;border:none;padding:6px 10px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600;">👑 Make leader</button>
+      </div>`;
+    }
+    h += `<li style="padding:8px 0;border-bottom:1px solid #eee;">${dot} <strong>${(m.name || 'Friend').replace(/</g,'')}</strong>${star} <span style="color:#888;font-size:12px;">· ${ageStr}</span>${actions}${promote}</li>`;
   });
   h += '</ul>';
   el.innerHTML = h;
   // Update map markers (map container is persistent and managed separately)
   renderGroupLiveMap(members);
+}
+
+async function promoteToLeader(newLeaderId, newLeaderName) {
+  const saved = getSavedGroupSession();
+  if (!saved || !saved.isLeader) {
+    addMessage('Only the current leader can transfer leadership.', 'bot');
+    return;
+  }
+  if (!confirm(`Make ${newLeaderName} the new group leader? You'll stay in the group as a regular member.`)) return;
+  const r = await groupApi({
+    action: 'transferLeader',
+    code: saved.code,
+    memberId: saved.memberId,
+    newLeaderId
+  });
+  if (!r.ok) {
+    addMessage(`Could not transfer leadership: ${r.data?.error || 'unknown error'}`, 'bot');
+    return;
+  }
+  // Update local saved session so this user is no longer the leader.
+  saveGroupSession({ ...saved, isLeader: false });
+  addMessage(`${newLeaderName} is now the group leader. You're still in the group.`, 'bot');
+  // Re-render the session card so the End group button disappears for this user
+  // and the member list reflects the new leader.
+  removeGroupSessionCard(saved.code);
+  setTimeout(() => showGroupSession(saved.code, saved.memberId, false, saved.name), 100);
 }
 
 function shareGroupCode(code) {
@@ -3876,13 +3914,26 @@ async function nativeShareGroupCode(code) {
   } catch (e) { /* user cancelled */ }
 }
 
+function removeGroupSessionCard(code) {
+  // Remove the persistent session card so the user sees the leave/end took effect.
+  const card = document.getElementById(`group-session-${code}`);
+  if (card) {
+    // Walk up to the message wrapper and remove the whole bubble.
+    const msg = card.closest('.message') || card;
+    msg.remove();
+  }
+}
+
 async function leaveGroup() {
   const saved = getSavedGroupSession();
   if (!saved) return;
   await groupApi({ action: 'leave', code: saved.code, memberId: saved.memberId });
   stopGroupSession();
   saveGroupSession(null);
+  removeGroupSessionCard(saved.code);
   addMessage('You left the group. Your pin is gone.', 'bot');
+  // Show the create / join menu again so the user can rejoin or start a new group.
+  setTimeout(() => { if (typeof showFindGroup === 'function') showFindGroup(); }, 80);
 }
 
 async function endGroup() {
@@ -3892,7 +3943,9 @@ async function endGroup() {
   await groupApi({ action: 'end', code: saved.code, memberId: saved.memberId });
   stopGroupSession();
   saveGroupSession(null);
+  removeGroupSessionCard(saved.code);
   addMessage('Group ended. Everyone is off the live map.', 'bot');
+  setTimeout(() => { if (typeof showFindGroup === 'function') showFindGroup(); }, 80);
 }
 function showBachelorette(skipPush) {
   if (!skipPush) pushMenu('bachelorette');

@@ -40,8 +40,10 @@ function pruneStale(members) {
 }
 
 function publicMembers(members) {
-  // Only return public-facing fields (no IDs)
+  // Member IDs are random opaque tokens, not personally identifiable.
+  // The leader needs them to transfer leadership to a specific member.
   return pruneStale(members).map(m => ({
+    id: m.id,
     name: m.name || 'Friend',
     lat: m.lat,
     lng: m.lng,
@@ -160,6 +162,22 @@ export default async function handler(req, res) {
       // Keep around for 60 seconds so members see "ended" message
       await kv.set(`group:${code}`, group, { ex: 60 });
       return res.status(200).json({ ok: true });
+    }
+
+    if (action === 'transferLeader') {
+      const { memberId, newLeaderId } = req.body || {};
+      if (!code || !memberId || !newLeaderId) return bad(res, 400, 'code, memberId, and newLeaderId required');
+      const group = await kv.get(`group:${code}`);
+      if (!group) return bad(res, 404, 'Group not found or expired');
+      if (group.leaderId !== memberId) return bad(res, 403, 'Only the current leader can transfer leadership');
+      const newLeader = group.members.find(m => m.id === newLeaderId);
+      if (!newLeader) return bad(res, 404, 'New leader is not a member of this group');
+      // Flip isLeader flags and update group.leaderId
+      group.members = group.members.map(m => ({ ...m, isLeader: m.id === newLeaderId }));
+      group.leaderId = newLeaderId;
+      const ttlSec = Math.max(60, Math.round((group.expiresAt - Date.now()) / 1000));
+      await kv.set(`group:${code}`, group, { ex: ttlSec });
+      return res.status(200).json({ ok: true, members: publicMembers(group.members), newLeaderId });
     }
 
     return bad(res, 400, 'Unknown action');
