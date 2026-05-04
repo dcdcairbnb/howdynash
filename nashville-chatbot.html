@@ -3762,6 +3762,16 @@ async function renderGroupLiveMap(members) {
       iconAnchor: [0, 0]
     });
     const marker = L.marker([m.lat, m.lng], { icon }).addTo(groupMapInstance);
+    // Popup with one-tap open in Google Maps for directions to this member
+    const mapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${m.lat},${m.lng}&travelmode=walking`;
+    const driveUrl = `https://www.google.com/maps/dir/?api=1&destination=${m.lat},${m.lng}&travelmode=driving`;
+    marker.bindPopup(`
+      <div style="text-align:center;font-size:14px;min-width:160px;">
+        <div style="font-weight:600;margin-bottom:8px;">${star}${safeName}</div>
+        <a href="${mapsUrl}" target="_blank" rel="noopener" style="display:block;background:#34a853;color:#fff;padding:8px;border-radius:6px;text-decoration:none;margin-bottom:6px;font-weight:600;">🚶 Walk in Google Maps</a>
+        <a href="${driveUrl}" target="_blank" rel="noopener" style="display:block;background:#2563eb;color:#fff;padding:8px;border-radius:6px;text-decoration:none;font-weight:600;">🚗 Drive in Google Maps</a>
+      </div>
+    `);
     groupMapMarkers.push(marker);
     bounds.push([m.lat, m.lng]);
   });
@@ -3790,11 +3800,16 @@ function renderGroupMembers(members, expiresAt) {
     const ageStr = ageMin < 1 ? 'now' : `${ageMin}m ago`;
     const dot = m.lat != null ? '🟢' : '⚪';
     const star = m.isLeader ? ' ⭐' : '';
-    let pin = '';
+    let actions = '';
     if (m.lat != null && m.lng != null) {
-      pin = `<a href="https://www.google.com/maps/dir/?api=1&destination=${m.lat},${m.lng}" target="_blank" style="font-size:12px;color:#2563eb;text-decoration:underline;">walk to them</a>`;
+      const walkUrl = `https://www.google.com/maps/dir/?api=1&destination=${m.lat},${m.lng}&travelmode=walking`;
+      const driveUrl = `https://www.google.com/maps/dir/?api=1&destination=${m.lat},${m.lng}&travelmode=driving`;
+      actions = `<div style="margin-top:6px;display:flex;gap:6px;flex-wrap:wrap;">
+        <a href="${walkUrl}" target="_blank" rel="noopener" style="background:#34a853;color:#fff;padding:6px 10px;border-radius:6px;text-decoration:none;font-size:12px;font-weight:600;">🚶 Walk (Google Maps)</a>
+        <a href="${driveUrl}" target="_blank" rel="noopener" style="background:#2563eb;color:#fff;padding:6px 10px;border-radius:6px;text-decoration:none;font-size:12px;font-weight:600;">🚗 Drive (Google Maps)</a>
+      </div>`;
     }
-    h += `<li style="padding:6px 0;border-bottom:1px solid #eee;">${dot} <strong>${(m.name || 'Friend').replace(/</g,'')}</strong>${star} <span style="color:#888;font-size:12px;">· ${ageStr}</span> ${pin}</li>`;
+    h += `<li style="padding:8px 0;border-bottom:1px solid #eee;">${dot} <strong>${(m.name || 'Friend').replace(/</g,'')}</strong>${star} <span style="color:#888;font-size:12px;">· ${ageStr}</span>${actions}</li>`;
   });
   h += '</ul>';
   el.innerHTML = h;
