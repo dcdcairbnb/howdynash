@@ -1634,37 +1634,38 @@ function maybeShowWelcomeTour() {
 // Location permission prompt modal
 function maybeShowLocationPrompt() {
   if (userLocation) return;
-  if (localStorage.getItem('howdy-nashville-location-asked')) return;
   if (!navigator.geolocation) return;
+
+  // New auto-prompt flag (v2). If user denies, we set this and never auto-ask again.
+  // Intentionally ignoring the old 'howdy-nashville-location-asked' key so users
+  // who dismissed the legacy custom modal get a fresh chance with the native prompt.
+  if (localStorage.getItem('howdy-location-autoprompt-v2')) return;
+
+  const fireAutoPrompt = () => {
+    setTimeout(() => {
+      localStorage.setItem('howdy-location-autoprompt-v2', '1');
+      requestLocation();
+    }, 2500);
+  };
 
   if (navigator.permissions) {
     navigator.permissions.query({ name: 'geolocation' }).then(p => {
       if (p.state === 'granted') {
+        // Permission already granted - fetch silently, no prompt
         requestLocation();
+        localStorage.setItem('howdy-location-autoprompt-v2', '1');
         return;
       }
       if (p.state === 'denied') {
-        localStorage.setItem('howdy-nashville-location-asked', '1');
+        // Already denied at the OS/browser level, can't re-prompt programmatically
+        localStorage.setItem('howdy-location-autoprompt-v2', '1');
         return;
       }
-      // First visit: trigger the native browser permission prompt directly.
-      // Skipping the custom modal saves a tap. If the user denies, we record
-      // it and never auto-prompt again.
-      setTimeout(() => {
-        localStorage.setItem('howdy-nashville-location-asked', '1');
-        requestLocation();
-      }, 2500);
-    }).catch(() => {
-      setTimeout(() => {
-        localStorage.setItem('howdy-nashville-location-asked', '1');
-        requestLocation();
-      }, 2500);
-    });
+      // 'prompt' state: native dialog hasn't appeared yet, trigger it
+      fireAutoPrompt();
+    }).catch(() => fireAutoPrompt());
   } else {
-    setTimeout(() => {
-      localStorage.setItem('howdy-nashville-location-asked', '1');
-      requestLocation();
-    }, 2500);
+    fireAutoPrompt();
   }
 }
 
