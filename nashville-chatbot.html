@@ -3903,28 +3903,43 @@ function promoteToLeader(newLeaderId, newLeaderName) {
   // In-app confirmation card. Avoids iOS WebView quirks with native confirm().
   const safeId = String(newLeaderId).replace(/'/g, "\\'");
   const safeName = String(newLeaderName).replace(/[<>]/g, '').replace(/'/g, "\\'");
-  const html = `<div class="card">
+  const html = `<div class="card transfer-leader-card">
     <div class="card-title">Transfer leadership?</div>
     <div class="card-desc">Make <strong>${safeName.replace(/\\'/g, "'")}</strong> the new group leader. You'll stay in the group as a regular member.</div>
     <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
-      <button type="button" onclick="confirmPromoteToLeader('${safeId}','${safeName}')" style="background:#d62828;color:#fff;border:none;padding:10px 16px;border-radius:8px;font-weight:600;cursor:pointer;font-size:14px;">👑 Yes, transfer</button>
+      <button type="button" onclick="confirmPromoteToLeader('${safeId}','${safeName}', this)" style="background:#d62828;color:#fff;border:none;padding:10px 16px;border-radius:8px;font-weight:600;cursor:pointer;font-size:14px;">👑 Yes, transfer</button>
       <button type="button" onclick="cancelPromoteToLeader(this)" style="background:#666;color:#fff;border:none;padding:10px 16px;border-radius:8px;font-weight:600;cursor:pointer;font-size:14px;">Cancel</button>
     </div>
   </div>`;
   addMessage(html, 'bot', true);
 }
 
-function cancelPromoteToLeader(btn) {
-  const card = btn.closest('.message') || btn.closest('.card');
-  if (card) card.remove();
+function dismissTransferLeaderCards(originBtn) {
+  // Remove every transfer-leader confirmation card so a stale one isn't left
+  // dangling after the action completes.
+  if (originBtn) {
+    const own = originBtn.closest('.message') || originBtn.closest('.card');
+    if (own) own.remove();
+  }
+  document.querySelectorAll('.transfer-leader-card').forEach(card => {
+    const wrap = card.closest('.message') || card;
+    wrap.remove();
+  });
 }
 
-async function confirmPromoteToLeader(newLeaderId, newLeaderName) {
+function cancelPromoteToLeader(btn) {
+  dismissTransferLeaderCards(btn);
+}
+
+async function confirmPromoteToLeader(newLeaderId, newLeaderName, originBtn) {
   const saved = getSavedGroupSession();
   if (!saved || !saved.isLeader) {
+    dismissTransferLeaderCards(originBtn);
     addMessage('Only the current leader can transfer leadership.', 'bot');
     return;
   }
+  // Hide the confirmation card right away so the user sees a clean state.
+  dismissTransferLeaderCards(originBtn);
   const r = await groupApi({
     action: 'transferLeader',
     code: saved.code,
