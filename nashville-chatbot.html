@@ -5638,7 +5638,9 @@ window.addEventListener('appinstalled', () => {
 function maybeShowIosInstallHint() {
   const isIos = /iPhone|iPad|iPod/i.test(navigator.userAgent) && !/CriOS|FxiOS|EdgiOS/i.test(navigator.userAgent);
   const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
-  if (!isIos || isStandalone) return;
+  // Running inside the Capacitor native iOS app — don't pitch "install as PWA"
+  const isCapacitor = !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform()) || /CapacitorWebView/i.test(navigator.userAgent);
+  if (!isIos || isStandalone || isCapacitor) return;
   if (localStorage.getItem('iosInstallDismissed')) return;
   if (sessionStorage.getItem('iosHintShown')) return;
   sessionStorage.setItem('iosHintShown', '1');
