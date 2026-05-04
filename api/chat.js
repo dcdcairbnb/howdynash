@@ -1,5 +1,95 @@
 // Anthropic Claude chat endpoint. Uses Haiku for cost efficiency.
 // Required env: ANTHROPIC_API_KEY
+// Optional env: DAILY_BUDGET_USD (default 5), BUDGET_ALERT_EMAIL (default jayhawks01@gmail.com),
+//               KV_REST_API_URL + KV_REST_API_TOKEN (Upstash Redis), RESEND_API_KEY
+
+import { Redis } from '@upstash/redis';
+import { Resend } from 'resend';
+
+// Haiku 4.5 pricing per million tokens. Adjust if Anthropic updates pricing.
+const HAIKU_INPUT_COST_PER_MTOK = 1.0;
+const HAIKU_OUTPUT_COST_PER_MTOK = 5.0;
+
+const DAILY_BUDGET_USD = Number(process.env.DAILY_BUDGET_USD || 5);
+const BUDGET_ALERT_EMAIL = process.env.BUDGET_ALERT_EMAIL || 'jayhawks01@gmail.com';
+const ALERT_THRESHOLD_PCT = 0.8; // email warning at 80% of daily budget
+
+let redis = null;
+function getRedis() {
+  if (redis !== null) return redis;
+  if (process.env.KV_REST_API_URL && process.env.KV_REST_API_TOKEN) {
+    redis = new Redis({ url: process.env.KV_REST_API_URL, token: process.env.KV_REST_API_TOKEN });
+  } else {
+    redis = false; // sentinel: tried, not configured
+  }
+  return redis;
+}
+
+let resend = null;
+function getResend() {
+  if (resend !== null) return resend;
+  if (process.env.RESEND_API_KEY) resend = new Resend(process.env.RESEND_API_KEY);
+  else resend = false;
+  return resend;
+}
+
+function todayKey() {
+  // YYYY-MM-DD in UTC. One bucket per day, expires after 48h.
+  return new Date().toISOString().slice(0, 10);
+}
+
+async function getTodaySpend() {
+  const r = getRedis();
+  if (!r) return 0;
+  try {
+    const v = await r.get(`chatspend:${todayKey()}`);
+    return Number(v) || 0;
+  } catch (e) {
+    console.error('redis spend read failed', e.message);
+    return 0;
+  }
+}
+
+async function addTodaySpend(deltaCents) {
+  const r = getRedis();
+  if (!r) return 0;
+  try {
+    const key = `chatspend:${todayKey()}`;
+    const newVal = await r.incrby(key, deltaCents);
+    await r.expire(key, 60 * 60 * 48); // 48h auto-expire
+    return Number(newVal) || 0;
+  } catch (e) {
+    console.error('redis spend incr failed', e.message);
+    return 0;
+  }
+}
+
+async function shouldSendAlert(thresholdCents) {
+  const r = getRedis();
+  if (!r) return false;
+  try {
+    const flagKey = `chatalert:${todayKey()}`;
+    const set = await r.set(flagKey, '1', { nx: true, ex: 60 * 60 * 48 });
+    return set === 'OK' || set === true;
+  } catch (e) {
+    return false;
+  }
+}
+
+async function sendBudgetAlert(spentUsd, budgetUsd) {
+  const sender = getResend();
+  if (!sender) return;
+  try {
+    await sender.emails.send({
+      from: 'Howdy Nash <howdy@howdynash.com>',
+      to: BUDGET_ALERT_EMAIL,
+      subject: `Howdy Nash chat budget at ${Math.round((spentUsd / budgetUsd) * 100)}% today`,
+      text: `Heads up. The Howdy Nash chat API has spent $${spentUsd.toFixed(2)} today out of a $${budgetUsd.toFixed(2)} daily budget.\n\nWhen the daily budget is hit, the chat endpoint will start returning errors until midnight UTC.\n\nIf this is unexpected, check Anthropic Console at https://console.anthropic.com for traffic patterns and adjust DAILY_BUDGET_USD in Vercel if needed.`
+    });
+  } catch (e) {
+    console.error('budget alert email failed', e.message);
+  }
+}
 
 const SYSTEM_PROMPT = `You are a Nashville tourism concierge inside the Howdy Nash chatbot. Help visitors plan their trip.
 
@@ -145,6 +235,13 @@ export default async function handler(req, res) {
     return res.status(429).json({ error: 'You have hit the daily chat limit. Try the menu buttons or come back tomorrow.' });
   }
 
+  // Daily dollar budget check. Stored in Redis as cents to keep ints clean.
+  const spentCents = await getTodaySpend();
+  const budgetCents = Math.round(DAILY_BUDGET_USD * 100);
+  if (spentCents >= budgetCents) {
+    return res.status(429).json({ error: 'The chat is taking a quick break. Try again tomorrow or use the menu buttons for now.' });
+  }
+
   const messages = [];
   for (const turn of history.slice(-6)) {
     if (turn.role && turn.content) {
@@ -181,6 +278,20 @@ export default async function handler(req, res) {
     // Cache only fresh, no-history questions to keep replies relevant.
     if (reply && (!history || history.length === 0)) {
       setCachedReply(message, reply);
+    }
+
+    // Tally the real cost of this call from Anthropic's usage block.
+    const inTok = Number(data.usage?.input_tokens || 0);
+    const outTok = Number(data.usage?.output_tokens || 0);
+    const callCostUsd = (inTok / 1_000_000) * HAIKU_INPUT_COST_PER_MTOK
+                      + (outTok / 1_000_000) * HAIKU_OUTPUT_COST_PER_MTOK;
+    const callCostCents = Math.max(1, Math.round(callCostUsd * 10000) / 100); // store with 0.01 cent precision rounded to whole cent
+    const newTotalCents = await addTodaySpend(Math.round(callCostUsd * 100));
+    const newTotalUsd = newTotalCents / 100;
+    const alertCents = Math.round(DAILY_BUDGET_USD * 100 * ALERT_THRESHOLD_PCT);
+    if (newTotalCents >= alertCents) {
+      const fire = await shouldSendAlert(alertCents);
+      if (fire) await sendBudgetAlert(newTotalUsd, DAILY_BUDGET_USD);
     }
 
     res.setHeader('Cache-Control', 'no-store');
