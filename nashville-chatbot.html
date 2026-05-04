@@ -3619,6 +3619,19 @@ function showGroupSession(code, memberId, isLeader, name) {
       showAffiliateForElapsed(999, isLeader);
       return;
     }
+    // Sync leader status: if the leader transferred leadership to me, update my
+    // local session and re-render the session card so I see the End group button
+    // and Make leader controls.
+    const myMember = r.data.members.find(m => m.id === memberId);
+    const saved = getSavedGroupSession();
+    if (myMember && saved && myMember.isLeader !== !!saved.isLeader) {
+      const nowLeader = !!myMember.isLeader;
+      saveGroupSession({ ...saved, isLeader: nowLeader });
+      isLeader = nowLeader;
+      removeGroupSessionCard(code);
+      setTimeout(() => showGroupSession(code, memberId, nowLeader, name), 80);
+      return;
+    }
     renderGroupMembers(r.data.members, r.data.expiresAt);
     // Time-based affiliate prompts
     const dur = r.data.durationHours || 6;
@@ -3750,11 +3763,15 @@ async function renderGroupLiveMap(members) {
     mapDiv.style.color = '';
     mapDiv.innerHTML = '';
     try {
-      groupMapInstance = L.map(mapDiv).setView([withCoords[0].lat, withCoords[0].lng], 14);
+      // attributionControl: false removes the default Leaflet branding ribbon.
+      // We still credit OpenStreetMap below since their tile license requires it.
+      groupMapInstance = L.map(mapDiv, { attributionControl: false }).setView([withCoords[0].lat, withCoords[0].lng], 14);
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© OpenStreetMap contributors',
         maxZoom: 19
       }).addTo(groupMapInstance);
+      L.control.attribution({ prefix: false })
+        .addAttribution('© OpenStreetMap')
+        .addTo(groupMapInstance);
     } catch (e) {
       console.error('Map init failed:', e);
       mapDiv.innerHTML = '<div style="padding:14px;color:#d62828;">Map failed to load. Refresh the page.</div>';
