@@ -1810,12 +1810,19 @@ function goHome() {
   messageSnapshots = [];
   menuStack = ['main'];
   scrollAnchor = null;
+  suppressAutoScroll = true;
   saveMenuState();
   const hdr = document.getElementById('appHeader');
   if (hdr) hdr.classList.remove('slim');
   updateBackBtn();
   addMessage("Back to the start. What can I help you find?", 'bot');
-  setTimeout(() => showMainMenu(), 300);
+  setTimeout(() => {
+    showMainMenu();
+    // Snap to the top of the chat container so user always lands at the greeting
+    if (messagesEl) messagesEl.scrollTop = 0;
+    window.scrollTo(0, 0);
+  }, 300);
+  setTimeout(() => { suppressAutoScroll = false; }, 1500);
 }
 
 function rebindQuickReplies() {
