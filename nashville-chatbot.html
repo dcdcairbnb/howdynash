@@ -3612,11 +3612,17 @@ function showGroupSession(code, memberId, isLeader, name) {
     }
     if (r.data.ended) {
       stopGroupSession();
+      // Read fresh leader status at runtime, not from the captured closure.
+      // The original leader may have transferred leadership and is now a regular
+      // member, so they should also see the "group ended" notification when the
+      // new leader ends the group.
+      const liveSaved = getSavedGroupSession();
+      const wasLeader = !!(liveSaved && liveSaved.isLeader);
       saveGroupSession(null);
       // Remove the stale session card so the map and member list disappear.
       removeGroupSessionCard(code);
-      // Prominent notification card so non-leaders clearly see the group ended.
-      if (!isLeader) {
+      // Prominent notification card so any non-leader clearly sees the group ended.
+      if (!wasLeader) {
         const html = `<div class="card" style="border:2px solid #d62828;background:#fff5f5;">
           <div class="card-title" style="color:#d62828;">🛑 Group ended</div>
           <div class="card-desc">The group leader ended the location share. Your live pin is gone and nobody in the group can see your location anymore.</div>
@@ -3635,7 +3641,7 @@ function showGroupSession(code, memberId, isLeader, name) {
         }, 100);
       }
       // Show post-session upsell (recovery brunch, plan another trip)
-      showAffiliateForElapsed(999, isLeader);
+      showAffiliateForElapsed(999, wasLeader);
       return;
     }
     // Sync leader status: if the leader transferred leadership to me, update my
