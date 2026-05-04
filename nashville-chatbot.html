@@ -1647,17 +1647,23 @@ function maybeShowLocationPrompt() {
         localStorage.setItem('howdy-nashville-location-asked', '1');
         return;
       }
+      // First visit: trigger the native browser permission prompt directly.
+      // Skipping the custom modal saves a tap. If the user denies, we record
+      // it and never auto-prompt again.
       setTimeout(() => {
-        document.getElementById('locationPromptModal').style.display = 'flex';
+        localStorage.setItem('howdy-nashville-location-asked', '1');
+        requestLocation();
       }, 2500);
     }).catch(() => {
       setTimeout(() => {
-        document.getElementById('locationPromptModal').style.display = 'flex';
+        localStorage.setItem('howdy-nashville-location-asked', '1');
+        requestLocation();
       }, 2500);
     });
   } else {
     setTimeout(() => {
-      document.getElementById('locationPromptModal').style.display = 'flex';
+      localStorage.setItem('howdy-nashville-location-asked', '1');
+      requestLocation();
     }, 2500);
   }
 }
