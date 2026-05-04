@@ -3957,20 +3957,34 @@ async function confirmPromoteToLeader(newLeaderId, newLeaderName, originBtn) {
     return;
   }
   // Update local saved session so this user is no longer the leader.
+  // Do this BEFORE any UI work so renderGroupMembers reads the new state.
   saveGroupSession({ ...saved, isLeader: false });
   addMessage(`${newLeaderName} is now the group leader. You're still in the group.`, 'bot');
-  // Update the existing session card in place: drop the End group button and
-  // re-render the member list so the leader star moves to the new leader.
-  // This avoids the scroll jump from tearing down and re-adding the whole card.
   const card = document.getElementById(`group-session-${saved.code}`);
-  if (card && r.data && Array.isArray(r.data.members)) {
-    const endBtn = Array.from(card.querySelectorAll('button')).find(b => /End group/i.test(b.textContent));
-    if (endBtn) endBtn.remove();
-    // Re-render the member list with the freshly returned membership.
-    // expiresAt isn't on this response, so use the existing status text.
-    const expiresAt = Date.now() + 60 * 1000; // safe minimum, real value updates on next poll
-    renderGroupMembers(r.data.members, expiresAt);
+  if (card) {
+    // Remove the End group button and any Make leader buttons immediately.
+    // Defensive cleanup so the user sees the new state without waiting for
+    // the next 10-second poll.
+    Array.from(card.querySelectorAll('button')).forEach(btn => {
+      const t = btn.textContent || '';
+      if (/End group/i.test(t) || /Make leader/i.test(t)) btn.remove();
+    });
+    // Also strip any leftover empty wrapper divs from the now-removed buttons.
+    if (r.data && Array.isArray(r.data.members)) {
+      const expiresAt = Date.now() + 60 * 1000;
+      renderGroupMembers(r.data.members, expiresAt);
+    }
   }
+  // Scroll the session card back into view. Removing the confirmation card
+  // shrinks the page, and iOS WebView may have scrolled up by then.
+  const scrollToSession = () => {
+    const c = document.getElementById(`group-session-${saved.code}`);
+    if (c && typeof c.scrollIntoView === 'function') {
+      c.scrollIntoView({ block: 'start', behavior: 'smooth' });
+    }
+  };
+  setTimeout(scrollToSession, 200);
+  setTimeout(scrollToSession, 700);
 }
 
 function shareGroupCode(code) {
