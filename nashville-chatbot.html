@@ -3545,6 +3545,14 @@ function showGroupSession(code, memberId, isLeader, name) {
   </div>`;
   addMessage(html, 'bot', true);
 
+  // Auto-scroll to the live map so the user lands on it instead of the join button.
+  setTimeout(() => {
+    const mapEl = document.getElementById('group-live-map');
+    if (mapEl && typeof mapEl.scrollIntoView === 'function') {
+      mapEl.scrollIntoView({ block: 'start', behavior: 'smooth' });
+    }
+  }, 200);
+
   // Begin sharing location
   if (navigator.geolocation) {
     if (groupGeoWatchId != null) navigator.geolocation.clearWatch(groupGeoWatchId);
