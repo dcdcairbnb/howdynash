@@ -3639,17 +3639,32 @@ function showGroupSession(code, memberId, isLeader, name) {
       return;
     }
     // Sync leader status: if the leader transferred leadership to me, update my
-    // local session and re-render the session card so I see the End group button
-    // and Make leader controls.
+    // local session and patch the session card in place so I see the End group
+    // button. Patching in place avoids the scroll jump from rebuilding the card.
     const myMember = r.data.members.find(m => m.id === memberId);
     const saved = getSavedGroupSession();
     if (myMember && saved && myMember.isLeader !== !!saved.isLeader) {
       const nowLeader = !!myMember.isLeader;
       saveGroupSession({ ...saved, isLeader: nowLeader });
       isLeader = nowLeader;
-      removeGroupSessionCard(code);
-      setTimeout(() => showGroupSession(code, memberId, nowLeader, name), 80);
-      return;
+      const card = document.getElementById(`group-session-${code}`);
+      const actions = card && card.querySelector('#group-actions');
+      if (actions) {
+        const hasEnd = Array.from(actions.querySelectorAll('button')).some(b => /End group/i.test(b.textContent));
+        if (nowLeader && !hasEnd) {
+          // Add End group button for the new leader.
+          const endBtn = document.createElement('button');
+          endBtn.type = 'button';
+          endBtn.onclick = endGroup;
+          endBtn.style.cssText = 'background:#d62828;color:#fff;border:none;padding:10px 16px;border-radius:8px;font-weight:600;cursor:pointer;font-size:14px;margin:4px;';
+          endBtn.textContent = 'End group';
+          actions.appendChild(endBtn);
+        } else if (!nowLeader && hasEnd) {
+          // Remove End group button when demoted.
+          const endBtn = Array.from(actions.querySelectorAll('button')).find(b => /End group/i.test(b.textContent));
+          if (endBtn) endBtn.remove();
+        }
+      }
     }
     renderGroupMembers(r.data.members, r.data.expiresAt);
     // Time-based affiliate prompts
@@ -3923,10 +3938,18 @@ async function confirmPromoteToLeader(newLeaderId, newLeaderName) {
   // Update local saved session so this user is no longer the leader.
   saveGroupSession({ ...saved, isLeader: false });
   addMessage(`${newLeaderName} is now the group leader. You're still in the group.`, 'bot');
-  // Re-render the session card so the End group button disappears for this user
-  // and the member list reflects the new leader.
-  removeGroupSessionCard(saved.code);
-  setTimeout(() => showGroupSession(saved.code, saved.memberId, false, saved.name), 100);
+  // Update the existing session card in place: drop the End group button and
+  // re-render the member list so the leader star moves to the new leader.
+  // This avoids the scroll jump from tearing down and re-adding the whole card.
+  const card = document.getElementById(`group-session-${saved.code}`);
+  if (card && r.data && Array.isArray(r.data.members)) {
+    const endBtn = Array.from(card.querySelectorAll('button')).find(b => /End group/i.test(b.textContent));
+    if (endBtn) endBtn.remove();
+    // Re-render the member list with the freshly returned membership.
+    // expiresAt isn't on this response, so use the existing status text.
+    const expiresAt = Date.now() + 60 * 1000; // safe minimum, real value updates on next poll
+    renderGroupMembers(r.data.members, expiresAt);
+  }
 }
 
 function shareGroupCode(code) {
