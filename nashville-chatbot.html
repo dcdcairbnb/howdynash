@@ -3545,13 +3545,19 @@ function showGroupSession(code, memberId, isLeader, name) {
   </div>`;
   addMessage(html, 'bot', true);
 
-  // Auto-scroll to the live map so the user lands on it instead of the join button.
-  setTimeout(() => {
-    const mapEl = document.getElementById('group-live-map');
-    if (mapEl && typeof mapEl.scrollIntoView === 'function') {
-      mapEl.scrollIntoView({ block: 'start', behavior: 'smooth' });
+  // Auto-scroll to the live session card so the user lands on the map instead of
+  // the join code input. addMessage normally scrolls to the bottom of the chat,
+  // which competes with this; we delay enough to win the race and retry once
+  // after the Leaflet map finishes rendering.
+  const scrollToSession = () => {
+    const card = document.getElementById(`group-session-${code}`);
+    if (card && typeof card.scrollIntoView === 'function') {
+      card.scrollIntoView({ block: 'start', behavior: 'smooth' });
     }
-  }, 200);
+  };
+  setTimeout(scrollToSession, 250);
+  setTimeout(scrollToSession, 800);
+  setTimeout(scrollToSession, 1500);
 
   // Begin sharing location
   if (navigator.geolocation) {
