@@ -4967,6 +4967,17 @@ function renderRestaurantCard(r) {
   const b = r.booking || {};
   const isWalkin = !!b.walkin;
   const ratingBadge = r.rating ? `<span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:10px;font-size:12px;font-weight:600;margin-left:6px;">⭐ ${r.rating}${r.reviewCount ? ' · ' + r.reviewCount : ''}</span>` : '';
+  // Last-ditch distance fallback: if upstream enrichment didn't set distanceMiles
+  // but we have user location and a neighborhood string, compute it inline so
+  // every restaurant card shows distance.
+  if (r.distanceMiles == null && userLocation) {
+    if (r.coords) {
+      r.distanceMiles = haversineMiles(userLocation, r.coords);
+    } else if (r.neighborhood) {
+      const nb = neighborhoodCoords(r.neighborhood);
+      if (nb) r.distanceMiles = haversineMiles(userLocation, nb);
+    }
+  }
   // Mark distance as approx if it came from a neighborhood center fallback
   // (when there's no exact rating, we know it didn't come from Google Places).
   const isApprox = r.distanceMiles != null && !r.rating;
